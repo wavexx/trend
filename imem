@@ -1,0 +1,4 @@
+#!/bin/sh
+# print out memory usage
+pmval mem.util.free
+
