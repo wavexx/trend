@@ -207,7 +207,7 @@ readNum(FILE* fd)
 
   // read the number
   char buf[Trend::maxNumLen];
-  char* end = readStr(fd, buf, sizeof(buf));
+  char* end = readStr(fd, buf, sizeof(buf) - 1);
   if(feof(fd))
     return NAN;
   if(!end)
@@ -216,6 +216,7 @@ readNum(FILE* fd)
     skipStr(fd);
     return NAN;
   }
+  *end = 0;
   
   // convert the number
   double num = strtod(buf, &end);
