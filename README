@@ -144,6 +144,7 @@ Interactive keys:
 
   ESC	quit/exit
   a	toggle auto-scaling
+  A	re-scale the graph without activating auto-scaling
   d	toggle dimmed shading mode
   D	toggle distribution graph
   S	toggle anti-aliasing
@@ -261,7 +262,7 @@ email to <minimalist@yuv.info> with a subject of "subscribe trend-users".
 Authors and Copyright
 =====================
 
-trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANY.
+trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
 Copyright(c) 2003-2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate.

@@ -885,6 +885,11 @@ keyboard(const unsigned char key, const int x, const int y)
     toggleStatus("autolimit", autoLimit);
     break;
 
+  case Trend::resetlimKey:
+    setLimits();
+    cout << "limits reset\n";
+    break;
+
   case Trend::smoothKey:
     toggleStatus("smoothing", smooth);
     init();
