@@ -69,7 +69,6 @@ namespace
   const char* fileName;
   pthread_mutex_t mutex;
   bool damaged = false;
-  bool first = false;
 
   // Data and fixed parameters
   deque<Value> data;
@@ -78,8 +77,11 @@ namespace
   size_t history;
   size_t divisions;
 
+  // Visual/Fixed settings
+  const char* title = NULL;
+
   // Visual/Changeable settings
-  bool autoLimit = false;
+  bool autoLimit;
   bool smooth = Trend::smooth;
   bool scroll = Trend::scroll;
   bool values = Trend::values;
@@ -218,18 +220,7 @@ thread(void*)
  * OpenGL functions
  */
 
-// Notify OpenGL to redraw everything.
-void
-notify()
-{
-  glLoadIdentity();
-  gluOrtho2D(0, divisions, loLimit, hiLimit);
-  if(!first)
-    glutPostRedisplay();
-}
-
-
-// Basic Window OpenGL initializer
+// OpenGL state initializer
 void
 init()
 {
@@ -251,6 +242,7 @@ init()
 }
 
 
+#if 0
 // Write an OpenGL string using glut.
 void
 drawString(const float scale, const float x, const float y, const char* string)
@@ -262,6 +254,7 @@ drawString(const float scale, const float x, const float y, const char* string)
     glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
   glPopMatrix();
 }
+#endif
 
 
 void
@@ -297,10 +290,13 @@ drawMarker(const float x)
 }
 
 
-// Redraw handler
+// redraw handler
 void
 display()
 {
+  glLoadIdentity();
+  gluOrtho2D(0, divisions, loLimit, hiLimit);
+
   // Clear the device.
   pthread_mutex_lock(&mutex);
   glClear(GL_COLOR_BUFFER_BIT);
@@ -349,15 +345,60 @@ void
 reshape(const int w, const int h)
 {
   glViewport(0, 0, w, h);
-  notify();
+  glutPostRedisplay();
 }
 
+
+void
+setLimits()
+{
+  deque<Value>::const_iterator it(data.begin());
+  float lo(it->value);
+  float hi(lo);
+
+  for(; it != data.end(); ++it)
+  {
+    if(it->value > hi)
+      hi = it->value;
+
+    if(it->value < lo)
+      lo = it->value;
+  }
+
+  hiLimit = hi + gridres;
+  loLimit = lo - gridres;
+}
+
+
+void
+idle(int)
+{
+  // re-register the callback
+  glutTimerFunc(1, idle, 0);
+
+  // check if a redraw is necessary
+  pthread_mutex_lock(&mutex);
+  if(damaged)
+  {
+    if(autoLimit)
+      setLimits();
+
+    glutPostRedisplay();
+    damaged = false;
+  }
+  pthread_mutex_unlock(&mutex);
+}
+
+
+/*
+ * Keyboard interation
+ */
 
 void
 showToggleStatus(const char* str, bool& var)
 {
   var = !var;
-  std::cout << str << " == " << (var? "enabled": "disabled") << std::endl;
+  std::cout << str << ": " << (var? "enabled": "disabled") << std::endl;
 }
 
 
@@ -411,108 +452,120 @@ keyboard(const unsigned char key, const int x, const int y)
     return;
   }
 
-  notify();
+  glutPostRedisplay();
 }
 
 
-void
-setLimits()
-{
-  deque<Value>::const_iterator it(data.begin());
-  float lo(it->value);
-  float hi(lo);
+/*
+ * CLI and options
+ */
 
-  for(; it != data.end(); ++it)
-  {
-    if(it->value > hi)
-      hi = it->value;
-
-    if(it->value < lo)
-      lo = it->value;
-  }
-
-  hiLimit = hi + gridres;
-  loLimit = lo - gridres;
-}
-
-
-void
-idle(int)
-{
-  // re-register the callback
-  glutTimerFunc(1, idle, 0);
-
-  // sadly, using glut we must rely on polling(!)
-  pthread_mutex_lock(&mutex);
-  if(damaged)
-  {
-    if(autoLimit)
-      setLimits();
-
-    notify();
-    damaged = false;
-  }
-  pthread_mutex_unlock(&mutex);
-}
-
-
+// Initialize globals through command line
 int
-main(const int argc, const char* const argv[]) try
+parseOptions(int argc, char* const argv[])
 {
-  // Parameters
-  if(argc != 4 && argc != 6)
-  {
-    cerr << argv[0] << " usage: " <<
-      argv[0] << " [options] <fifo> <hist-sz> <x-div> [-y +y]\n" <<
-      argv[0] << " version: $Revision$ $Date$\n";
+  // starting options
+  autoLimit = false;
 
-    return Trend::args;
+  int arg;
+  while((arg = getopt(argc, argv, "aSsvmgG:ht:")) != -1)
+    switch(arg)
+    {
+    case 'a':
+      autoLimit = true;
+      break;
+
+    case 'S':
+      smooth = true;
+      break;
+
+    case 's':
+      scroll = true;
+      break;
+
+    case 'v':
+      values = true;
+      break;
+
+    case 'm':
+      marker = true;
+      break;
+
+    case 'g':
+      grid = true;
+      break;
+
+    case 'G':
+      gridres = strtod(optarg, NULL);
+      break;
+
+    case 't':
+      title = optarg;
+      break;
+
+    case 'h':
+      cout << argv[0] << " usage: " <<
+	argv[0] << " [options] fifo hist-sz x-div [-y +y]\n" <<
+	argv[0] << " version: $Revision$ $Date$\n";
+      return 1;
+
+    default:
+      return -1;
+    }
+
+  // main parameters
+  argc -= optind;
+  if(argc != 3 && argc != 5)
+  {
+    cerr << argv[0] << ": bad parameters\n";
+    return -1;
   }
 
-  // TODO: parse some options
-  // Start the producer thread
   fileName = argv[1];
-  pthread_t thrd;
-  pthread_mutex_init(&mutex, NULL);
-  pthread_create(&thrd, NULL, thread, NULL);
-
-  // Initialize data
   history = strtoul(argv[2], NULL, 0);
   divisions = strtoul(argv[3], NULL, 0);
-  if(argc == 6)
+
+  // optional limiting factors
+  if(argc == 5)
   {
-    autoLimit = false;
     loLimit = strtod(argv[4], NULL);
     hiLimit = strtod(argv[5], NULL);
   }
   else
-  {
     autoLimit = true;
-    loLimit = 0;
-    hiLimit = 0;
-  }
 
-  // Display
+  return 0;
+}
+
+
+int
+main(int argc, char* const argv[]) try
+{
+  // parameters
+  if(parseOptions(argc, argv))
+    return Trend::args;
+
+  // start the producer thread
+  pthread_t thrd;
+  pthread_mutex_init(&mutex, NULL);
+  pthread_create(&thrd, NULL, thread, NULL);
+
+  // display
   glutInit(const_cast<int*>(&argc), const_cast<char**>(argv));
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 
-  // Main Window
-  glutCreateWindow(argv[0]);
-  init();
+  // main mindow and callbacks
+  glutCreateWindow(title? title: argv[0]);
   glutReshapeFunc(reshape);
   glutDisplayFunc(display);
   glutKeyboardFunc(keyboard);
 
-  // Let glut do its work.
+  // first redraw
+  init();
   idle(0);
-  first = false;
+
+  // processing
   glutMainLoop();
-
-  // Terminate the data thread
-  fileName = NULL;
-  pthread_join(thrd, NULL);
-  pthread_mutex_destroy(&mutex);
-
   return Trend::success;
 }
 catch(const std::exception& e)
