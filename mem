@@ -1,0 +1,27 @@
+#!/usr/bin/env perl
+# memory + swap usage for trend
+
+use strict;
+use warnings;
+use Time::HiRes "usleep";
+$| = 1;
+
+my $if = "eth0";
+
+while()
+{
+  open FD, "/proc/meminfo" or die;
+  while(<FD>)
+  {
+    my ($tot, $used, $free, $buf, $cache) = /^Mem: +(\d+) +(\d+) +(\d+) +\d+ +(\d+) +(\d+)$/;
+    if($tot)
+    {
+      print(($tot - $free - $buf - $cache) / 1024. . "\n");
+      last;
+    }
+  }
+  close FD;
+
+  usleep ($ARGV[0]? $ARGV[0]: 100000);
+}
+
