@@ -103,7 +103,7 @@ of the following formats:
 While this may seem hard at first, "./trend fifo '60*3'" is a much easier way
 of defining "180 values, 60 subdivisions". Note that "*" may be expanded by
 your shell as a globbing operator, thus you should escape the specification
-with quotes.
+with quotes or backslashes.
 
 Standard X11/GLUT options:
 
@@ -143,9 +143,9 @@ Colour spec:
 A colour is specified in hex RGB format, as follows: #RRGGBB, RRGGBB or
 0xRRGGBB; some examples:
 
-  #FF0000: red
-  #00FF00: green
-  #A020F0: purple
+  #FF0000	red
+  #00FF00	green
+  #A020F0	purple
 
 Scrolling modes:
 
@@ -166,7 +166,7 @@ A grid specification is of the form:
 
   [[A][+C]][x[B][+C]]
 
-(eg: 1.3, 10+5, 1x10+5, +5x+5 etc) where:
+(eg: 1.3, 10+5, 1x10+5, +5x+5; +1x+1 gets the old behaviour) where:
 
   A	y grid resolution
   B	x grid resolution
@@ -237,6 +237,10 @@ Some very sample introductory scripts are included within the package:
 
   Print-out used memory (incl. swap) of a linux kernel using /proc/meminfo
   using Perl each tenth of second or the specified number of microseconds.
+
+./imem <seconds>:
+
+  The same using pmval from Peformance Co-Pilot.
 
 ./net <microseconds> [if]:
 

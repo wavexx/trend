@@ -1,3 +1,16 @@
+Rev #27 02/11/2004 to Rev #35 14/12/2004
+========================================
+
+	* An "history specification" can be used on the command line as a
+	simplified alternative to the hist-sz/x-div pair.
+
+	* Visual latency sampling/visualisation.
+
+	* Differential input.
+
+	* Grid enhancements/offsetting.
+
+
 Rev #23 29/10/2004 to Rev #27 02/11/2004
 ========================================
 

@@ -13,9 +13,6 @@ LDFLAGS = -L/usr/local/lib
 LDADD = -lglut -lGL -lGLU -lrt
 #endif
 
-# Shared flags
-CXXFLAGS = -g
-
 
 # Config
 TREND_OBJECTS = trend.o color.o
