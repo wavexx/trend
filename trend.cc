@@ -46,6 +46,7 @@ using std::strlen;
 #include <math.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <pthread.h>
 
@@ -288,6 +289,12 @@ thread(void*)
       if(!(++pos % divisions))
 	pos = 0;
     }
+
+    // terminate the loop for regular files
+    struct stat stBuf;
+    fstat(fileno(in), &stBuf);
+    if(S_ISREG(stBuf.st_mode))
+      fileName = NULL;
 
     // close the stream
     fclose(in);
