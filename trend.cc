@@ -968,7 +968,7 @@ parseGrid(Grid& grid, char* spec)
   char* p = strchr(spec, '+');
   if(p)
   {
-    *p++ = NULL;
+    *p++ = 0;
     if(*p) grid.mayor = strtoul(p, NULL, 0);
   }
   if(*spec) grid.res = strtod(spec, NULL);
@@ -982,7 +982,7 @@ parseGrSpec(GrSpec& grid, char* spec)
   char* p = strchr(spec, 'x');
   if(p)
   {
-    *p++ = NULL;
+    *p++ = 0;
     if(*p) parseGrid(grid.x, p);
   }
   if(*spec) parseGrid(grid.y, spec);
