@@ -369,7 +369,10 @@ main(const int argc, const char* const argv[]) try
   {
     cerr << argv[0] << " usage: " <<
       argv[0] << " [options] <fifo> <hist-sz> <x-div> [-y +y]\n" <<
-      argv[0] << " version: $Revision$ $Date$\n";
+      argv[0] << " version: "
+      "$Revision$"
+      "$Date$"
+      "\n";
 
     return Exit::args;
   }
