@@ -41,5 +41,5 @@ clean:
 
 
 # Dependencies
-trend.o: defaults.hh color.hh
+trend.o: defaults.hh color.hh rr.hh
 color.o: color.hh
