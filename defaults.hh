@@ -57,6 +57,7 @@ namespace Trend
   const int intrRad = 4;
   const int intrNum = 3;
   const int distribWidth = 30;
+  const int maxGridDens = 4;
 }
 
 #endif

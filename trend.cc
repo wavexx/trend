@@ -421,12 +421,13 @@ drawOSString(const int x, const int y, const char* str)
 void
 drawGrid()
 {
+  using Trend::maxGridDens;
   glColor3fv(gridCol);
   glBegin(GL_LINES);
   double it;
 
   // horizontal scanlines
-  if(divisions < (width / 4))
+  if(divisions < static_cast<size_t>(width / maxGridDens))
   {
     for(it = 1; it != divisions; ++it)
     {
@@ -435,8 +436,8 @@ drawGrid()
     }
   }
 
-  // vertical rasterlines
-  if(((hiLimit - loLimit) / gridres) < (height / 4))
+  // vertical lines
+  if(((hiLimit - loLimit) / gridres) < (height / maxGridDens))
   {
     it = loLimit - drem(loLimit, gridres);
     for(; it <= hiLimit; it += gridres)
@@ -524,7 +525,7 @@ drawDistrib()
 {
   // reallocate only if necessary. we must avoid to reallocate in order to
   // not fragment memory (resize() on gcc 3 isn't very friendly)
-  if(distribData.size() != height)
+  if(distribData.size() != static_cast<size_t>(height))
     distribData.resize(height);
 
   // calculate distribution
@@ -660,7 +661,7 @@ drawIntr()
 
   // consider only the nearest n values
   std::sort(intrs.begin(), intrs.end());
-  if(intrs.size() > Trend::intrNum)
+  if(intrs.size() > static_cast<size_t>(Trend::intrNum))
     intrs.resize(Trend::intrNum);
 
   // draw intersections and estimate mean value
@@ -840,7 +841,7 @@ idle(int)
 
 
 /*
- * Keyboard interation
+ * Keyboard interaction
  */
 
 void
