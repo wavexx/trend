@@ -368,7 +368,8 @@ main(const int argc, const char* const argv[]) try
   if(argc != 4 && argc != 6)
   {
     cerr << argv[0] << " usage: " <<
-      argv[0] << " [options] <fifo> <hist-sz> <x-div> [-y +y]\n";
+      argv[0] << " [options] <fifo> <hist-sz> <x-div> [-y +y]\n" <<
+      argv[0] << " version: $Revision$ $Date$\n";
 
     return Exit::args;
   }
