@@ -7,9 +7,6 @@ Planned features
 
 	* Binary input
 
-	* Differential input (initial absolute value and relative ones
-	following).
-
 	* More optimisations can be done for: different shading modes,
 	different input types.
 

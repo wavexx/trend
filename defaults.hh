@@ -28,8 +28,11 @@ namespace Trend
   const unsigned char pauseKey = ' ';
   const unsigned char latKey = 'l';
 
+  // Some types
+  enum input_t {normal, incremental, differential};
+
   // Defaults
-  const bool incr = false;
+  const input_t input = normal;
   const bool dimmed = false;
   const bool distrib = false;
   const bool smooth = false;

@@ -106,7 +106,7 @@ namespace
   const char* fileName;
   pthread_mutex_t mutex;
   volatile unsigned long damaged = 0;
-  bool incr = Trend::incr;
+  Trend::input_t input = Trend::input;
 
   // Data and fixed parameters
   rr<Value>* rrData;
@@ -287,7 +287,7 @@ producer(void*)
 
     // first value for incremental data
     double old, num;
-    if(incr)
+    if(input)
       old = readFirstNum(in);
 
     // read all data
@@ -298,11 +298,18 @@ producer(void*)
 	continue;
 
       // determine the actual value
-      if(incr)
+      switch(input)
       {
+      case Trend::incremental:
 	double tmp = num;
 	num = (num - old);
 	old = tmp;
+	break;
+
+      case Trend::differential:
+	old += num;
+	num = old;
+	break;
       }
 
       // append the value
@@ -1049,7 +1056,7 @@ parseOptions(int argc, char* const argv[])
   memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:i")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:ir")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1117,7 +1124,11 @@ parseOptions(int argc, char* const argv[])
       break;
 
     case 'i':
-      incr = !incr;
+      input = Trend::incremental;
+      break;
+
+    case 'r':
+      input = Trend::differential;
       break;
 
     case 'h':

@@ -53,8 +53,9 @@ The data is a space/tab/newline-separated series of ASCII decimal numbers; es:
 
 The parser is very lenient, and will silently ignore whatever looks like
 garbage. By default all values are considered absolute. By using the -i switch
-values are considered to be incremental counters (in this case the first one is
-used as the initial zero).
+values are considered to be an incremental counter. With -r values are
+considered to be relative/differential. With -r or -i the first value is taken
+as the reference value.
 
 FIFO:
 
@@ -128,6 +129,7 @@ Options:
  -M colour	marker colour
  -N colour	interactive indicator colour
  -i		input is an incremental counter
+ -r		input is differential
 
 Shading modes:
 
