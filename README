@@ -78,7 +78,7 @@ Interactive keys:
 - ESC: quit the trend
 - s: switch scrolling mode (wrap-around or scrolling)
 - S: activate anti-aliasing
-- m: activate a green maker on the cursor cursor position
+- m: activate a green marker on the current cursor position
 - g: toggle grid
 - G: change grid resolution (enter the new resolution on the console).
 
@@ -95,8 +95,8 @@ Some very sample introductory scripts are included within the package:
 
 ./mem <microseconds>:
 
-  Print-out free memory of a linux kernel using /proc/meminfo using Perl each
-  tenth of second or the specified number of microseconds.
+  Print-out used memory (incl. swap) of a linux kernel using /proc/meminfo
+  using Perl each tenth of second or the specified number of microseconds.
 
 ./net <microseconds>:
 
