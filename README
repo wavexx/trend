@@ -1,0 +1,141 @@
+General Description
+===================
+
+trend is a general-purpose, efficient trend graph for "live" data. Data is read
+in ASCII form from a file or continuously from a FIFO and displayed in
+real-time into a multipass trend (much like a CRT oscilloscope). trend can be
+used as a rapid analysis tool for progressive or time-based data series
+together with trivial scripting.
+
+Features:
+
+- OpenGL graphics
+- Automatic or fixed graph scaling
+- Two graph scrolling modes
+- Configurable grid
+
+Requires:
+
+- OpenGL
+- GLUT (http://www.opengl.org/resources/libraries/glut.html) or
+  FreeGLUT (http://freeglut.sourceforge.net/)
+
+
+Building
+========
+
+Type "make". Alternatively trend can be compiled with
+
+  g++ -O2 -o trend trend.cc -lglut
+
+where "g++" is your C++ compiler ("CC" on some systems).
+Additional libraries may be required, look into the Makefile.
+
+
+Executing
+=========
+
+Data:
+
+The data is a space/tab/newline-separated series of ASCII decimal numbers; es:
+
+  1 2 3 4
+  5.1 6 0x12
+  -12.4E5
+
+FIFO:
+
+To display real-time data you should create a special FIFO file using the
+mkfifo command:
+
+  mkfifo fifofilename
+
+and redirect your script's output to that file. Alternatively you can store
+your data in a plain file and simply display it non-interactively.
+
+Executing:
+
+Execute trend as follows:
+
+  ./trend fifofilename history-size subdivisions [low high]
+
+where:
+
+- fifofilename is the named fifo you just created.
+- history-size is the total number of values the graph will retain in the graph
+  before discarding the old ones.
+- subdivisions is the number of horizontal subdivisions of the graph. Older
+  values will wrap around (you can still see them under newer ones).
+- low and high are the optional graph vertical limits (respectively the lower
+  and upper limits). If none are specified the graph will auto-scale itself.
+
+When new data arrives, the value is plotted and the cursor position is
+advanced. That is, the graph scrolling speed is determined by the speed of the
+data flow (for now at least).
+
+Interactive keys:
+
+- ESC: quit the trend
+- s: switch scrolling mode (wrap-around or scrolling)
+- S: activate anti-aliasing
+- m: activate a green maker on the cursor cursor position
+- g: toggle grid
+- G: change grid resolution (enter the new resolution on the console).
+
+Autoscaling:
+
+When autoscaling is enabled the graph will be scaled vertically to fit visible
+values. The grid resolution is used to add some vertical bounds to the graph.
+
+
+Examples
+========
+
+Some very sample introductory scripts are included within the package:
+
+./mem <microseconds>:
+
+  Print-out free memory of a linux kernel using /proc/meminfo using Perl each
+  tenth of second or the specified number of microseconds.
+
+./net <microseconds>:
+
+  Show cumulative (in + out) network consumption in bytes using /proc/net/dev
+  using Perl.
+
+./tstimes:
+
+  A more complicated example I use to display server production times without
+  particular requirements (the log is parsed and displayed in realtime)
+
+In the following example we will display the latest two minutes of network
+activity (with the first one being in front of the other) sampled each tenth of
+second:
+
+  mkfifo fifo
+  trend fifo 1200 600 &
+  ./net 100000 > fifo
+
+To display the number of current active processes over time you can do:
+
+  (while true; do ps -A | wc -l; sleep 1; done) > fifo
+
+etc.
+
+
+Known bugs/TODO
+===============
+
+- Colours are not configurable yet
+- Grid resolution should be specified on the command line
+- More switches on the command line
+- Multiple trends in a single graph
+
+
+Authors and Copyright
+=====================
+
+trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANY.
+Copyright(c) 2003-2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+Suggestions/comments are welcome. A new version of trend is coming out shortly,
+so don't hesitate.
