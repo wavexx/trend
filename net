@@ -6,16 +6,17 @@ use warnings;
 use Time::HiRes "usleep";
 $| = 1;
 
-my $if = "eth0";
 my $old = 0;
+my $ms = ($ARGV[0]? $ARGV[0]: 100000);
+my $if = ($ARGV[1]? $ARGV[1]: "eth0");
 
 while()
 {
   open FD, "/proc/net/dev" or die;
   while(<FD>)
   {
-    my ($in, $out) = /^ *$if\:(\d+) +\d+ +\d+ +\d+ +\d+ +\d+ +\d+ +\d+ +(\d+)/;
-    if($in && $out)
+    my ($ent, $in, $out) = /^\s*([^\s:]+):\s*(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)/;
+    if($ent and $ent eq $if)
     {
       my $cnt = $in + $out;
       $old = $cnt if($old == 0);
@@ -27,6 +28,6 @@ while()
   }
   close FD;
 
-  usleep ($ARGV[0]? $ARGV[0]: 100000);
+  usleep $ms;
 }
 

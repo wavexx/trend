@@ -6,22 +6,30 @@ use warnings;
 use Time::HiRes "usleep";
 $| = 1;
 
-my $if = "eth0";
+my $ms = ($ARGV[0]? $ARGV[0]: 100000);
 
 while()
 {
   open FD, "/proc/meminfo" or die;
   while(<FD>)
   {
-    my ($tot, $used, $free, $buf, $cache) = /^Mem: +(\d+) +(\d+) +(\d+) +\d+ +(\d+) +(\d+)$/;
+    # 2.4 kernel
+    my ($tot, $used, $free, $buf, $cache) = /^Mem: *(\d+) +(\d+) +(\d+) +\d+ +(\d+) +(\d+)$/;
     if($tot)
     {
       print(($tot - $free - $buf - $cache) / 1024. . "\n");
       last;
     }
+    
+    # 2.6 kernel
+    my ($active) = /^Active: *(\d+) kB$/;
+    if($active)
+    {
+      print "$active\n";
+      last;
+    }
   }
   close FD;
 
-  usleep ($ARGV[0]? $ARGV[0]: 100000);
+  usleep $ms;
 }
-

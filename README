@@ -98,10 +98,10 @@ Some very sample introductory scripts are included within the package:
   Print-out used memory (incl. swap) of a linux kernel using /proc/meminfo
   using Perl each tenth of second or the specified number of microseconds.
 
-./net <microseconds>:
+./net <microseconds> [if]:
 
   Show cumulative (in + out) network consumption in bytes using /proc/net/dev
-  using Perl.
+  using Perl (defaults to eth0).
 
 ./tstimes:
 
