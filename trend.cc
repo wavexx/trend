@@ -27,11 +27,16 @@ using std::string;
 #include <utility>
 using std::pair;
 
+#include <cmath>
+using std::isnan;
+
 // c system headers
 #include <cstdlib>
 using std::strtod;
 using std::strtoul;
 
+#include <stdio.h>
+#include <ctype.h>
 #include <unistd.h>
 #include <pthread.h>
 
@@ -66,7 +71,7 @@ namespace
   bool damaged = false;
   bool first = false;
 
-  // Data and parameters
+  // Data and fixed parameters
   deque<Value> data;
   double loLimit;
   double hiLimit;
@@ -81,6 +86,131 @@ namespace
   bool marker = Trend::marker;
   bool grid = Trend::grid;
   double gridres = Trend::gridres;
+}
+
+
+/*
+ * I/O and data manipulation
+ */
+
+// skip whitespace
+void
+skipSpc(FILE* fd)
+{
+  char c;
+
+  do { c = getc_unlocked(fd); }
+  while(isspace(c) && c != EOF);
+  ungetc(c, fd);
+}
+
+
+// skip a space-separated string
+void
+skipStr(FILE* fd)
+{
+  char c;
+
+  do { c = getc_unlocked(fd); }
+  while(!isspace(c) && c != EOF);
+  ungetc(c, fd);
+}
+
+
+// read a space-separated string
+char*
+readStr(FILE* fd, char* buf, size_t len)
+{
+  char* p(buf);
+  int c;
+
+  while(len--)
+  {
+    c = getc_unlocked(fd);
+    if(c == EOF || isspace(c))
+    {
+      ungetc(c, fd);
+      return p;
+    }
+    *p++ = c;
+  }
+
+  // overflow
+  return NULL;
+}
+
+
+// read a number from the stream
+double
+readNum(FILE* fd)
+{
+  // discard initial whitespace
+  skipSpc(fd);
+  if(feof(fd))
+    return NAN;
+
+  // read the number
+  char buf[Trend::maxNumLen];
+  char* end = readStr(fd, buf, sizeof(buf));
+  if(feof(fd))
+    return NAN;
+  if(!end)
+  {
+    // long string, skip it.
+    skipStr(fd);
+    return NAN;
+  }
+  
+  // convert the number
+  double num = strtod(buf, &end);
+  if(end == buf)
+    return NAN;
+  
+  return num;
+}
+
+
+// producer thread
+void*
+thread(void*)
+{
+  // iostreams under gcc 3.x are completely unusable for advanced tasks such as
+  // customizable buffering/locking/etc. They also removed the (really
+  // standard) ->fd() access for "encapsulation"...
+  FILE* in;
+
+  for(size_t pos = 0; fileName;)
+  {
+    // open the file and disable buffering
+    in = fopen(fileName, "r");
+    if(!in) break;
+    setvbuf(in, NULL, _IONBF, 0);
+
+    // read all data
+    double num;
+
+    while(!isnan(num = readNum(in)) && fileName)
+    {
+      // append the value
+      pthread_mutex_lock(&mutex);
+
+      data.push_back(Value(num, pos));
+      if(data.size() == history + 2)
+	data.pop_front();
+      damaged = true;
+
+      pthread_mutex_unlock(&mutex);
+
+      // wrap pos when possible
+      if(!(++pos % divisions))
+	pos = 0;
+    }
+
+    // close the stream
+    fclose(in);
+  }
+
+  return NULL;
 }
 
 
@@ -121,7 +251,7 @@ init()
 }
 
 
-// Write al OpenGL string using glut.
+// Write an OpenGL string using glut.
 void
 drawString(const float scale, const float x, const float y, const char* string)
 {
@@ -323,45 +453,6 @@ idle(int)
     damaged = false;
   }
   pthread_mutex_unlock(&mutex);
-}
-
-
-void*
-thread(void*)
-{
-  // Open the file and set some handlers
-  FILE* in;
-  size_t pos(0);
-
-  while(fileName)
-  {
-    if(!(in = fopen(fileName, "r")))
-      // TODO: should never happen ;)
-      break;
-
-    // read all data
-    float num;
-    while(fscanf(in, "%f", &num) && !feof(in))
-    {
-      pthread_mutex_lock(&mutex);
-
-      // add the new value
-      data.push_back(Value(num, pos));
-      if(data.size() == history + 2)
-        data.pop_front();
-
-      // wrap pos when possible
-      if(!(++pos % divisions))
-        pos = 0;
-
-      damaged = true;
-      pthread_mutex_unlock(&mutex);
-    }
-
-    fclose(in);
-  }
-
-  return NULL;
 }
 
 

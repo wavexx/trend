@@ -31,6 +31,9 @@ namespace Trend
   const int success = 0;
   const int fail = 1;
   const int args = 2;
+
+  // Constants
+  const int maxNumLen = 128;
 }
 
 #endif
