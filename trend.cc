@@ -11,6 +11,7 @@
 // defaults
 #include "defaults.hh"
 #include "color.hh"
+#include "timer.hh"
 #include "rr.hh"
 
 // system headers
@@ -48,6 +49,9 @@ using std::strpbrk;
 #include <sys/stat.h>
 #include <unistd.h>
 #include <pthread.h>
+#ifdef __sgi
+#include <mutex.h>
+#endif
 
 // OpenGL/GLU
 #include <GL/glut.h>
@@ -101,7 +105,7 @@ namespace
   // Basic data
   const char* fileName;
   pthread_mutex_t mutex;
-  volatile bool damaged = false;
+  volatile unsigned long damaged = 0;
   bool incr = Trend::incr;
 
   // Data and fixed parameters
@@ -126,6 +130,7 @@ namespace
   // Visual/Changeable settings
   int width;
   int height;
+  int lc;
   bool autoLimit;
   bool dimmed = Trend::dimmed;
   bool smooth = Trend::smooth;
@@ -145,6 +150,10 @@ namespace
   // Distribution graph
   bool distrib = Trend::distrib;
   vector<double> distribData;
+
+  // Latency
+  bool latency = Trend::latency;
+  ATimer atLat(Trend::latAvg);
 }
 
 
@@ -298,9 +307,13 @@ producer(void*)
 
       // append the value
       rrData->push_back(Value(num, pos));
+#ifndef __sgi
       pthread_mutex_lock(&mutex);
-      damaged = true;
+#endif
+      damaged = 1;
+#ifndef __sgi
       pthread_mutex_unlock(&mutex);
+#endif
 
       // wrap pos when possible
       if(!(++pos % divisions))
@@ -389,6 +402,14 @@ drawString(const int x, const int y, const char* str)
   glRasterPos2i(x, y);
   for(const char* p = str; *p; ++p)
     glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p);
+}
+
+
+// write strings in the lower-left corner
+void
+drawLEString(const char* str)
+{
+  drawString(Trend::strSpc, Trend::strSpc + Trend::fontHeight * lc++, str);
 }
 
 
@@ -716,10 +737,6 @@ drawIntr()
 void
 drawValues()
 {
-  glPushMatrix();
-  glLoadIdentity();
-  gluOrtho2D(0, width, 0, height);
-
   const Value& last = rrBuf[history - 1];
   char buf[Trend::maxNumLen];
   glColor3fv(textCol);
@@ -731,9 +748,18 @@ drawValues()
   drawOSString(width, height, buf);
 
   sprintf(buf, "%g", last.value);
-  drawString(Trend::strSpc, Trend::strSpc, buf);
+  drawLEString(buf);
+}
 
-  glPopMatrix();
+
+void
+drawLatency()
+{
+  char buf[Trend::maxNumLen];
+  glColor3fv(textCol);
+
+  sprintf(buf, "lat: %g", atLat.avg());
+  drawLEString(buf);
 }
 
 
@@ -741,6 +767,9 @@ drawValues()
 void
 display()
 {
+  // reset some data
+  lc = 0;
+
   // setup model coordinates
   double zero = (distrib?
       -(static_cast<double>(Trend::distribWidth) * divisions /
@@ -758,10 +787,18 @@ display()
   if(distrib) drawDistrib();
   if(marker) drawMarker(pos);
   if(intr) drawIntr();
+
+  // setup video coordinates
+  glLoadIdentity();
+  gluOrtho2D(0, width, 0, height);
+
+  // video stuff
   if(values) drawValues();
+  if(latency) drawLatency();
 
   // flush buffers
   glutSwapBuffers();
+  atLat.stop();
 }
 
 
@@ -815,17 +852,24 @@ idle(int)
 
   // check if a redraw is really necessary
   bool recalc = false;
+#ifdef __sgi
+  if(test_and_set((unsigned long*)(&damaged), 0))
+    recalc = true;
+#else
   pthread_mutex_lock(&mutex);
   if(damaged)
   {
-    rrData->copy(rrBuf);
+    damaged = 0;
     recalc = true;
-    damaged = false;
   }
   pthread_mutex_unlock(&mutex);
+#endif
 
   if(recalc)
   {
+    atLat.start();
+    rrData->copy(rrBuf);
+
     // since we swiched from deque to rr, the size now is always fixed, and
     // the initial buffer is filled with NANs. We don't want NANs however,
     // and we don't want to handle this lone-case everywhere.
@@ -916,6 +960,10 @@ keyboard(const unsigned char key, const int x, const int y)
     gridres = getUnit("grid resolution");
     break;
 
+  case Trend::latKey:
+    toggleStatus("latency", latency);
+    break;
+
   case Trend::pauseKey:
     toggleStatus("paused", paused);
 
@@ -1001,7 +1049,7 @@ parseOptions(int argc, char* const argv[])
   memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvmgG:ht:A:E:R:I:M:N:i")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:i")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1022,6 +1070,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'v':
       values = !values;
+      break;
+
+    case 'l':
+      latency = !latency;
       break;
 
     case 'm':

@@ -95,8 +95,7 @@ An history specification is another convenient form or defining the pair
 "hist-sz x-div" for common cases. An history specification can be in either one
 of the following formats:
 
- N	Sets x-div to N, and hist-sz to N+1 (as the first and last values
-	are really shared in the graph).
+ N	Sets x-div to N, and hist-sz to N+1.
  N/M	Sets hist-sz to N, and x-div to N/M.
  N*M	Sets x-div to N, and hist-sz to N*M.
 
@@ -116,6 +115,7 @@ Options:
  -S		enable anti-aliasing
  -s		"scrolling" mode
  -v		visible values
+ -l		visible latency
  -m		visible marker
  -g		visible grid
  -G n		specify grid resolution
@@ -167,6 +167,7 @@ Interactive keys:
   S	toggle anti-aliasing
   s	switch scrolling mode (wrap-around or scrolling)
   v	toggle values
+  l	show real-to-visual latency
   m	activate a marker on the current cursor position
   g	toggle grid
   G	change grid resolution (enter the new resolution on the console)
@@ -179,6 +180,15 @@ When autoscaling is enabled the graph will be scaled vertically to fit visible
 values. The grid resolution is used to add some vertical bounds to the
 graph. Disabling autoscaling interactively will retain current limits. When the
 grid is too dense to be displayed it's deactivated automatically.
+
+Latency indicator:
+
+The latency indicator shows the time-frame (in seconds) between real value
+updates and the final output you're seeing: it includes copy/redraw times
+(which varies depending on enabled layers) plus video sync. This means that on
+CRT monitors with eg. 85hz of vertical refresh, a mean value 5ms is unavoidable
+(unless your graphic card supports asynchronous blits). Sampling accuracy is
+also subject to RTC precision and system scheduling.
 
 Interactive indicators:
 
@@ -301,7 +311,7 @@ trend-distrib:		trend with the distribution graph active, showing a
 			sine, tangent, random-incremental and random function.
 
 trend-intr:		trend -d fifo 1200 600, with the interactive indicators
-			active. Input is from an analogue board.
+			active. Input is from a custom board.
 
 trend-oversample:	trend -S -I 0x00FF00 fifo 10000*3 on a ~700 pixels
 			wide window (implicit 1x14 oversampling), showing

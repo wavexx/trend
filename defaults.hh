@@ -26,6 +26,7 @@ namespace Trend
   const unsigned char gridKey = 'g';
   const unsigned char setResKey = 'G';
   const unsigned char pauseKey = ' ';
+  const unsigned char latKey = 'l';
 
   // Defaults
   const bool incr = false;
@@ -35,6 +36,7 @@ namespace Trend
   const bool scroll = false;
   const bool values = false;
   const bool marker = true;
+  const bool latency = false;
   const bool grid = false;
   const double gridres = 1.;
 
@@ -59,6 +61,7 @@ namespace Trend
   const int intrNum = 3;
   const int distribWidth = 30;
   const int maxGridDens = 4;
+  const int latAvg = 5;
 }
 
 #endif
