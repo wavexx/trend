@@ -514,31 +514,25 @@ drawLine()
 }
 
 
-#if 0
 void
 drawDistrib()
 {
-  // return immediately for buggy conditions
-  if(data.size() < 2)
-    return;
-
   // reallocate only if necessary. we must avoid to reallocate in order to
   // not fragment memory (resize() on gcc 3 isn't very friendly)
   if(distribData.size() != height)
     distribData.resize(height);
 
   // calculate distribution
-  deque<Value>::const_iterator it;
-  size_t size(data.size() - 1);
+  const Value* it = rrBuf;
+  const Value* end = rrEnd - 1;
 
   distribData.assign(distribData.size(), 0.);
   double max = 0;
 
-  it = data.begin();
-  for(size_t i = 0; i != size; ++i, ++it)
+  for(; it != end; ++it)
   {
-    deque<Value>::const_iterator a = it;
-    deque<Value>::const_iterator b = (it + 1);
+    const Value* a = it;
+    const Value* b = (it + 1);
 
     // projection
     double mul = (static_cast<double>(height) / (hiLimit - loLimit));
@@ -595,7 +589,6 @@ drawDistrib()
   glEnd();
   glPopMatrix();
 }
-#endif
 
 
 void
@@ -754,10 +747,8 @@ display()
   if(grid) drawGrid();
   size_t pos = drawLine();
 
-#if 0
   // other data
   if(distrib) drawDistrib();
-#endif
   if(marker) drawMarker(pos);
   if(intr) drawIntr();
   if(values) drawValues();
