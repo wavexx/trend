@@ -28,6 +28,9 @@ using std::string;
 #include <utility>
 using std::pair;
 
+#include <limits>
+using std::numeric_limits;
+
 // c system headers
 #include <cstdlib>
 using std::strtod;
@@ -47,7 +50,7 @@ using std::strlen;
 #include <GL/glut.h>
 
 #ifndef NAN
-#define NAN nan("NAN")
+#define NAN numeric_limits<double>::quiet_NaN()
 #endif
 
 
@@ -79,6 +82,7 @@ namespace
   const char* fileName;
   pthread_mutex_t mutex;
   bool damaged = false;
+  bool incr = Trend::incr;
 
   // Data and fixed parameters
   deque<Value> data;
@@ -86,10 +90,6 @@ namespace
   double hiLimit;
   size_t history;
   size_t divisions;
-
-  // Input params
-  bool absval = Trend::absval;
-  double freq = Trend::freq;
 
   // Visual/Fixed settings
   int width;
@@ -194,6 +194,19 @@ readNum(FILE* fd)
 }
 
 
+// read up to the first number in the stream
+double
+readFirstNum(FILE* fd)
+{
+  double num;
+
+  do { num = readNum(fd); }
+  while(!feof(fd) && isnan(num));
+
+  return num;
+}
+
+
 // producer thread
 void*
 thread(void*)
@@ -210,14 +223,25 @@ thread(void*)
     if(!in) break;
     setvbuf(in, NULL, _IONBF, 0);
 
-    // read all data
-    double num;
+    // first value for incremental data
+    double old, num;
+    if(incr)
+      old = readFirstNum(in);
 
-    while(fileName)
+    // read all data
+    while(!feof(in))
     {
       num = readNum(in);
-      if(isnan(num) && feof(in))
-	break;
+      if(isnan(num))
+	continue;
+
+      // determine the actual value
+      if(incr)
+      {
+	double tmp = num;
+	num = (num - old);
+	old = tmp;
+      }
 
       // append the value
       pthread_mutex_lock(&mutex);
@@ -323,18 +347,24 @@ drawGrid()
   double it;
 
   // horizontal scanlines
-  for(it = 1; it != divisions; ++it)
+  if(divisions < (width / 4))
   {
-    glVertex2d(it, loLimit);
-    glVertex2d(it, hiLimit);
+    for(it = 1; it != divisions; ++it)
+    {
+      glVertex2d(it, loLimit);
+      glVertex2d(it, hiLimit);
+    }
   }
 
   // vertical rasterlines
-  it = loLimit + drem(loLimit, gridres);
-  for(; it <= hiLimit; it += gridres)
+  if(((hiLimit - loLimit) / gridres) < (height / 4))
   {
-    glVertex2d(0, it);
-    glVertex2d(divisions, it);
+    it = loLimit - drem(loLimit, gridres);
+    for(; it <= hiLimit; it += gridres)
+    {
+      glVertex2d(0, it);
+      glVertex2d(divisions, it);
+    }
   }
 
   glEnd();
@@ -577,31 +607,31 @@ parseOptions(int argc, char* const argv[])
   memcpy(markCol, Trend::markCol, sizeof(markCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "dSsvmgG:ht:A:E:R:I:M:")) != -1)
+  while((arg = getopt(argc, argv, "dSsvmgG:ht:A:E:R:I:M:i")) != -1)
     switch(arg)
     {
     case 'd':
-      dimmed = true;
+      dimmed = !dimmed;
       break;
 
     case 'S':
-      smooth = true;
+      smooth = !smooth;
       break;
 
     case 's':
-      scroll = true;
+      scroll = !scroll;
       break;
 
     case 'v':
-      values = true;
+      values = !values;
       break;
 
     case 'm':
-      marker = true;
+      marker = !marker;
       break;
 
     case 'g':
-      grid = true;
+      grid = !grid;
       break;
 
     case 'G':
@@ -630,6 +660,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'M':
       parseColor(markCol, optarg);
+      break;
+
+    case 'i':
+      incr = !incr;
       break;
 
     case 'h':

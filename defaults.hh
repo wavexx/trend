@@ -25,7 +25,7 @@ namespace Trend
   const unsigned char setResKey = 'G';
 
   // Defaults
-  const bool absval = true;
+  const bool incr = false;
   const bool dimmed = false;
   const bool smooth = false;
   const bool scroll = false;
@@ -33,7 +33,6 @@ namespace Trend
   const bool marker = true;
   const bool grid = false;
   const double gridres = 1.;
-  const double freq = 0.;
 
   // Colors
   const GLfloat backCol[3] = {0.,  0.,  0. };
