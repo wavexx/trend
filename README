@@ -11,25 +11,24 @@ Features:
 
 - OpenGL graphics
 - Automatic or fixed graph scaling
-- Two graph scrolling modes
-- Configurable grid
+- Two graph scrolling and shading modes
+- Configurable colours/grid
 
 Requires:
 
 - OpenGL
 - GLUT (http://www.opengl.org/resources/libraries/glut.html) or
   FreeGLUT (http://freeglut.sourceforge.net/)
+- A recent C++ compiler
+- POSIX system
 
 
 Building
 ========
 
-Type "make". Alternatively trend can be compiled with
-
-  g++ -O2 -o trend trend.cc -lglut
-
-where "g++" is your C++ compiler ("CC" on some systems).
-Additional libraries may be required, look into the Makefile.
+Type "make" in the source distribution. The executable "trend" will be created.
+The Makefile is still in embryonic form, so it supports only gcc/IRIX systems
+for now. Any POSIX/OpenGL capable system should be supported.
 
 
 Executing
@@ -43,6 +42,9 @@ The data is a space/tab/newline-separated series of ASCII decimal numbers; es:
   5.1 6 0x12
   -12.4E5
 
+The parser is very lenient, and will silently ignore whatever looks like
+garbage.
+
 FIFO:
 
 To display real-time data you should create a special FIFO file using the
@@ -50,17 +52,19 @@ mkfifo command:
 
   mkfifo fifofilename
 
-and redirect your script's output to that file. Alternatively you can store
-your data in a plain file and simply display it non-interactively.
+and redirect your script's output to that file. FIFOs are automatically
+re-opened upon EOF. Alternatively you can store your data in a plain file and
+simply display its last values non-interactively.
 
 Executing:
 
 Execute trend as follows:
 
-  ./trend fifofilename history-size subdivisions [low high]
+  ./trend [options] fifofilename history-size subdivisions [low high]
 
 where:
 
+- options is a list of optional flags (explained later)
 - fifofilename is the named fifo you just created.
 - history-size is the total number of values the graph will retain in the graph
   before discarding the old ones.
@@ -73,19 +77,68 @@ When new data arrives, the value is plotted and the cursor position is
 advanced. That is, the graph scrolling speed is determined by the speed of the
 data flow (for now at least).
 
+Options:
+
+ -d		dimmed shading mode
+ -S		enable antialiasing
+ -s		"scrolling" mode
+ -v		visible values
+ -m		visible marker
+ -g		visible grid
+ -G n		specify grid resolution
+ -h		help and version info
+ -t str		specify a window title
+ -A colour	background colour
+ -E colour	text (values) colour
+ -R colour	grid colour
+ -I colour	trend colour
+ -M colour	marker colour
+
+Shading modes:
+
+The default is to shade uniformly old values to complete transparency. The
+"dimmed" shading mode draws the foreground values with full opacity and the
+others with half opacity.
+
+Colour spec:
+
+A colour is specified in hex RGB format, as follows: #RRGGBB (with or without #).
+Some examples:
+
+  #FF0000: red
+  #00FF00: green
+  #A020F0: purple
+
+Scrolling modes:
+
+The default visualisation mode is "wrap-around": newer values will simply wrap
+around the screen when new data arrives. The other one is "scrolling": new data
+is always placed at the right edge of the screen, and older values scrolled on
+the left.
+
+Values:
+
+Three value indicators are drawn on the screen: upper limit, lower limit and
+current data value (respectively on the upper right, lower right and lower left
+of the screen).
+
 Interactive keys:
 
-- ESC: quit the trend
+- ESC: quit/exit
+- a: toggle auto-scaling
+- d: toggle dimmed shading mode
+- S: toggle anti-aliasing
 - s: switch scrolling mode (wrap-around or scrolling)
-- S: activate anti-aliasing
-- m: activate a green marker on the current cursor position
+- v: toggle values
+- m: activate a marker on the current cursor position
 - g: toggle grid
 - G: change grid resolution (enter the new resolution on the console).
 
 Autoscaling:
 
 When autoscaling is enabled the graph will be scaled vertically to fit visible
-values. The grid resolution is used to add some vertical bounds to the graph.
+values. The grid resolution is used to add some vertical bounds to the
+graph. Disabling autoscaling interactively will retain current limits.
 
 
 Examples
@@ -113,7 +166,7 @@ activity (with the first one being in front of the other) sampled each tenth of
 second:
 
   mkfifo fifo
-  trend fifo 1200 600 &
+  ./trend fifo 1200 600 &
   ./net 100000 > fifo
 
 To display the number of current active processes over time you can do:
@@ -121,15 +174,6 @@ To display the number of current active processes over time you can do:
   (while true; do ps -A | wc -l; sleep 1; done) > fifo
 
 etc.
-
-
-Known bugs/TODO
-===============
-
-- Colours are not configurable yet
-- Grid resolution should be specified on the command line
-- More switches on the command line
-- Multiple trends in a single graph
 
 
 Authors and Copyright

@@ -46,6 +46,10 @@ using std::strlen;
 // OpenGL/GLU
 #include <GL/glut.h>
 
+#ifndef NAN
+#define NAN nan("NAN")
+#endif
+
 
 /*
  * Data structures
@@ -83,6 +87,10 @@ namespace
   size_t history;
   size_t divisions;
 
+  // Input params
+  bool absval = Trend::absval;
+  double freq = Trend::freq;
+
   // Visual/Fixed settings
   int width;
   int height;
@@ -95,6 +103,7 @@ namespace
 
   // Visual/Changeable settings
   bool autoLimit;
+  bool dimmed = Trend::dimmed;
   bool smooth = Trend::smooth;
   bool scroll = Trend::scroll;
   bool values = Trend::values;
@@ -350,6 +359,7 @@ drawLine(Value& last)
   last.count = 0;
 
   deque<Value>::const_iterator it(data.begin());
+  size_t size(data.size());
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
@@ -358,9 +368,11 @@ drawLine(Value& last)
     last = *it;
 
     // shade the color
-    glColor4f(lineCol[0], lineCol[1], lineCol[2],
-	static_cast<float>(i) / data.size());
-
+    double alpha(dimmed?
+	((size - i) <= divisions? 1.: .5):
+	(static_cast<float>(i) / size));
+	
+    glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
     pos = ((scroll? i: last.count) % divisions);
     if(!pos)
     {
@@ -508,6 +520,10 @@ keyboard(const unsigned char key, const int x, const int y)
     break;
 
   // redraw alteration
+  case Trend::dimmedKey:
+    toggleStatus("dimmed", dimmed);
+    break;
+
   case Trend::autolimKey:
     toggleStatus("autolimit", autoLimit);
     break;
@@ -554,7 +570,6 @@ int
 parseOptions(int argc, char* const argv[])
 {
   // starting options
-  autoLimit = false;
   memcpy(backCol, Trend::backCol, sizeof(backCol));
   memcpy(textCol, Trend::textCol, sizeof(textCol));
   memcpy(gridCol, Trend::gridCol, sizeof(gridCol));
@@ -562,11 +577,11 @@ parseOptions(int argc, char* const argv[])
   memcpy(markCol, Trend::markCol, sizeof(markCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "aSsvmgG:ht:A:E:R:I:M:")) != -1)
+  while((arg = getopt(argc, argv, "dSsvmgG:ht:A:E:R:I:M:")) != -1)
     switch(arg)
     {
-    case 'a':
-      autoLimit = true;
+    case 'd':
+      dimmed = true;
       break;
 
     case 'S':
@@ -644,6 +659,7 @@ parseOptions(int argc, char* const argv[])
   {
     loLimit = strtod(argv[optind++], NULL);
     hiLimit = strtod(argv[optind++], NULL);
+    autoLimit = false;
   }
   else
     autoLimit = true;

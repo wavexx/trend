@@ -16,6 +16,7 @@ namespace Trend
   // Keys
   const unsigned char quitKey =	27;
   const unsigned char autolimKey = 'a';
+  const unsigned char dimmedKey = 'd';
   const unsigned char smoothKey = 'S';
   const unsigned char scrollKey = 's';
   const unsigned char valuesKey = 'v';
@@ -24,12 +25,15 @@ namespace Trend
   const unsigned char setResKey = 'G';
 
   // Defaults
+  const bool absval = true;
+  const bool dimmed = false;
   const bool smooth = false;
   const bool scroll = false;
   const bool values = false;
   const bool marker = true;
   const bool grid = false;
   const double gridres = 1.;
+  const double freq = 0.;
 
   // Colors
   const GLfloat backCol[3] = {0.,  0.,  0. };
