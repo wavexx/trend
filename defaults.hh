@@ -45,6 +45,7 @@ namespace Trend
 
   // Constants
   const int maxNumLen = 128;
+  const int strSpc = 2;
 }
 
 #endif

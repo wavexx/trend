@@ -28,9 +28,6 @@ using std::string;
 #include <utility>
 using std::pair;
 
-#include <cmath>
-using std::isnan;
-
 // c system headers
 #include <cstdlib>
 using std::strtod;
@@ -38,7 +35,9 @@ using std::strtoul;
 
 #include <cstring>
 using std::memcpy;
+using std::strlen;
 
+#include <math.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
@@ -54,6 +53,9 @@ using std::memcpy;
 
 struct Value
 {
+  Value()
+  {}
+
   Value(double value, size_t count)
   : value(value), count(count)
   {}
@@ -110,7 +112,7 @@ namespace
 void
 skipSpc(FILE* fd)
 {
-  char c;
+  int c;
 
   do { c = getc_unlocked(fd); }
   while(isspace(c) && c != EOF);
@@ -122,7 +124,7 @@ skipSpc(FILE* fd)
 void
 skipStr(FILE* fd)
 {
-  char c;
+  int c;
 
   do { c = getc_unlocked(fd); }
   while(!isspace(c) && c != EOF);
@@ -262,25 +264,46 @@ void
 reshape(const int w, const int h)
 {
   width = w;
-  height = w;
+  height = h;
 
   glViewport(0, 0, w, h);
 }
 
 
-#if 0
-// Write an OpenGL string using glut.
+// write a normal string
 void
-drawString(const float scale, const float x, const float y, const char* string)
+drawString(const int x, const int y, const char* str)
 {
-  glPushMatrix();
-  glTranslatef(x, y, 0);
-  glScalef(scale, scale, 0);
-  for(const char* p = string; *p; ++p)
-    glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
-  glPopMatrix();
+  glRasterPos2i(x, y);
+  for(const char* p = str; *p; ++p)
+    glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p);
 }
-#endif
+
+
+// write an on-screen string using video coordinates
+void
+drawOSString(const int x, const int y, const char* str)
+{
+  using Trend::strSpc;
+
+  int len(strlen(str) * 8);
+  int rx(x + strSpc);
+  int ry(y + strSpc);
+
+  // check x
+  if((rx + strSpc + len) > width)
+    rx = width - len - strSpc;
+  if(rx < 0)
+    rx = strSpc;
+
+  // check y
+  if((ry + strSpc + 13) > height)
+    ry = height - 13 - strSpc;
+  if(ry < 0)
+    ry = strSpc;
+
+  drawString(rx, ry, str);
+}
 
 
 void
@@ -321,33 +344,55 @@ drawMarker(const float x)
 
 
 size_t
-drawLine()
+drawLine(Value& last)
 {
+  last.value = NAN;
+  last.count = 0;
+
   deque<Value>::const_iterator it(data.begin());
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
   for(size_t i = 0; i != data.size(); ++i, ++it)
   {
+    last = *it;
+
     // shade the color
     glColor4f(lineCol[0], lineCol[1], lineCol[2],
 	static_cast<float>(i) / data.size());
 
-    pos = ((scroll? i: it->count) % divisions);
+    pos = ((scroll? i: last.count) % divisions);
     if(!pos)
     {
       // Cursor at the end
-      glVertex2f(divisions, it->value);
+      glVertex2f(divisions, last.value);
       glEnd();
       glBegin(GL_LINE_STRIP);
-      glVertex2d(0, it->value);
+      glVertex2d(0, last.value);
     }
     else
-      glVertex2d(pos, it->value);
+      glVertex2d(pos, last.value);
   }
   glEnd();
 
   return pos;
+}
+
+
+void
+drawValues(const Value& last)
+{
+  char buf[Trend::maxNumLen];
+  glColor3fv(textCol);
+
+  sprintf(buf, "%g", loLimit);
+  drawOSString(width, 0, buf);
+
+  sprintf(buf, "%g", hiLimit);
+  drawOSString(width, height, buf);
+
+  sprintf(buf, "%g", last.value);
+  drawString(Trend::strSpc, Trend::strSpc, buf);
 }
 
 
@@ -366,12 +411,21 @@ display()
 
   // data
   pthread_mutex_lock(&mutex);
-  size_t pos(drawLine());
+  Value last;
+  size_t pos(drawLine(last));
   pthread_mutex_unlock(&mutex);
 
   // marker
   if(marker)
     drawMarker(pos);
+
+  // values
+  if(values)
+  {
+    glLoadIdentity();
+    gluOrtho2D(0, width, 0, height);
+    drawValues(last);
+  }
 
   // flush buffers
   glutSwapBuffers();
