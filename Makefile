@@ -5,7 +5,6 @@
 # Some flags (MIPSPro)
 #if $(CXX) == "CC"
 CPPFLAGS = -I/usr/freeware/include -I/usr/local/include
-CXXFLAGS = -g
 LDFLAGS = -FE:template_in_elf_section -quiet_prelink
 LDADD = -lpthread -L/usr/freeware/lib32 -L/usr/local/lib32 -lm -lglut -lGL -lGLU -lX11 -lXmu
 #else
@@ -13,6 +12,9 @@ CPPFLAGS = -I/usr/local/include
 LDFLAGS = -L/usr/local/lib
 LDADD = -lglut
 #endif
+
+# Shared flags
+CXXFLAGS = -g
 
 
 # Config
@@ -32,7 +34,7 @@ TARGETS = trend
 all: $(TARGETS)
 
 trend: $(TREND_OBJECTS)
-	$(CXX) $(LDFLAGS) -o $@ $(TREND_OBJECTS) $(LDADD)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(TREND_OBJECTS) $(LDADD)
 
 clean:
 	rm -rf *.o core ii_files $(TARGETS)
