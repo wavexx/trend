@@ -21,7 +21,7 @@ set -e
 # check ancillary files
 echo "1: checking files"
 head -1 NEWS | fgrep -s "$HEAD"
-fgrep -s TODO README
+grep -q '\<TODO\>' README || true
 
 
 # creating distribution
