@@ -152,14 +152,18 @@ namespace
 
 // fill the round robin consistently with a single value
 void
-fillRr(double value, size_t start)
+fillRr(double value, size_t start = 0)
 {
   Value buf;
   buf.count = start;
   buf.value = value;
 
-  for(size_t i = 0; i != history; ++buf.count, ++i)
+  for(size_t i = 0; i != history; ++i)
+  {
     rrData->push_back(buf);
+    if(!(++buf.count % divisions))
+      buf.count = 0;
+  }
 }
 
 
@@ -263,7 +267,7 @@ thread(void*)
   // standard) ->fd() access for "encapsulation"...
   FILE* in;
 
-  for(size_t pos = history; fileName;)
+  for(size_t pos = (history % divisions); fileName;)
   {
     // open the file and disable buffering
     in = fopen(fileName, "r");
@@ -1073,7 +1077,7 @@ main(int argc, char* const argv[]) try
   rrData = new rr<Value>(history);
   rrBuf = new Value[history];
   rrEnd = rrBuf + history;
-  fillRr(NAN, 0);
+  fillRr(NAN);
 
   // start the producer thread
   pthread_t thrd;
