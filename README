@@ -205,7 +205,15 @@ To display the number of current active processes over time you can do:
 
   (while true; do ps -A | wc -l; sleep 1; done) > fifo
 
-etc.
+An example of using snmpdelta from the NET-SNMP utilities to monitor a remote
+IF-MIB network interface:
+
+  snmpdelta -v1 -CT -c public router ifInOctets.1 > fifo
+
+A collection of contributed data-gathering scripts is kept at
+http://www.yuv.info/~wavexx/hacks/trend/contrib/ (if you want to make a
+contribution just mail me). Alternatively, many (if not all) of the contributed
+MRTG scripts are a valuable resource to system administrators in particular.
 
 
 Authors and Copyright
