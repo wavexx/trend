@@ -113,6 +113,7 @@ namespace
   // Visual/Fixed settings
   size_t history;
   size_t divisions;
+  size_t offset;
   const char* title = NULL;
   GLfloat backCol[3];
   GLfloat textCol[3];
@@ -483,15 +484,16 @@ drawLine()
 {
   const Value* it = rrBuf;
   const Value* end = rrEnd;
+  const size_t mark(history + offset - divisions);
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
-  for(size_t i = 1; it != end; ++i, ++it)
+  for(size_t i = offset; it != end; ++i, ++it)
   {
     // shade the color
     double alpha(dimmed?
-	((history - i) <= divisions? 1.: .5):
-	(static_cast<float>(i) / history));
+	(i > mark? 1.: .5):
+	(static_cast<float>(i - offset) / history));
 	
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
     pos = getPosition(i, *it);
@@ -593,15 +595,12 @@ drawDistrib()
   glEnd();
   glPopMatrix();
 }
+#endif
 
 
 void
 drawIntr()
 {
-  // bail out immediately for buggy conditions
-  if(data.size() < 2)
-    return;
-
   // initial color and current position
   glColor3fv(intrCol);
   glBegin(GL_LINES);
@@ -616,43 +615,45 @@ drawIntr()
   vector<Intr> intrs;
 
   // starting position
-  size_t i = ((intrFg && data.size() >= divisions)?
-      data.size() - divisions - 1: 0);
-  deque<Value>::const_iterator it(data.begin() + i);
+  size_t i;
+  const Value* it;
+  if(scroll)
+  {
+    it = rrBuf + (trX - offset);
+    i = trX;
+  }
+  else
+  {
+    it = rrBuf + (trX - rrBuf->count);
+    i = 0;
+  }
+  if(it < rrBuf)
+    it += divisions;
+  if(intrFg)
+    it += ((rrEnd - it) / divisions) * divisions;
 
-  while(i < data.size())
+  const Value* end = rrEnd - 1;
+  for(; it < end; i += divisions, it += divisions)
   {
     size_t pos = getPosition(i, *it);
-    if(pos == trX && (i + 1) != data.size())
+
+    // fetch the next value
+    Value next = *(it + 1);
+    
+    Intr buf;
+    if(mul < 0.5)
     {
-      // fetch the next value
-      Value next = *(it + 1);
-
-      Intr buf;
-      if(mul < 0.5)
-      {
-	buf.near.value = it->value;
-	buf.near.count = pos;
-      }
-      else
-      {
-	buf.near.value = next.value;
-	buf.near.count = getPosition(i + 1, next);
-      }
-      buf.value = it->value + mul * (next.value - it->value);
-      buf.dist = std::abs(buf.value - intrY);
-      intrs.push_back(buf);
-
-      // fast forward
-      i += divisions;
-      it += divisions;
+      buf.near.value = it->value;
+      buf.near.count = pos;
     }
     else
     {
-      // normal advance
-      ++i;
-      ++it;
+      buf.near.value = next.value;
+      buf.near.count = getPosition(i + 1, next);
     }
+    buf.value = it->value + mul * (next.value - it->value);
+    buf.dist = std::abs(buf.value - intrY);
+    intrs.push_back(buf);
   }
 
   // no intersections found
@@ -710,7 +711,6 @@ drawIntr()
   // restore model space
   glPopMatrix();
 }
-#endif
 
 
 void
@@ -759,9 +759,7 @@ display()
   if(distrib) drawDistrib();
 #endif
   if(marker) drawMarker(pos);
-#if 0
   if(intr) drawIntr();
-#endif
   if(values) drawValues();
 
   // flush buffers
@@ -828,16 +826,15 @@ idle(int)
 
   if(recalc)
   {
+    // since we swiched from deque to rr, the size now is always fixed, and
+    // the initial buffer is filled with NANs. We don't want NANs however,
+    // and we don't want to handle this lone-case everywhere.
+    if(isnan(rrBuf->value))
+      removeNANs();
+
     // recalculate limits seldom
     if(autoLimit)
-    {
-      // since we swiched from deque to rr, the size now is always fixed, and
-      // the initial buffer is filled with NANs. We don't want NANs however,
-      // and we don't want to handle this lone-case everywhere.
-      if(isnan(rrBuf->value))
-	removeNANs();
       setLimits();
-    }
 
     glutPostRedisplay();
   }
@@ -1052,6 +1049,7 @@ parseOptions(int argc, char* const argv[])
   fileName = argv[optind++];
   history = strtoul(argv[optind++], NULL, 0);
   divisions = strtoul(argv[optind++], NULL, 0);
+  offset = divisions - (history % divisions) + 1;
   if(!history || !divisions)
   {
     cerr << argv[0] << ": hist-sz or x-div can't be zero\n";
