@@ -1,4 +1,7 @@
 #!/bin/sh
-# print out memory usage
-pmval mem.util.free
+# print out memory usage using PCP
 
+sec="$1"
+[ -z "$sec" ] && sec=1
+
+pmval -t "$sec" mem.util.free
