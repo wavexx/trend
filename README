@@ -142,16 +142,18 @@ the screen).
 
 Interactive keys:
 
-- ESC: quit/exit
-- a: toggle auto-scaling
-- d: toggle dimmed shading mode
-- D: toggle distribution graph
-- S: toggle anti-aliasing
-- s: switch scrolling mode (wrap-around or scrolling)
-- v: toggle values
-- m: activate a marker on the current cursor position
-- g: toggle grid
-- G: change grid resolution (enter the new resolution on the console).
+  ESC	quit/exit
+  a	toggle auto-scaling
+  d	toggle dimmed shading mode
+  D	toggle distribution graph
+  S	toggle anti-aliasing
+  s	switch scrolling mode (wrap-around or scrolling)
+  v	toggle values
+  m	activate a marker on the current cursor position
+  g	toggle grid
+  G	change grid resolution (enter the new resolution on the console)
+  space	pause visualisation (but still continue to consume input to
+	preserve time coherency)
 
 Autoscaling:
 

@@ -133,6 +133,7 @@ namespace
   bool marker = Trend::marker;
   bool grid = Trend::grid;
   double gridres = Trend::gridres;
+  bool paused = false;
 
   // Indicator status
   bool intr = false;
@@ -616,7 +617,7 @@ drawIntr()
   const Value* it;
   if(scroll)
   {
-    it = rrBuf + (trX - offset);
+    it = rrBuf + (trX - offset % divisions);
     i = trX;
   }
   else
@@ -807,6 +808,8 @@ idle(int)
 {
   // re-register the callback
   glutTimerFunc(1, idle, 0);
+  if(paused)
+    return;
 
   // check if a redraw is really necessary
   bool recalc = false;
@@ -905,6 +908,9 @@ keyboard(const unsigned char key, const int x, const int y)
   case Trend::setResKey:
     gridres = getUnit("grid resolution");
     break;
+
+  case Trend::pauseKey:
+    toggleStatus("paused", paused);
 
   default:
     return;

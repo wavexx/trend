@@ -24,6 +24,7 @@ namespace Trend
   const unsigned char markerKey = 'm';
   const unsigned char gridKey = 'g';
   const unsigned char setResKey = 'G';
+  const unsigned char pauseKey = ' ';
 
   // Defaults
   const bool incr = false;
