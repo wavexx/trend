@@ -567,18 +567,20 @@ drawIntr()
     drawCircle(width, nearY);
 
   // plot values
+  using Trend::strSpc;
+
   char buf[256];
   int curY = height;
 
   sprintf(buf, "nearest: %g, mean: %g", intrs[0].near.value, mean);
-  drawString(0, curY -= Trend::fontHeight + Trend::strSpc, buf);
+  drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
 
   i = 1;
   for(vector<Intr>::const_iterator it = intrs.begin();
       it != intrs.end(); ++i, ++it)
   {
     sprintf(buf, "%d: %g", i, it->value);
-    drawString(0, curY -= Trend::fontHeight + Trend::strSpc, buf);
+    drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
   }
 
   // restore model space
