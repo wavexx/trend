@@ -14,6 +14,7 @@ Features:
 - Two graph scrolling and shading modes
 - Configurable colours/grid
 - Flexible input
+- Interactivity
 
 Requires:
 
@@ -163,7 +164,8 @@ You can query interactively the graph for any value in the history by clicking
 with the first mouse button. This will enable a permanent indicator in the
 selected position and display up to the three nearest values in the upper-left
 corner of the screen. Intersections are projected horizontally, while a small
-circle will show the position of the nearest sampled value.
+circle will show the position of the nearest sampled value. The mean value
+refers to the three intersections.
 
 By holding down the CTRL key while clicking/dragging only "foreground" values
 will be considered.
