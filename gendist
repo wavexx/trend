@@ -1,0 +1,47 @@
+#!/bin/sh
+# generate and tests a trend distribution
+
+# basic data
+DATE="`date '+%04Y%02m%02d'`"
+DIST="trend-$DATE"
+REV="`p4 have trend.cc | sed -e 's/^\/\/[^#]*#\([0-9]*\).*/\1/'`"
+HEAD="to Rev #$REV `date '+%02d/%02m/%04Y'`"
+CATALOG="
+	Makefile
+	imem tstimes mem net
+	trend.cc defaults.hh color.cc color.hh
+	AUTHORS COPYING README TODO NEWS
+"
+
+
+# trap errors
+set -e
+
+
+# check ancillary files
+echo "1: checking files"
+head -1 NEWS | fgrep -q "$HEAD"
+
+
+# creating distribution
+echo "2: creating distribution"
+rm -rf "$DIST"
+mkdir "$DIST"
+cp -p $CATALOG "$DIST"
+tar cf - "$DIST" | gzip -9 > "$DIST.tar.gz"
+rm -rf "$DIST"
+
+
+# check
+echo "3: checking distribution"
+gzip -dc "$DIST.tar.gz" | tar xf -
+cd "$DIST"
+make
+test -x trend
+cd ..
+rm -rf "$DIST"
+
+
+# ok
+echo "= generated $DIST:"
+gzip -dc "$DIST.tar.gz" | tar tvf -

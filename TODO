@@ -1,7 +1,8 @@
 Planned features
 ================
 
-	* Multiple trends in a single graph.
+	* Multiple trends in a single graph. I'd appreciate comments on that
+	(how the interface should respond, where to place the values, etc).
 
 	* Binary input
 
@@ -10,8 +11,12 @@ Planned features
 	'feeder' without the need to code sleeping loops. This has timing
 	implications, and it's too imprecise for ASCII input.
 
-	* More optimizations can be done for: different shading, different
-	inputs, deque.
-
 	* Differential input (initial absolute value and relative ones
 	following).
+
+	* More optimisations can be done for: different shading, different
+	inputs, deque.
+
+	* The synchronised areas should be reduced considerably.
+
+	* "Integration" sidebar, quantization script.

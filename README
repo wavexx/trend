@@ -20,7 +20,7 @@ Requires:
 
 - OpenGL
 - GLUT (http://www.opengl.org/resources/libraries/glut.html) or
-  FreeGLUT (http://freeglut.sourceforge.net/)
+  (preferably) FreeGLUT (http://freeglut.sourceforge.net/)
 - A recent C++ compiler
 - POSIX system
 
@@ -214,6 +214,34 @@ A collection of contributed data-gathering scripts is kept at
 http://www.yuv.info/~wavexx/hacks/trend/contrib/ (if you want to make a
 contribution just mail me). Alternatively, many (if not all) of the contributed
 MRTG scripts are a valuable resource to system administrators in particular.
+
+
+Accurate timing
+===============
+
+Here are some considerations you should take note of when doing accurate
+time-based observations. trend was designed with accuracy and speed in mind (I
+use it literally as a virtual oscilloscope, hence the need of OpenGL); for this
+reason:
+
+- The fifo is read and managed asynchronously from the graphics. Delays at
+  the display end will not interfere with the data feed[1], which can go at
+  much higher speeds than what your graphic card permits.
+- The fifo is unbuffered and the feeder thread is synchronously locked on it
+  waiting for new data.
+- The value is accepted (and displayed thereafter) when a separator character
+  is received after the value, or, for binary input, when the needed amount of
+  bytes is read (in this case each value is read with a single read call).
+- The display is updated within the next millisecond after at least one value
+  is read or when a redisplay is needed, with the data available at the
+  instant of the call-back (sampled atomically[2]). Scheduler latencies apply.
+
+[1, 2] To a certain degree. Actually the display call-back uses the same
+       shared memory region, but I'm improving that along with the
+       replacement of deque (see TODO).
+
+For the non-experts, the scripting convention of sleeping a fixed amount of
+time after sampling the value will lead to cumulative timing errors.
 
 
 Authors and Copyright
