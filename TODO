@@ -3,7 +3,7 @@ Planned features
 
 	* Multiple trends in a single graph. I'd appreciate comments on that
 	(how the interface should respond, where to place the values, etc:
-	I don't feel the idea "intuitive" or very convenient).
+	I don't feel the idea "intuitive" or very convenient anymore).
 
 	* Binary input
 
@@ -19,4 +19,7 @@ Planned features
 	inputs, deque (synchronised areas should be reduced considerably),
 	internal latencies.
 
-	* Quantisation script.
+	* Script to time-quantise input.
+
+	* Maybe some basic oscilloscope controls like: graph offsetting,
+	zooming, value skipping.
