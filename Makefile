@@ -16,6 +16,7 @@ LDADD = -lglut
 
 
 # Config
+TREND_OBJECTS = trend.o color.o
 TARGETS = trend
 
 
@@ -30,12 +31,13 @@ TARGETS = trend
 # Targets
 all: $(TARGETS)
 
-trend: trend.o
-	$(CXX) $(LDFLAGS) -o $@ trend.o $(LDADD)
+trend: $(TREND_OBJECTS)
+	$(CXX) $(LDFLAGS) -o $@ $(TREND_OBJECTS) $(LDADD)
 
 clean:
-	rm -rf *.o core ii_files *.o $(TARGETS)
+	rm -rf *.o core ii_files $(TARGETS)
 
 
 # Dependencies
-trend.o: defaults.hh
+trend.o: defaults.hh color.hh
+color.o: color.hh

@@ -7,6 +7,10 @@
 #ifndef defaults_hh
 #define defaults_hh
 
+// GL headers
+#include <GL/gl.h>
+
+
 namespace Trend
 {
   // Keys
@@ -26,6 +30,13 @@ namespace Trend
   const bool marker = true;
   const bool grid = false;
   const double gridres = 1.;
+
+  // Colors
+  const GLfloat backCol[3] = {0.,  0.,  0. };
+  const GLfloat textCol[3] = {1.,  1.,  1. };
+  const GLfloat gridCol[3] = {0.5, 0.,  0.5};
+  const GLfloat lineCol[3] = {1.,  1.,  1. };
+  const GLfloat markCol[3] = {0.5, 0.5, 0. };
 
   // Exit
   const int success = 0;
