@@ -32,6 +32,12 @@ The Makefile is still in embryonic form, so it supports only gcc (and IRIX
 systems using pmake and MIPSPro) for now. trend should work on any POSIX/OpenGL
 capable system.
 
+Optimisations are left to the user. Usually doing
+
+  CXXFLAGS="-O2" make -e
+
+should suffice.
+
 
 Executing
 =========
@@ -81,6 +87,10 @@ When new data arrives, the value is plotted and the cursor position is
 advanced. That is, the graph scrolling speed is determined by the speed of the
 data flow (for now at least).
 
+Standard X11/GLUT options:
+
+ -display, -geometry, -iconic
+
 Options:
 
  -d		"dimmed" shading mode
@@ -97,6 +107,7 @@ Options:
  -R colour	grid colour
  -I colour	trend colour
  -M colour	marker colour
+ -N colour	interactive indicator colour
  -i		input is an incremental counter
 
 Shading modes:
@@ -107,8 +118,8 @@ others with half opacity.
 
 Colour spec:
 
-A colour is specified in hex RGB format, as follows: #RRGGBB, RRGGBB or 0xRRGGBB,
-Some examples:
+A colour is specified in hex RGB format, as follows: #RRGGBB, RRGGBB or
+0xRRGGBB; some examples:
 
   #FF0000: red
   #00FF00: green
@@ -145,6 +156,19 @@ When autoscaling is enabled the graph will be scaled vertically to fit visible
 values. The grid resolution is used to add some vertical bounds to the
 graph. Disabling autoscaling interactively will retain current limits. When the
 grid is too dense to be displayed it's deactivated automatically.
+
+Interactive indicators:
+
+You can query interactively the graph for any value in the history by clicking
+with the first mouse button. This will enable a permanent indicator in the
+selected position and display up to the three nearest values in the upper-left
+corner of the screen. Intersections are projected horizontally, while a small
+circle will show the position of the nearest sampled value.
+
+By holding down the CTRL key while clicking/dragging only "foreground" values
+will be considered.
+
+The indicators can be removed by clicking anywhere with the third mouse button.
 
 
 Examples

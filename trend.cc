@@ -17,6 +17,9 @@
 #include <deque>
 using std::deque;
 
+#include <vector>
+using std::vector;
+
 #include <iostream>
 using std::cout;
 using std::cerr;
@@ -72,6 +75,23 @@ struct Value
 };
 
 
+struct Intr
+{
+  // nearest value
+  Value near;
+  
+  // intersection
+  double value;
+  double dist;
+};
+
+bool
+operator<(const Intr& l, const Intr& r)
+{
+  return (l.dist < r.dist);
+}
+
+
 /*
  * Graph/Program state
  */
@@ -100,6 +120,7 @@ namespace
   GLfloat gridCol[3];
   GLfloat lineCol[3];
   GLfloat markCol[3];
+  GLfloat intrCol[3];
 
   // Visual/Changeable settings
   bool autoLimit;
@@ -110,6 +131,12 @@ namespace
   bool marker = Trend::marker;
   bool grid = Trend::grid;
   double gridres = Trend::gridres;
+
+  // Indicator status
+  bool intr = false;
+  bool intrFg;
+  double intrX;
+  double intrY;
 }
 
 
@@ -318,6 +345,7 @@ void
 drawOSString(const int x, const int y, const char* str)
 {
   using Trend::strSpc;
+  using Trend::fontHeight;
 
   int len(strlen(str) * 8);
   int rx(x + strSpc);
@@ -330,8 +358,8 @@ drawOSString(const int x, const int y, const char* str)
     rx = strSpc;
 
   // check y
-  if((ry + strSpc + 13) > height)
-    ry = height - 13 - strSpc;
+  if((ry + strSpc + fontHeight) > height)
+    ry = height - fontHeight - strSpc;
   if(ry < 0)
     ry = strSpc;
 
@@ -372,13 +400,35 @@ drawGrid()
 
 
 void
-drawMarker(const float x)
+drawMarker(const double x)
 {
   glColor3fv(markCol);
   glBegin(GL_LINES);
   glVertex2d(x, loLimit);
   glVertex2d(x, hiLimit);
   glEnd();
+}
+
+
+void
+drawCircle(const int x, const int y)
+{
+  using Trend::intrRad;
+
+  glBegin(GL_LINE_LOOP);
+  glVertex2i(x - intrRad, y);
+  glVertex2i(x, y + intrRad);
+  glVertex2i(x + intrRad, y);
+  glVertex2i(x, y - intrRad);
+  glEnd();
+}
+
+
+// get drawing position based on current settings
+size_t
+getPosition(size_t pos, const Value& value)
+{
+  return ((scroll? pos: value.count) % divisions);
 }
 
 
@@ -403,7 +453,7 @@ drawLine(Value& last)
 	(static_cast<float>(i) / size));
 	
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
-    pos = ((scroll? i: last.count) % divisions);
+    pos = getPosition(i, last);
     if(!pos)
     {
       // Cursor at the end
@@ -422,8 +472,118 @@ drawLine(Value& last)
 
 
 void
+drawIntr()
+{
+  // bail out immediately for buggy conditions
+  if(data.size() < 2)
+    return;
+
+  // initial color and current position
+  glColor3fv(intrCol);
+  glBegin(GL_LINES);
+  glVertex2d(intrX, loLimit);
+  glVertex2d(intrX, hiLimit);
+  glEnd();
+
+  // scan for all intersections
+  size_t trX = (static_cast<size_t>(std::floor(intrX)));
+  if(trX == divisions) --trX;
+  double mul = (intrX - trX);
+  vector<Intr> intrs;
+
+  // starting position
+  size_t i = ((intrFg && data.size() >= divisions)? data.size() - divisions - 1: 0);
+  deque<Value>::const_iterator it(data.begin() + i);
+
+  while(i < data.size())
+  {
+    size_t pos = getPosition(i, *it);
+    if(pos == trX && (i + 1) != data.size())
+    {
+      // fetch the next value
+      Value next = *(it + 1);
+
+      Intr buf;
+      buf.near = (mul < 0.5? *it: next);
+      buf.value = it->value + mul * (next.value - it->value);
+      buf.dist = std::abs(buf.value - intrY);
+      intrs.push_back(buf);
+
+      // fast forward
+      i += divisions;
+      it += divisions;
+    }
+    else
+    {
+      // normal advance
+      ++i;
+      ++it;
+    }
+  }
+
+  // no intersections found
+  if(!intrs.size())
+    return;
+
+  // consider only the nearest n values
+  std::sort(intrs.begin(), intrs.end());
+  if(intrs.size() > Trend::intrNum)
+    intrs.resize(Trend::intrNum);
+
+  // draw intersections and estimate mean value
+  double mean = 0;
+  glBegin(GL_LINES);
+  for(vector<Intr>::const_iterator it = intrs.begin();
+      it != intrs.end(); ++it)
+  {
+    mean += it->value;
+    glVertex2d(0, it->value);
+    glVertex2d(divisions, it->value);
+
+  }
+  glEnd();
+  mean /= intrs.size();
+
+  // switch to video coordinates
+  glPushMatrix();
+  glLoadIdentity();
+  gluOrtho2D(0, width, 0, height);
+
+  // nearest point
+  int nearX = static_cast<int>(intrs[0].near.count * width / divisions);
+  int nearY = static_cast<int>((intrs[0].near.value - loLimit) *
+      height / (hiLimit - loLimit));
+  drawCircle(nearX, nearY);
+  if(!intrs[0].near.count)
+    drawCircle(width, nearY);
+
+  // plot values
+  char buf[256];
+  int curY = height;
+
+  sprintf(buf, "nearest: %g, mean: %g", intrs[0].near.value, mean);
+  drawString(0, curY -= Trend::fontHeight + Trend::strSpc, buf);
+
+  i = 1;
+  for(vector<Intr>::const_iterator it = intrs.begin();
+      it != intrs.end(); ++i, ++it)
+  {
+    sprintf(buf, "%d: %g", i, it->value);
+    drawString(0, curY -= Trend::fontHeight + Trend::strSpc, buf);
+  }
+
+  // restore model space
+  glPopMatrix();
+}
+
+
+void
 drawValues(const Value& last)
 {
+  glPushMatrix();
+  glLoadIdentity();
+  gluOrtho2D(0, width, 0, height);
+
   char buf[Trend::maxNumLen];
   glColor3fv(textCol);
 
@@ -435,6 +595,8 @@ drawValues(const Value& last)
 
   sprintf(buf, "%g", last.value);
   drawString(Trend::strSpc, Trend::strSpc, buf);
+
+  glPopMatrix();
 }
 
 
@@ -451,10 +613,12 @@ display()
   if(grid)
     drawGrid();
 
-  // data
+  // data and indicator (the indicator should use the
+  // same data so group them)
   pthread_mutex_lock(&mutex);
   Value last;
   size_t pos(drawLine(last));
+  if(intr) drawIntr();
   pthread_mutex_unlock(&mutex);
 
   // marker
@@ -463,11 +627,7 @@ display()
 
   // values
   if(values)
-  {
-    glLoadIdentity();
-    gluOrtho2D(0, width, 0, height);
     drawValues(last);
-  }
 
   // flush buffers
   glutSwapBuffers();
@@ -591,6 +751,31 @@ keyboard(const unsigned char key, const int x, const int y)
 }
 
 
+void
+motion(int x, int y)
+{
+  // the x position must be adjusted
+  intrX = (static_cast<double>(divisions) * x / width);
+  if(intrX < 0)
+    intrX = 0.;
+  else if(intrX > divisions)
+    intrX = static_cast<double>(divisions);
+
+  intrY = hiLimit - (static_cast<double>(hiLimit - loLimit) * y / height);
+  glutPostRedisplay();
+}
+
+
+void
+mouse(int button, int state, int x, int y)
+{
+  // cause a motion event internally
+  intr = (button != GLUT_RIGHT_BUTTON);
+  intrFg = (glutGetModifiers() & GLUT_ACTIVE_CTRL);
+  motion(x, y);
+}
+
+
 /*
  * CLI and options
  */
@@ -605,9 +790,10 @@ parseOptions(int argc, char* const argv[])
   memcpy(gridCol, Trend::gridCol, sizeof(gridCol));
   memcpy(lineCol, Trend::lineCol, sizeof(lineCol));
   memcpy(markCol, Trend::markCol, sizeof(markCol));
+  memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "dSsvmgG:ht:A:E:R:I:M:i")) != -1)
+  while((arg = getopt(argc, argv, "dSsvmgG:ht:A:E:R:I:M:N:i")) != -1)
     switch(arg)
     {
     case 'd':
@@ -662,6 +848,10 @@ parseOptions(int argc, char* const argv[])
       parseColor(markCol, optarg);
       break;
 
+    case 'N':
+      parseColor(intrCol, optarg);
+      break;
+
     case 'i':
       incr = !incr;
       break;
@@ -687,6 +877,11 @@ parseOptions(int argc, char* const argv[])
   fileName = argv[optind++];
   history = strtoul(argv[optind++], NULL, 0);
   divisions = strtoul(argv[optind++], NULL, 0);
+  if(!history || !divisions)
+  {
+    cerr << argv[0] << ": hist-sz or x-div can't be zero\n";
+    return -1;
+  }
 
   // optional limiting factors
   if(argc == 5)
@@ -721,6 +916,8 @@ main(int argc, char* const argv[]) try
   glutReshapeFunc(reshape);
   glutDisplayFunc(display);
   glutKeyboardFunc(keyboard);
+  glutMouseFunc(mouse);
+  glutMotionFunc(motion);
 
   // first redraw
   init();

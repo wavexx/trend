@@ -40,6 +40,7 @@ namespace Trend
   const GLfloat gridCol[3] = {0.5, 0.,  0.5};
   const GLfloat lineCol[3] = {1.,  1.,  1. };
   const GLfloat markCol[3] = {0.5, 0.5, 0. };
+  const GLfloat intrCol[3] = {0.,  1.,  0. };
 
   // Exit
   const int success = 0;
@@ -48,7 +49,10 @@ namespace Trend
 
   // Constants
   const int maxNumLen = 128;
+  const int fontHeight = 13;
   const int strSpc = 2;
+  const int intrRad = 4;
+  const int intrNum = 3;
 }
 
 #endif
