@@ -10,7 +10,7 @@ LDADD = -lpthread -L/usr/freeware/lib32 -L/usr/local/lib32 -lm -lglut -lGL -lGLU
 #else
 CPPFLAGS = -I/usr/local/include
 LDFLAGS = -L/usr/local/lib
-LDADD = -lglut
+LDADD = -lglut -lGL -lGLU
 #endif
 
 # Shared flags
