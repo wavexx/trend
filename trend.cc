@@ -1,6 +1,15 @@
-// display live data on a trend graph
-// Copyright(c) 2003 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
-// Distributed under GNU LGPL WITHOUT ANY WARRANTY.
+/*
+ * trend: display live data on a trend graph
+ * Copyright(c) 2003-2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
+ */
+
+/*
+ * Headers
+ */
+
+// defaults
+#include "defaults.hh"
 
 // system headers
 #include <stdexcept>
@@ -23,12 +32,6 @@ using std::pair;
 using std::strtod;
 using std::strtoul;
 
-#include <cstdio>
-using std::FILE;
-using std::fopen;
-using std::fclose;
-using std::fscanf;
-
 #include <unistd.h>
 #include <pthread.h>
 
@@ -36,53 +39,54 @@ using std::fscanf;
 #include <GL/glut.h>
 
 
-// Constants
-namespace Exit
+/*
+ * Data structures
+ */
+
+struct Value
 {
-  const int success(0);
-  const int fail(1);
-  const int args(2);
-}
+  Value(double value, size_t count)
+  : value(value), count(count)
+  {}
 
-namespace Default
-{
-  // Valid keys
-  const unsigned char quitKey(27);
-  const unsigned char smoothKey('S');
-  const unsigned char scrollKey('s');
-  const unsigned char valuesKey('v');
-  const unsigned char markerKey('m');
-  const unsigned char gridKey('g');
-  const unsigned char gridOnKey('G');
-}
+  double value;
+  size_t count;
+};
 
 
-// Horriphilant globals
+/*
+ * Graph/Program state
+ */
+
 namespace
 {
-  // Basic globals
+  // Basic data
   const char* fileName;
   pthread_mutex_t mutex;
-  bool damaged(false);
+  bool damaged = false;
+  bool first = false;
 
   // Data and parameters
-  deque<pair<float, size_t> > data;
-  bool autoLimit;
-  float loLimit;
-  float hiLimit;
+  deque<Value> data;
+  double loLimit;
+  double hiLimit;
   size_t history;
-
-  // Settings
   size_t divisions;
-  bool smooth(false);
-  bool values(false);
-  bool grid(false);
-  bool first(false);
-  bool scroll(false);
-  bool marker(false);
-  float gridOn(1);
+
+  // Visual/Changeable settings
+  bool autoLimit = false;
+  bool smooth = Trend::smooth;
+  bool scroll = Trend::scroll;
+  bool values = Trend::values;
+  bool marker = Trend::marker;
+  bool grid = Trend::grid;
+  double gridres = Trend::gridres;
 }
 
+
+/*
+ * OpenGL functions
+ */
 
 // Notify OpenGL to redraw everything.
 void
@@ -143,7 +147,7 @@ drawGrid()
   }
 
   // vertical rasterlines
-  for(float it = loLimit; it <= hiLimit; it += gridOn)
+  for(float it = loLimit; it <= hiLimit; it += gridres)
   {
     glVertex2f(0, it);
     glVertex2f(divisions, it);
@@ -177,24 +181,24 @@ display()
     drawGrid();
   }
 
-  deque<pair<float, size_t> >::const_iterator it(data.begin());
+  deque<Value>::const_iterator it(data.begin());
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
   for(size_t i = 0; i != data.size(); ++i, ++it)
   {
     glColor4f(1., 1., 1., static_cast<float>(i) / data.size());
-    pos = ((scroll? i: it->second) % divisions);
+    pos = ((scroll? i: it->count) % divisions);
     if(!pos)
     {
       // Cursor at the end
-      glVertex2f(divisions, it->first);
+      glVertex2f(divisions, it->value);
       glEnd();
       glBegin(GL_LINE_STRIP);
-      glVertex2f(0, it->first);
+      glVertex2f(0, it->value);
     }
     else
-      glVertex2f(pos, it->first);
+      glVertex2f(pos, it->value);
   }
   glEnd();
 
@@ -227,11 +231,11 @@ showToggleStatus(const char* str, bool& var)
 }
 
 
-float
+double
 getUnit()
 {
   cout << "u? ";
-  float u;
+  double u;
   cin >> u;
 
   return u;
@@ -243,34 +247,34 @@ keyboard(const unsigned char key, const int x, const int y)
 {
   switch(key)
   {
-  case Default::quitKey:
-    exit(Exit::success);
+  case Trend::quitKey:
+    exit(Trend::success);
     break;
 
   // Redraw alteration
-  case Default::smoothKey:
+  case Trend::smoothKey:
     showToggleStatus("smoothing", smooth);
     init();
     break;
 
-  case Default::scrollKey:
+  case Trend::scrollKey:
     showToggleStatus("scrolling", scroll);
     break;
 
-  case Default::markerKey:
+  case Trend::markerKey:
     showToggleStatus("marker", marker);
     break;
 
-  case Default::gridKey:
+  case Trend::gridKey:
     showToggleStatus("grid", grid);
     break;
 
-  case Default::valuesKey:
+  case Trend::valuesKey:
     showToggleStatus("values", values);
     break;
 
-  case Default::gridOnKey:
-    gridOn = getUnit();
+  case Trend::setResKey:
+    gridres = getUnit();
     break;
 
   default:
@@ -284,21 +288,21 @@ keyboard(const unsigned char key, const int x, const int y)
 void
 setLimits()
 {
-  deque<pair<float, size_t> >::const_iterator it(data.begin());
-  float lo(it->first);
+  deque<Value>::const_iterator it(data.begin());
+  float lo(it->value);
   float hi(lo);
 
   for(; it != data.end(); ++it)
   {
-    if(it->first > hi)
-      hi = it->first;
+    if(it->value > hi)
+      hi = it->value;
 
-    if(it->first < lo)
-      lo = it->first;
+    if(it->value < lo)
+      lo = it->value;
   }
 
-  hiLimit = hi + gridOn;
-  loLimit = lo - gridOn;
+  hiLimit = hi + gridres;
+  loLimit = lo - gridres;
 }
 
 
@@ -342,7 +346,7 @@ thread(void*)
       pthread_mutex_lock(&mutex);
 
       // add the new value
-      data.push_back(pair<float, size_t>(num, pos));
+      data.push_back(Value(num, pos));
       if(data.size() == history + 2)
         data.pop_front();
 
@@ -371,7 +375,7 @@ main(const int argc, const char* const argv[]) try
       argv[0] << " [options] <fifo> <hist-sz> <x-div> [-y +y]\n" <<
       argv[0] << " version: $Revision$ $Date$\n";
 
-    return Exit::args;
+    return Trend::args;
   }
 
   // TODO: parse some options
@@ -418,11 +422,10 @@ main(const int argc, const char* const argv[]) try
   pthread_join(thrd, NULL);
   pthread_mutex_destroy(&mutex);
 
-  return Exit::success;
+  return Trend::success;
 }
 catch(const std::exception& e)
 {
   std::cerr << argv[0] << ": " << e.what() << std::endl;
   throw;
 }
-
