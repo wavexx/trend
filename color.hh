@@ -11,7 +11,7 @@
 #include <GL/gl.h>
 
 
-// parse a color in hexadecimal format ([#]RRGGBB)
+// parse a color in hexadecimal format ([[#]0x]RRGGBB)
 GLfloat*
 parseColor(GLfloat* buf, const char* color);
 
