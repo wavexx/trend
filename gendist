@@ -9,7 +9,7 @@ HEAD="to Rev #$REV `date '+%d/%m/%Y'`"
 CATALOG="
 	Makefile
 	imem tstimes mem net
-	trend.cc defaults.hh color.cc color.hh
+	trend.cc defaults.hh color.cc color.hh rr.hh
 	AUTHORS COPYING README TODO NEWS
 "
 

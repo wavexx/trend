@@ -1,3 +1,15 @@
+Rev #20 21/10/2004 to Rev #23 29/10/2004
+========================================
+
+	* Optimisations and huge internal latency reductions.
+
+	* Fixed precision truncation in auto-scaling.
+
+	* Fixed scrolling mode for "history" non multiple of "divisions".
+
+	* Created a support/testing mailing list. See README for details.
+
+
 Rev #15 27/09/2004 to Rev #20 21/10/2004
 ========================================
 

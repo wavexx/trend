@@ -233,7 +233,7 @@ use it literally as a virtual oscilloscope, hence the need of OpenGL); for this
 reason:
 
 - The fifo is read and managed asynchronously from the graphics. Delays at
-  the display end will not interfere with the data feed[1], which can go at
+  the display end will not interfere with the data feed, which can go at
   much higher speeds than what your graphic card permits.
 - The fifo is unbuffered and the feeder thread is synchronously locked on it
   waiting for new data.
@@ -242,14 +242,18 @@ reason:
   bytes is read (in this case each value is read with a single read call).
 - The display is updated within the next millisecond after at least one value
   is read or when a redisplay is needed, with the data available at the
-  instant of the call-back (sampled atomically[1]). Scheduler latencies apply.
-
-[1] To a certain degree. Actually the display call-back uses the same
-    shared exclusive memory region, but I'm improving that along with the
-    replacement of deque (see TODO).
+  instant of the call-back (sampled atomically). Scheduler latencies apply.
 
 For the non-experts, the scripting convention of sleeping a fixed amount of
 time after sampling the value will lead to cumulative timing errors.
+
+
+General/support mailing list
+============================
+
+If you feel to discuss improvements and suggestions, and/or test beta releases
+before announcement you can subscribe to <trend-users@yuv.info> by sending an
+email to <minimalist@yuv.info> with a subject of "subscribe trend-users".
 
 
 Authors and Copyright

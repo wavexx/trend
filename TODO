@@ -7,19 +7,13 @@ Planned features
 
 	* Binary input
 
-	* Rate-limiting for binary input only (specify the frequency of the
-	input values in order to block the 'feeder' without the need to code
-	sleeping loops. This has timing implications, and it's too imprecise
-	for ASCII input.) or additional tool.
-
 	* Differential input (initial absolute value and relative ones
 	following).
 
-	* More optimisations can be done for: different shading, different
-	inputs, deque (synchronised areas should be reduced considerably),
-	internal latencies.
+	* More optimisations can be done for: different shading modes,
+	different input types.
 
-	* Script to time-quantise input.
+	* Script or program to time-quantise input.
 
 	* Maybe some basic oscilloscope controls like: graph offsetting,
 	zooming, value skipping.
