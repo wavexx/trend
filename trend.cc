@@ -11,12 +11,10 @@
 // defaults
 #include "defaults.hh"
 #include "color.hh"
+#include "rr.hh"
 
 // system headers
 #include <stdexcept>
-#include <deque>
-using std::deque;
-
 #include <vector>
 using std::vector;
 
@@ -102,19 +100,19 @@ namespace
   // Basic data
   const char* fileName;
   pthread_mutex_t mutex;
-  bool damaged = false;
+  volatile bool damaged = false;
   bool incr = Trend::incr;
 
   // Data and fixed parameters
-  deque<Value> data;
+  rr<Value>* rrData;
+  Value* rrBuf;
+  Value* rrEnd;
   double loLimit;
   double hiLimit;
-  size_t history;
-  size_t divisions;
 
   // Visual/Fixed settings
-  int width;
-  int height;
+  size_t history;
+  size_t divisions;
   const char* title = NULL;
   GLfloat backCol[3];
   GLfloat textCol[3];
@@ -124,6 +122,8 @@ namespace
   GLfloat intrCol[3];
 
   // Visual/Changeable settings
+  int width;
+  int height;
   bool autoLimit;
   bool dimmed = Trend::dimmed;
   bool smooth = Trend::smooth;
@@ -140,7 +140,7 @@ namespace
   double intrY;
 
   // Distribution graph
-  bool distrib = false;
+  bool distrib = Trend::distrib;
   vector<double> distribData;
 }
 
@@ -148,6 +148,19 @@ namespace
 /*
  * I/O and data manipulation
  */
+
+// fill the round robin consistently with a single value
+void
+fillRr(double value, size_t start)
+{
+  Value buf;
+  buf.count = start;
+  buf.value = value;
+
+  for(size_t i = 0; i != history; ++buf.count, ++i)
+    rrData->push_back(buf);
+}
+
 
 // skip whitespace
 void
@@ -249,7 +262,7 @@ thread(void*)
   // standard) ->fd() access for "encapsulation"...
   FILE* in;
 
-  for(size_t pos = 0; fileName;)
+  for(size_t pos = history; fileName;)
   {
     // open the file and disable buffering
     in = fopen(fileName, "r");
@@ -277,13 +290,9 @@ thread(void*)
       }
 
       // append the value
+      rrData->push_back(Value(num, pos));
       pthread_mutex_lock(&mutex);
-
-      data.push_back(Value(num, pos));
-      if(data.size() == history + 2)
-	data.pop_front();
       damaged = true;
-
       pthread_mutex_unlock(&mutex);
 
       // wrap pos when possible
@@ -470,37 +479,32 @@ getPosition(size_t pos, const Value& value)
 
 
 size_t
-drawLine(Value& last)
+drawLine()
 {
-  last.value = NAN;
-  last.count = 0;
-
-  deque<Value>::const_iterator it(data.begin());
-  size_t size(data.size());
+  const Value* it = rrBuf;
+  const Value* end = rrEnd;
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
-  for(size_t i = 0; i != size; ++i, ++it)
+  for(size_t i = 1; it != end; ++i, ++it)
   {
-    last = *it;
-
     // shade the color
     double alpha(dimmed?
-	((size - i) <= divisions? 1.: .5):
-	(static_cast<float>(i) / size));
+	((history - i) <= divisions? 1.: .5):
+	(static_cast<float>(i) / history));
 	
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
-    pos = getPosition(i, last);
+    pos = getPosition(i, *it);
     if(!pos)
     {
       // Cursor at the end
-      glVertex2d(divisions, last.value);
+      glVertex2d(divisions, it->value);
       glEnd();
       glBegin(GL_LINE_STRIP);
-      glVertex2d(0, last.value);
+      glVertex2d(0, it->value);
     }
     else
-      glVertex2d(pos, last.value);
+      glVertex2d(pos, it->value);
   }
   glEnd();
 
@@ -508,6 +512,7 @@ drawLine(Value& last)
 }
 
 
+#if 0
 void
 drawDistrib()
 {
@@ -705,15 +710,17 @@ drawIntr()
   // restore model space
   glPopMatrix();
 }
+#endif
 
 
 void
-drawValues(const Value& last)
+drawValues()
 {
   glPushMatrix();
   glLoadIdentity();
   gluOrtho2D(0, width, 0, height);
 
+  const Value& last = rrBuf[history - 1];
   char buf[Trend::maxNumLen];
   glColor3fv(textCol);
 
@@ -744,22 +751,18 @@ display()
   gluOrtho2D(zero, divisions, loLimit, hiLimit);
 
   // background grid
-  if(grid)
-    drawGrid();
+  if(grid) drawGrid();
+  size_t pos = drawLine();
 
-  // data and indicator (the indicator should use the
-  // same data so group them)
-  pthread_mutex_lock(&mutex);
-  Value last;
-  size_t pos(drawLine(last));
+#if 0
+  // other data
   if(distrib) drawDistrib();
+#endif
   if(marker) drawMarker(pos);
+#if 0
   if(intr) drawIntr();
-  pthread_mutex_unlock(&mutex);
-
-  // values
-  if(values)
-    drawValues(last);
+#endif
+  if(values) drawValues();
 
   // flush buffers
   glutSwapBuffers();
@@ -767,17 +770,35 @@ display()
 
 
 void
+removeNANs()
+{
+  const Value* begin = rrBuf;
+  Value* it = rrEnd;
+  double old = NAN;
+
+  while(it-- != begin)
+  {
+    if(isnan(it->value))
+      it->value = old;
+    else if(it->value != old)
+      old = it->value;
+  }
+}
+
+
+void
 setLimits()
 {
-  deque<Value>::const_iterator it(data.begin());
-  float lo(it->value);
-  float hi(lo);
+  const Value* it = rrBuf;
+  const Value* end = rrEnd;
 
-  for(; it != data.end(); ++it)
+  double lo(it->value);
+  double hi(lo);
+
+  for(; it != end; ++it)
   {
     if(it->value > hi)
       hi = it->value;
-
     if(it->value < lo)
       lo = it->value;
   }
@@ -795,17 +816,31 @@ idle(int)
   glutTimerFunc(1, idle, 0);
 
   // check if a redraw is really necessary
+  bool recalc = false;
   pthread_mutex_lock(&mutex);
   if(damaged)
   {
-    // recalculate limits seldom
-    if(autoLimit)
-      setLimits();
-
-    glutPostRedisplay();
+    rrData->copy(rrBuf);
+    recalc = true;
     damaged = false;
   }
   pthread_mutex_unlock(&mutex);
+
+  if(recalc)
+  {
+    // recalculate limits seldom
+    if(autoLimit)
+    {
+      // since we swiched from deque to rr, the size now is always fixed, and
+      // the initial buffer is filled with NANs. We don't want NANs however,
+      // and we don't want to handle this lone-case everywhere.
+      if(isnan(rrBuf->value))
+	removeNANs();
+      setLimits();
+    }
+
+    glutPostRedisplay();
+  }
 }
 
 
@@ -1044,6 +1079,12 @@ main(int argc, char* const argv[]) try
   glutInit(&argc, const_cast<char**>(argv));
   if(parseOptions(argc, argv))
     return Trend::args;
+
+  // initialize rr buffers
+  rrData = new rr<Value>(history);
+  rrBuf = new Value[history];
+  rrEnd = rrBuf + history;
+  fillRr(NAN, 0);
 
   // start the producer thread
   pthread_t thrd;
