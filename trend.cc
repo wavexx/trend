@@ -706,6 +706,7 @@ int
 main(int argc, char* const argv[]) try
 {
   // parameters
+  glutInit(const_cast<int*>(&argc), const_cast<char**>(argv));
   if(parseOptions(argc, argv))
     return Trend::args;
 
@@ -714,11 +715,8 @@ main(int argc, char* const argv[]) try
   pthread_mutex_init(&mutex, NULL);
   pthread_create(&thrd, NULL, thread, NULL);
 
-  // display
-  glutInit(const_cast<int*>(&argc), const_cast<char**>(argv));
+  // display, main mindow and callbacks
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-
-  // main mindow and callbacks
   glutCreateWindow(title? title: argv[0]);
   glutReshapeFunc(reshape);
   glutDisplayFunc(display);
