@@ -443,7 +443,7 @@ drawLine(Value& last)
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
-  for(size_t i = 0; i != data.size(); ++i, ++it)
+  for(size_t i = 0; i != size; ++i, ++it)
   {
     last = *it;
 
@@ -504,7 +504,16 @@ drawIntr()
       Value next = *(it + 1);
 
       Intr buf;
-      buf.near = (mul < 0.5? *it: next);
+      if(mul < 0.5)
+      {
+	buf.near.value = it->value;
+	buf.near.count = pos;
+      }
+      else
+      {
+	buf.near.value = next.value;
+	buf.near.count = getPosition(i + 1, next);
+      }
       buf.value = it->value + mul * (next.value - it->value);
       buf.dist = std::abs(buf.value - intrY);
       intrs.push_back(buf);
