@@ -137,6 +137,10 @@ namespace
   bool intrFg;
   double intrX;
   double intrY;
+
+  // Distribution graph
+  bool distrib = false;
+  vector<double> distribData;
 }
 
 
@@ -296,6 +300,30 @@ thread(void*)
 /*
  * OpenGL functions
  */
+
+// project model coordinates
+void
+project(double xi, double yi, int& xo, int& yo)
+{
+  int width(distrib? ::width - Trend::distribWidth: ::width);
+  int off(distrib? Trend::distribWidth: 0);
+
+  xo = (off + static_cast<int>(xi * width / divisions));
+  yo = static_cast<int>((yi - loLimit) * height / (hiLimit - loLimit));
+}
+
+
+// unproject video to model coordinates
+void
+unproject(int xi, int yi, double& xo, double& yo)
+{
+  int width = (distrib? ::width - Trend::distribWidth: ::width);
+  int xr = (distrib? xi - Trend::distribWidth: xi);
+
+  xo = (static_cast<double>(divisions) * xr / width);
+  yo = hiLimit - (static_cast<double>(hiLimit - loLimit) * yi / height);
+}
+
 
 // OpenGL state initializer
 void
@@ -472,6 +500,75 @@ drawLine(Value& last)
 
 
 void
+drawDistrib()
+{
+  // return immediately for buggy conditions
+  if(data.size() < 2)
+    return;
+
+  // reallocate only if necessary. we must avoid to reallocate
+  // in order to not fragment memory (resize() on gcc 3 isn't very friendly)
+  if(distribData.size() != height)
+    distribData.resize(height);
+
+  deque<Value>::const_iterator it;
+  size_t size(data.size() - 1);
+
+  glPushMatrix();
+  glLoadIdentity();
+  gluOrtho2D(0, width, 0, height);
+
+  const double w = Trend::distribWidth;
+  distribData.assign(distribData.size(), 0.);
+  double ma = data[0].value;
+
+  it = data.begin();
+  for(size_t i = 0; i != size; ++i, ++it)
+  {
+    deque<Value>::const_iterator a = it;
+    deque<Value>::const_iterator b = (it + 1);
+
+    int s = ((a->value - loLimit) * height / (hiLimit - loLimit));
+    int e = ((b->value - loLimit) * height / (hiLimit - loLimit));
+    if(s > e) std::swap(s, e);
+
+    if(e <= 0 || s >= height) continue;
+    if(s < 0) s = 0;
+    if(e > height) e = height;
+
+    for(int x = s; x != e; ++x)
+    {
+      ++distribData[x];
+      if(distribData[x] > ma)
+	ma = distribData[x];
+    }
+  }
+  if(ma != 0.) ma = 1. / ma;
+
+  glBegin(GL_QUAD_STRIP);
+  double color = distribData[0] * ma;
+  glColor3d(color, color, color);
+  glVertex2i(0, 0);
+  glVertex2i(w, 0);
+
+  for(int x = 0; x != height; ++x)
+  {
+    double ncolor = distribData[x] * ma;
+    if(ncolor != color)
+    {
+      glColor3d(ncolor, ncolor, ncolor);
+      glVertex2i(0, x + 1);
+      glVertex2i(w, x + 1);
+    }
+    color = ncolor;
+  }
+  glEnd();
+
+  glPopMatrix();
+}
+
+
+void
 drawIntr()
 {
   // bail out immediately for buggy conditions
@@ -492,7 +589,8 @@ drawIntr()
   vector<Intr> intrs;
 
   // starting position
-  size_t i = ((intrFg && data.size() >= divisions)? data.size() - divisions - 1: 0);
+  size_t i = ((intrFg && data.size() >= divisions)?
+      data.size() - divisions - 1: 0);
   deque<Value>::const_iterator it(data.begin() + i);
 
   while(i < data.size())
@@ -559,9 +657,8 @@ drawIntr()
   gluOrtho2D(0, width, 0, height);
 
   // nearest point
-  int nearX = static_cast<int>(intrs[0].near.count * width / divisions);
-  int nearY = static_cast<int>((intrs[0].near.value - loLimit) *
-      height / (hiLimit - loLimit));
+  int nearX, nearY;
+  project(intrs[0].near.count, intrs[0].near.value, nearX, nearY);
   drawCircle(nearX, nearY);
   if(!intrs[0].near.count)
     drawCircle(width, nearY);
@@ -616,9 +713,13 @@ void
 display()
 {
   // setup model coordinates
+  double zero = (distrib?
+      -(static_cast<double>(Trend::distribWidth) * divisions /
+	  (width - Trend::distribWidth)): 0);
+
   glClear(GL_COLOR_BUFFER_BIT);
   glLoadIdentity();
-  gluOrtho2D(0, divisions, loLimit, hiLimit);
+  gluOrtho2D(zero, divisions, loLimit, hiLimit);
 
   // background grid
   if(grid)
@@ -629,12 +730,10 @@ display()
   pthread_mutex_lock(&mutex);
   Value last;
   size_t pos(drawLine(last));
+  if(distrib) drawDistrib();
+  if(marker) drawMarker(pos);
   if(intr) drawIntr();
   pthread_mutex_unlock(&mutex);
-
-  // marker
-  if(marker)
-    drawMarker(pos);
 
   // values
   if(values)
@@ -725,6 +824,10 @@ keyboard(const unsigned char key, const int x, const int y)
     toggleStatus("dimmed", dimmed);
     break;
 
+  case Trend::distribKey:
+    toggleStatus("distribution", distrib);
+    break;
+
   case Trend::autolimKey:
     toggleStatus("autolimit", autoLimit);
     break;
@@ -765,14 +868,14 @@ keyboard(const unsigned char key, const int x, const int y)
 void
 motion(int x, int y)
 {
+  unproject(x, y, intrX, intrY);
+
   // the x position must be adjusted
-  intrX = (static_cast<double>(divisions) * x / width);
   if(intrX < 0)
     intrX = 0.;
   else if(intrX > divisions)
     intrX = static_cast<double>(divisions);
 
-  intrY = hiLimit - (static_cast<double>(hiLimit - loLimit) * y / height);
   glutPostRedisplay();
 }
 
@@ -804,11 +907,15 @@ parseOptions(int argc, char* const argv[])
   memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "dSsvmgG:ht:A:E:R:I:M:N:i")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvmgG:ht:A:E:R:I:M:N:i")) != -1)
     switch(arg)
     {
     case 'd':
       dimmed = !dimmed;
+      break;
+
+    case 'D':
+      distrib = !distrib;
       break;
 
     case 'S':
@@ -912,7 +1019,7 @@ int
 main(int argc, char* const argv[]) try
 {
   // parameters
-  glutInit(const_cast<int*>(&argc), const_cast<char**>(argv));
+  glutInit(&argc, const_cast<char**>(argv));
   if(parseOptions(argc, argv))
     return Trend::args;
 

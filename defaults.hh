@@ -17,6 +17,7 @@ namespace Trend
   const unsigned char quitKey =	27;
   const unsigned char autolimKey = 'a';
   const unsigned char dimmedKey = 'd';
+  const unsigned char distribKey = 'D';
   const unsigned char smoothKey = 'S';
   const unsigned char scrollKey = 's';
   const unsigned char valuesKey = 'v';
@@ -27,6 +28,7 @@ namespace Trend
   // Defaults
   const bool incr = false;
   const bool dimmed = false;
+  const bool distrib = false;
   const bool smooth = false;
   const bool scroll = false;
   const bool values = false;
@@ -53,6 +55,7 @@ namespace Trend
   const int strSpc = 2;
   const int intrRad = 4;
   const int intrNum = 3;
+  const int distribWidth = 30;
 }
 
 #endif
