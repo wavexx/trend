@@ -40,6 +40,7 @@ using std::strtoul;
 #include <cstring>
 using std::memcpy;
 using std::strlen;
+using std::strpbrk;
 
 #include <math.h>
 #include <stdio.h>
@@ -955,6 +956,38 @@ mouse(int button, int state, int x, int y)
  * CLI and options
  */
 
+// Parse a hist/n, div*n, div spec
+bool
+parseSpec(size_t& hist, size_t& div, const char* spec)
+{
+  // find the separator first
+  const char* p = strpbrk(spec, "/*");
+  if((p == spec) || (p && *(p + 1) == NULL))
+    return true;
+
+  if(!p)
+  {
+    div = strtoul(spec, NULL, 0);
+    hist = div + 1;
+    return false;
+  }
+  else if(*p == '/')
+  {
+    hist = strtoul(spec, NULL, 0);
+    div = strtoul(p + 1, NULL, 0);
+    if(!div) return true;
+    div = hist / div;
+  }
+  else if(*p == '*')
+  {
+    div = strtoul(spec, NULL, 0);
+    hist = div * strtoul(p + 1, NULL, 0);
+  }
+
+  return false;
+}
+
+
 // Initialize globals through command line
 int
 parseOptions(int argc, char* const argv[])
@@ -1037,7 +1070,7 @@ parseOptions(int argc, char* const argv[])
 
     case 'h':
       cout << argv[0] << " usage: " <<
-	argv[0] << " [options] fifo hist-sz x-div [-y +y]\n" <<
+	argv[0] << " [options] fifo <hist-spec|hist-sz x-div> [-y +y]\n" <<
 	argv[0] << " version: $Revision$ $Date$\n";
       return 1;
 
@@ -1047,15 +1080,28 @@ parseOptions(int argc, char* const argv[])
 
   // main parameters
   argc -= optind;
-  if(argc != 3 && argc != 5)
+  if(argc < 2 || argc > 5)
   {
     cerr << argv[0] << ": bad parameters\n";
     return -1;
   }
 
   fileName = argv[optind++];
-  history = strtoul(argv[optind++], NULL, 0);
-  divisions = strtoul(argv[optind++], NULL, 0);
+  if(argc == 2 || argc == 4)
+  {
+    if(parseSpec(history, divisions, argv[optind++]))
+    {
+      cerr << argv[0] << ": bad hist-spec\n";
+      return -1;
+    }
+  }
+  else
+  {
+    history = strtoul(argv[optind++], NULL, 0);
+    divisions = strtoul(argv[optind++], NULL, 0);
+  }
+
+  // parameters may still be buggy
   if(!history || !divisions)
   {
     cerr << argv[0] << ": hist-sz or x-div can't be zero\n";
@@ -1064,7 +1110,7 @@ parseOptions(int argc, char* const argv[])
   offset = divisions - (history % divisions) + 1;
 
   // optional limiting factors
-  if(argc == 5)
+  if(argc == 4 || argc == 5)
   {
     loLimit = strtod(argv[optind++], NULL);
     hiLimit = strtod(argv[optind++], NULL);

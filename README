@@ -3,7 +3,7 @@ General Description
 
 trend is a general-purpose, efficient trend graph for "live" data. Data is read
 in ASCII form from a file or continuously from a FIFO and displayed in
-real-time into a multipass trend (much like a CRT oscilloscope). trend can be
+real-time into a multi-pass trend (much like a CRT oscilloscope). trend can be
 used as a rapid analysis tool for progressive or time-based data series
 together with trivial scripting.
 
@@ -71,22 +71,39 @@ Executing:
 
 Execute trend as follows:
 
-  ./trend [options] fifofilename history-size subdivisions [low high]
+  ./trend [options] fifofilename <hist-spec|hist-sz x-div> [low high]
 
 where:
 
 - options is a list of optional flags (explained later)
 - fifofilename is the named fifo you just created.
-- history-size is the total number of values the graph will retain
-  before discarding them.
-- subdivisions is the number of horizontal subdivisions of the graph. Older
-  values will wrap around (you can still see them under newer ones).
+- hist-spec is an "history specification" as explained later, or replaced
+  by the old combination of hist-sz (total number of values to retain) and
+  x-div (number of horizontal subdivisions in the graph).
 - low and high are the optional graph vertical limits (respectively the lower
-  and upper limits). If none are specified the graph will auto-scale itself.
+  and upper limit). If none are specified the graph will auto-scale itself.
 
 When new data arrives, the value is plotted and the cursor position is
 advanced. That is, the graph scrolling speed is determined by the speed of the
-data flow (for now at least).
+data flow (for now at least). When the number of received values is above the
+number of horizontal subdivisions, the graph will wrap or scroll, depending on
+your settings.
+
+History specification (hist-spec):
+
+An history specification is another convenient form or defining the pair
+"hist-sz x-div" for common cases. An history specification can be in either one
+of the following formats:
+
+ N	Sets x-div to N, and hist-sz to N+1 (as the first and last values
+	are really shared in the graph).
+ N/M	Sets hist-sz to N, and x-div to N/M.
+ N*M	Sets x-div to N, and hist-sz to N*M.
+
+While this may seem hard at first, "./trend fifo '60*3'" is a much easier way
+of defining "180 values, 60 subdivisions". Note that "*" may be expanded by
+your shell as a globbing operator, thus you should escape the specification
+with quotes.
 
 Standard X11/GLUT options:
 
@@ -259,10 +276,43 @@ before announcement you can subscribe to <trend-users@yuv.info> by sending an
 email to <minimalist@yuv.info> with a subject of "subscribe trend-users".
 
 
+Troubleshooting
+===============
+
+trend crashes on start with SIGBUS/SIGSEGV:
+
+This problem experienced on some machines is caused by the new joystick support
+present in FreeGLUT 2.2.0. Either use standard GLUT, or upgrade to a later/cvs
+version of FreeGLUT (nightly snapshots are fine), where joystick initialisation
+has been made conditional.
+
+
+Screen-shots
+============
+
+Due to popular demand, here's how the screen-shots as found in
+http://www.yuv.info/~wavexx/hacks/trend/ were generated:
+
+trend-and-ion:		Several instances of trend running under the ION window
+			manager: http://freshmeat.net/projects/ion/
+			Data source: /proc/ and mrtg-utils.
+
+trend-distrib:		trend with the distribution graph active, showing a
+			sine, tangent, random-incremental and random function.
+
+trend-intr:		trend -d fifo 1200 600, with the interactive indicators
+			active. Input is from an analogue board.
+
+trend-oversample:	trend -S -I 0x00FF00 fifo 10000*3 on a ~700 pixels
+			wide window (implicit 1x14 oversampling), showing
+			buffer and visual latency in respect to the source.
+
+
 Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
 Copyright(c) 2003-2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
-so don't hesitate.
+so don't hesitate. Latest trend versions can be downloaded from
+http://www.yuv.info/~wavexx/hacks/trend/
