@@ -450,6 +450,7 @@ drawCircle(const int x, const int y)
 {
   using Trend::intrRad;
 
+  // ok, it's not really a circle.
   glBegin(GL_LINE_LOOP);
   glVertex2i(x - intrRad, y);
   glVertex2i(x, y + intrRad);
@@ -492,7 +493,7 @@ drawLine(Value& last)
     if(!pos)
     {
       // Cursor at the end
-      glVertex2f(divisions, last.value);
+      glVertex2d(divisions, last.value);
       glEnd();
       glBegin(GL_LINE_STRIP);
       glVertex2d(0, last.value);
