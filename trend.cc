@@ -261,7 +261,7 @@ readFirstNum(FILE* fd)
 
 // producer thread
 void*
-thread(void*)
+producer(void*)
 {
   // iostreams under gcc 3.x are completely unusable for advanced tasks such as
   // customizable buffering/locking/etc. They also removed the (really
@@ -1056,12 +1056,12 @@ parseOptions(int argc, char* const argv[])
   fileName = argv[optind++];
   history = strtoul(argv[optind++], NULL, 0);
   divisions = strtoul(argv[optind++], NULL, 0);
-  offset = divisions - (history % divisions) + 1;
   if(!history || !divisions)
   {
     cerr << argv[0] << ": hist-sz or x-div can't be zero\n";
     return -1;
   }
+  offset = divisions - (history % divisions) + 1;
 
   // optional limiting factors
   if(argc == 5)
@@ -1078,10 +1078,10 @@ parseOptions(int argc, char* const argv[])
 
 
 int
-main(int argc, char* const argv[]) try
+main(int argc, char* argv[]) try
 {
   // parameters
-  glutInit(&argc, const_cast<char**>(argv));
+  glutInit(&argc, argv);
   if(parseOptions(argc, argv))
     return Trend::args;
 
@@ -1094,7 +1094,7 @@ main(int argc, char* const argv[]) try
   // start the producer thread
   pthread_t thrd;
   pthread_mutex_init(&mutex, NULL);
-  pthread_create(&thrd, NULL, thread, NULL);
+  pthread_create(&thrd, NULL, producer, NULL);
 
   // display, main mindow and callbacks
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
