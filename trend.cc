@@ -10,6 +10,7 @@
 
 // defaults
 #include "defaults.hh"
+#include "color.hh"
 
 // system headers
 #include <stdexcept>
@@ -34,6 +35,9 @@ using std::isnan;
 #include <cstdlib>
 using std::strtod;
 using std::strtoul;
+
+#include <cstring>
+using std::memcpy;
 
 #include <stdio.h>
 #include <ctype.h>
@@ -78,7 +82,14 @@ namespace
   size_t divisions;
 
   // Visual/Fixed settings
+  int width;
+  int height;
   const char* title = NULL;
+  GLfloat backCol[3];
+  GLfloat textCol[3];
+  GLfloat gridCol[3];
+  GLfloat lineCol[3];
+  GLfloat markCol[3];
 
   // Visual/Changeable settings
   bool autoLimit;
@@ -191,8 +202,12 @@ thread(void*)
     // read all data
     double num;
 
-    while(!isnan(num = readNum(in)) && fileName)
+    while(fileName)
     {
+      num = readNum(in);
+      if(isnan(num) && feof(in))
+	break;
+
       // append the value
       pthread_mutex_lock(&mutex);
 
@@ -238,7 +253,18 @@ init()
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   // Clear color
-  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClearColor(backCol[0], backCol[1], backCol[2], 0.0);
+}
+
+
+// Resize handler
+void
+reshape(const int w, const int h)
+{
+  width = w;
+  height = w;
+
+  glViewport(0, 0, w, h);
 }
 
 
@@ -260,20 +286,23 @@ drawString(const float scale, const float x, const float y, const char* string)
 void
 drawGrid()
 {
+  glColor3fv(gridCol);
   glBegin(GL_LINES);
+  double it;
 
   // horizontal scanlines
-  for(size_t it = 1; it != divisions; ++it)
+  for(it = 1; it != divisions; ++it)
   {
-    glVertex2f(it, loLimit);
-    glVertex2f(it, hiLimit);
+    glVertex2d(it, loLimit);
+    glVertex2d(it, hiLimit);
   }
 
   // vertical rasterlines
-  for(float it = loLimit; it <= hiLimit; it += gridres)
+  it = loLimit + drem(loLimit, gridres);
+  for(; it <= hiLimit; it += gridres)
   {
-    glVertex2f(0, it);
-    glVertex2f(divisions, it);
+    glVertex2d(0, it);
+    glVertex2d(divisions, it);
   }
 
   glEnd();
@@ -283,37 +312,27 @@ drawGrid()
 void
 drawMarker(const float x)
 {
+  glColor3fv(markCol);
   glBegin(GL_LINES);
-  glVertex2f(x, loLimit);
-  glVertex2f(x, hiLimit);
+  glVertex2d(x, loLimit);
+  glVertex2d(x, hiLimit);
   glEnd();
 }
 
 
-// redraw handler
-void
-display()
+size_t
+drawLine()
 {
-  glLoadIdentity();
-  gluOrtho2D(0, divisions, loLimit, hiLimit);
-
-  // Clear the device.
-  pthread_mutex_lock(&mutex);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  if(grid)
-  {
-    glColor3f(0.5, 0., 0.5);
-    drawGrid();
-  }
-
   deque<Value>::const_iterator it(data.begin());
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
   for(size_t i = 0; i != data.size(); ++i, ++it)
   {
-    glColor4f(1., 1., 1., static_cast<float>(i) / data.size());
+    // shade the color
+    glColor4f(lineCol[0], lineCol[1], lineCol[2],
+	static_cast<float>(i) / data.size());
+
     pos = ((scroll? i: it->count) % divisions);
     if(!pos)
     {
@@ -321,31 +340,41 @@ display()
       glVertex2f(divisions, it->value);
       glEnd();
       glBegin(GL_LINE_STRIP);
-      glVertex2f(0, it->value);
+      glVertex2d(0, it->value);
     }
     else
-      glVertex2f(pos, it->value);
+      glVertex2d(pos, it->value);
   }
   glEnd();
 
-  if(marker)
-  {
-    glColor3f(0.5, 0.5, 0.);
-    drawMarker(pos);
-  }
-
-  // Flush buffers
-  glutSwapBuffers();
-  pthread_mutex_unlock(&mutex);
+  return pos;
 }
 
 
-// Resize handler
+// redraw handler
 void
-reshape(const int w, const int h)
+display()
 {
-  glViewport(0, 0, w, h);
-  glutPostRedisplay();
+  // setup model coordinates
+  glClear(GL_COLOR_BUFFER_BIT);
+  glLoadIdentity();
+  gluOrtho2D(0, divisions, loLimit, hiLimit);
+
+  // background grid
+  if(grid)
+    drawGrid();
+
+  // data
+  pthread_mutex_lock(&mutex);
+  size_t pos(drawLine());
+  pthread_mutex_unlock(&mutex);
+
+  // marker
+  if(marker)
+    drawMarker(pos);
+
+  // flush buffers
+  glutSwapBuffers();
 }
 
 
@@ -365,6 +394,7 @@ setLimits()
       lo = it->value;
   }
 
+  // some vertical bounds
   hiLimit = hi + gridres;
   loLimit = lo - gridres;
 }
@@ -376,10 +406,11 @@ idle(int)
   // re-register the callback
   glutTimerFunc(1, idle, 0);
 
-  // check if a redraw is necessary
+  // check if a redraw is really necessary
   pthread_mutex_lock(&mutex);
   if(damaged)
   {
+    // recalculate limits seldom
     if(autoLimit)
       setLimits();
 
@@ -395,7 +426,7 @@ idle(int)
  */
 
 void
-showToggleStatus(const char* str, bool& var)
+toggleStatus(const char* str, bool& var)
 {
   var = !var;
   std::cout << str << ": " << (var? "enabled": "disabled") << std::endl;
@@ -403,9 +434,9 @@ showToggleStatus(const char* str, bool& var)
 
 
 double
-getUnit()
+getUnit(const char* str)
 {
-  cout << "u? ";
+  cout << str << "? ";
   double u;
   cin >> u;
 
@@ -422,30 +453,34 @@ keyboard(const unsigned char key, const int x, const int y)
     exit(Trend::success);
     break;
 
-  // Redraw alteration
+  // redraw alteration
+  case Trend::autolimKey:
+    toggleStatus("autolimit", autoLimit);
+    break;
+
   case Trend::smoothKey:
-    showToggleStatus("smoothing", smooth);
+    toggleStatus("smoothing", smooth);
     init();
     break;
 
   case Trend::scrollKey:
-    showToggleStatus("scrolling", scroll);
-    break;
-
-  case Trend::markerKey:
-    showToggleStatus("marker", marker);
-    break;
-
-  case Trend::gridKey:
-    showToggleStatus("grid", grid);
+    toggleStatus("scrolling", scroll);
     break;
 
   case Trend::valuesKey:
-    showToggleStatus("values", values);
+    toggleStatus("values", values);
+    break;
+
+  case Trend::markerKey:
+    toggleStatus("marker", marker);
+    break;
+
+  case Trend::gridKey:
+    toggleStatus("grid", grid);
     break;
 
   case Trend::setResKey:
-    gridres = getUnit();
+    gridres = getUnit("grid resolution");
     break;
 
   default:
@@ -466,9 +501,14 @@ parseOptions(int argc, char* const argv[])
 {
   // starting options
   autoLimit = false;
+  memcpy(backCol, Trend::backCol, sizeof(backCol));
+  memcpy(textCol, Trend::textCol, sizeof(textCol));
+  memcpy(gridCol, Trend::gridCol, sizeof(gridCol));
+  memcpy(lineCol, Trend::lineCol, sizeof(lineCol));
+  memcpy(markCol, Trend::markCol, sizeof(markCol));
 
   int arg;
-  while((arg = getopt(argc, argv, "aSsvmgG:ht:")) != -1)
+  while((arg = getopt(argc, argv, "aSsvmgG:ht:A:E:R:I:M:")) != -1)
     switch(arg)
     {
     case 'a':
@@ -503,6 +543,26 @@ parseOptions(int argc, char* const argv[])
       title = optarg;
       break;
 
+    case 'A':
+      parseColor(backCol, optarg);
+      break;
+
+    case 'E':
+      parseColor(textCol, optarg);
+      break;
+
+    case 'R':
+      parseColor(gridCol, optarg);
+      break;
+
+    case 'I':
+      parseColor(lineCol, optarg);
+      break;
+
+    case 'M':
+      parseColor(markCol, optarg);
+      break;
+
     case 'h':
       cout << argv[0] << " usage: " <<
 	argv[0] << " [options] fifo hist-sz x-div [-y +y]\n" <<
@@ -521,15 +581,15 @@ parseOptions(int argc, char* const argv[])
     return -1;
   }
 
-  fileName = argv[1];
-  history = strtoul(argv[2], NULL, 0);
-  divisions = strtoul(argv[3], NULL, 0);
+  fileName = argv[optind++];
+  history = strtoul(argv[optind++], NULL, 0);
+  divisions = strtoul(argv[optind++], NULL, 0);
 
   // optional limiting factors
   if(argc == 5)
   {
-    loLimit = strtod(argv[4], NULL);
-    hiLimit = strtod(argv[5], NULL);
+    loLimit = strtod(argv[optind++], NULL);
+    hiLimit = strtod(argv[optind++], NULL);
   }
   else
     autoLimit = true;
