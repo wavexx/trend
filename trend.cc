@@ -468,12 +468,22 @@ void
 drawGridX(double gridres)
 {
   // horizontal lines
+  double it;
   glBegin(GL_LINES);
-  for(double it = gridres; it <= divisions; it += gridres)
-  {
-    glVertex2d(it, loLimit);
-    glVertex2d(it, hiLimit);
-  }
+
+  if(scroll)
+    for(it = divisions; it > 0; it -= gridres)
+    {
+      glVertex2d(it, loLimit);
+      glVertex2d(it, hiLimit);
+    }
+  else
+    for(it = gridres; it <= divisions; it += gridres)
+    {
+      glVertex2d(it, loLimit);
+      glVertex2d(it, hiLimit);
+    }
+
   glEnd();
 }
 
@@ -507,7 +517,7 @@ drawGrid()
   if(r < (d * grSpec.x.mayor))
   {
     // minor lines
-    if(grSpec.x.mayor != 1 || r < d)
+    if(grSpec.x.mayor != 1 && r < d)
     {
       glColor4f(gridCol[0], gridCol[1], gridCol[2], 0.5);
       drawGridX(grSpec.x.res);
