@@ -507,15 +507,18 @@ drawGrid()
   if(r < (d * grSpec.x.mayor))
   {
     // minor lines
-    if(r < d)
+    if(grSpec.x.mayor != 1 || r < d)
     {
       glColor4f(gridCol[0], gridCol[1], gridCol[2], 0.5);
       drawGridX(grSpec.x.res);
     }
 
     // mayor lines
-    glColor3fv(gridCol);
-    drawGridX(grSpec.x.res * grSpec.x.mayor);
+    if(grSpec.x.mayor)
+    {
+      glColor3fv(gridCol);
+      drawGridX(grSpec.x.res * grSpec.x.mayor);
+    }
   }
 
   // y
@@ -525,15 +528,18 @@ drawGrid()
   if(r < (d * grSpec.y.mayor))
   {
     // minor lines
-    if(r < d)
+    if(grSpec.y.mayor != 1 && r < d)
     {
       glColor4f(gridCol[0], gridCol[1], gridCol[2], 0.5);
       drawGridY(grSpec.y.res);
     }
 
     // mayor lines
-    glColor3fv(gridCol);
-    drawGridY(grSpec.y.res * grSpec.y.mayor);
+    if(grSpec.y.mayor)
+    {
+      glColor3fv(gridCol);
+      drawGridY(grSpec.y.res * grSpec.y.mayor);
+    }
   }
 }
 
@@ -1038,6 +1044,12 @@ keyboard(const unsigned char key, const int x, const int y)
   case Trend::resetlimKey:
     setLimits();
     cout << "limits reset\n";
+    break;
+
+  case Trend::setlimKey:
+    loLimit = getUnit("-y");
+    hiLimit = getUnit("+y");
+    autoLimit = false;
     break;
 
   case Trend::smoothKey:

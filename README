@@ -33,7 +33,7 @@ The Makefile is still in embryonic form, so it supports only gcc (and IRIX
 systems using pmake and MIPSPro) for now. trend should work on any POSIX/OpenGL
 capable system.
 
-Optimisations are left to the user. Usually doing
+Compiler optimisations are left to the user. Usually doing
 
   CXXFLAGS="-O2" make -e
 
@@ -183,6 +183,7 @@ Interactive keys:
   s	switch scrolling mode (wrap-around or scrolling)
   v	toggle values
   l	show real-to-visual latency
+  L	set limits on the console
   m	activate a marker on the current cursor position
   g	toggle grid
   G	change grid-spec (enter the new spec on the console)
@@ -198,12 +199,13 @@ grid is too dense to be displayed it's deactivated automatically.
 
 Latency indicator:
 
-The latency indicator shows the time-frame (in seconds) between real value
-updates and the final output you're seeing: it includes copy/redraw times
-(which varies depending on enabled layers) plus video sync. This means that on
-CRT monitors with eg. 85hz of vertical refresh, a mean value 5ms is unavoidable
-(unless your graphic card supports asynchronous blits). Sampling accuracy is
-also subject to RTC precision and system scheduling.
+The latency indicator shows a 5s average of the time-frame (always in seconds)
+between real value updates and the final output you're seeing: it includes
+copy/redraw times (which varies depending on enabled layers) plus video
+sync. This means that on CRT monitors with eg. 85hz of vertical refresh, a mean
+value 5ms is unavoidable (unless your graphic card supports asynchronous
+blits). Sampling accuracy is also subject to RTC precision and system
+scheduling.
 
 Interactive indicators:
 
@@ -290,7 +292,8 @@ reason:
   instant of the call-back (sampled atomically). Scheduler latencies apply.
 
 For the non-experts, the scripting convention of sleeping a fixed amount of
-time after sampling the value will lead to cumulative timing errors.
+time after sampling the value will lead to cumulative timing
+errors. Variable-length ASCII input by itself adds a variable delay.
 
 
 General/support mailing list
@@ -331,6 +334,14 @@ trend-intr:		trend -d fifo 1200 600, with the interactive indicators
 trend-oversample:	trend -S -I 0x00FF00 fifo 10000*3 on a ~700 pixels
 			wide window (implicit 1x14 oversampling), showing
 			buffer and visual latency in respect to the source.
+
+
+Further customisation
+=====================
+
+Almost all internal aspects and defaults of trend can be changed by modifying
+"defaults.hh" and recompiling. If you feel that a default should be changed or
+an internal constant be exposed, contact me.
 
 
 Authors and Copyright

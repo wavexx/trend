@@ -17,6 +17,7 @@ namespace Trend
   const unsigned char quitKey =	27;
   const unsigned char autolimKey = 'a';
   const unsigned char resetlimKey = 'A';
+  const unsigned char setlimKey = 'L';
   const unsigned char dimmedKey = 'd';
   const unsigned char distribKey = 'D';
   const unsigned char smoothKey = 'S';
