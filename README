@@ -77,8 +77,8 @@ where:
 
 - options is a list of optional flags (explained later)
 - fifofilename is the named fifo you just created.
-- history-size is the total number of values the graph will retain in the graph
-  before discarding the old ones.
+- history-size is the total number of values the graph will retain
+  before discarding them.
 - subdivisions is the number of horizontal subdivisions of the graph. Older
   values will wrap around (you can still see them under newer ones).
 - low and high are the optional graph vertical limits (respectively the lower
@@ -95,6 +95,7 @@ Standard X11/GLUT options:
 Options:
 
  -d		"dimmed" shading mode
+ -D		visible distribution graph
  -S		enable anti-aliasing
  -s		"scrolling" mode
  -v		visible values
@@ -144,6 +145,7 @@ Interactive keys:
 - ESC: quit/exit
 - a: toggle auto-scaling
 - d: toggle dimmed shading mode
+- D: toggle distribution graph
 - S: toggle anti-aliasing
 - s: switch scrolling mode (wrap-around or scrolling)
 - v: toggle values
@@ -171,6 +173,12 @@ By holding down the CTRL key while clicking/dragging only "foreground" values
 will be considered.
 
 The indicators can be removed by clicking anywhere with the third mouse button.
+
+Distribution graph:
+
+D or -D enable a distribution graph on the left side of the window. This is
+especially useful when analysing the continuity of a function or
+signal. Intensity is proportional to the visible maximum.
 
 
 Examples
@@ -234,11 +242,11 @@ reason:
   bytes is read (in this case each value is read with a single read call).
 - The display is updated within the next millisecond after at least one value
   is read or when a redisplay is needed, with the data available at the
-  instant of the call-back (sampled atomically[2]). Scheduler latencies apply.
+  instant of the call-back (sampled atomically[1]). Scheduler latencies apply.
 
-[1, 2] To a certain degree. Actually the display call-back uses the same
-       shared memory region, but I'm improving that along with the
-       replacement of deque (see TODO).
+[1] To a certain degree. Actually the display call-back uses the same
+    shared exclusive memory region, but I'm improving that along with the
+    replacement of deque (see TODO).
 
 For the non-experts, the scripting convention of sleeping a fixed amount of
 time after sampling the value will lead to cumulative timing errors.

@@ -2,21 +2,21 @@ Planned features
 ================
 
 	* Multiple trends in a single graph. I'd appreciate comments on that
-	(how the interface should respond, where to place the values, etc).
+	(how the interface should respond, where to place the values, etc:
+	I don't feel the idea "intuitive" or very convenient).
 
 	* Binary input
 
-	* Rate-limiting for binary input only:
-	specify the frequency of the input values in order to block the
-	'feeder' without the need to code sleeping loops. This has timing
-	implications, and it's too imprecise for ASCII input.
+	* Rate-limiting for binary input only (specify the frequency of the
+	input values in order to block the 'feeder' without the need to code
+	sleeping loops. This has timing implications, and it's too imprecise
+	for ASCII input.) or additional tool.
 
 	* Differential input (initial absolute value and relative ones
 	following).
 
 	* More optimisations can be done for: different shading, different
-	inputs, deque.
+	inputs, deque (synchronised areas should be reduced considerably),
+	internal latencies.
 
-	* The synchronised areas should be reduced considerably.
-
-	* "Integration" sidebar, quantization script.
+	* Quantisation script.
