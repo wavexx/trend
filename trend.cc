@@ -506,21 +506,17 @@ drawDistrib()
   if(data.size() < 2)
     return;
 
-  // reallocate only if necessary. we must avoid to reallocate
-  // in order to not fragment memory (resize() on gcc 3 isn't very friendly)
+  // reallocate only if necessary. we must avoid to reallocate in order to
+  // not fragment memory (resize() on gcc 3 isn't very friendly)
   if(distribData.size() != height)
     distribData.resize(height);
 
+  // calculate distribution
   deque<Value>::const_iterator it;
   size_t size(data.size() - 1);
 
-  glPushMatrix();
-  glLoadIdentity();
-  gluOrtho2D(0, width, 0, height);
-
-  const double w = Trend::distribWidth;
   distribData.assign(distribData.size(), 0.);
-  double ma = data[0].value;
+  double max = 0;
 
   it = data.begin();
   for(size_t i = 0; i != size; ++i, ++it)
@@ -528,42 +524,59 @@ drawDistrib()
     deque<Value>::const_iterator a = it;
     deque<Value>::const_iterator b = (it + 1);
 
-    int s = ((a->value - loLimit) * height / (hiLimit - loLimit));
-    int e = ((b->value - loLimit) * height / (hiLimit - loLimit));
-    if(s > e) std::swap(s, e);
+    // projection
+    double mul = (static_cast<double>(height) / (hiLimit - loLimit));
+    int begin = static_cast<int>(mul * (a->value - loLimit));
+    int end = static_cast<int>(mul * (b->value - loLimit));
+    if(begin > end) std::swap(begin, end);
 
-    if(e <= 0 || s >= height) continue;
-    if(s < 0) s = 0;
-    if(e > height) e = height;
+    // fixation
+    if(end < 0 || begin > height) continue;
+    if(begin < 0) begin = 0;
+    if(end > height) end = height;
 
-    for(int x = s; x != e; ++x)
+    // integration
+    for(int y = begin; y != end; ++y)
     {
-      ++distribData[x];
-      if(distribData[x] > ma)
-	ma = distribData[x];
+      if(++distribData[y] > max)
+	max = distribData[y];
     }
   }
-  if(ma != 0.) ma = 1. / ma;
+  if(max != 0.)
+    max = 1. / max;
 
-  glBegin(GL_QUAD_STRIP);
-  double color = distribData[0] * ma;
-  glColor3d(color, color, color);
+  // draw the results (optimize for continue zones)
+  glPushMatrix();
+  glLoadIdentity();
+  gluOrtho2D(0, width, 0, height);
+
+  using Trend::distribWidth;
+  double oldColor = distribData[0] * max;
+  glColor3d(oldColor, oldColor, oldColor);
+
+  glBegin(GL_QUADS);
   glVertex2i(0, 0);
-  glVertex2i(w, 0);
+  glVertex2i(distribWidth, 0);
 
-  for(int x = 0; x != height; ++x)
+  for(int y = 1; y != (height - 1); ++y)
   {
-    double ncolor = distribData[x] * ma;
-    if(ncolor != color)
+    double color = distribData[y] * max;
+    if(color != oldColor)
     {
-      glColor3d(ncolor, ncolor, ncolor);
-      glVertex2i(0, x + 1);
-      glVertex2i(w, x + 1);
-    }
-    color = ncolor;
-  }
-  glEnd();
+      glVertex2i(distribWidth, y);
+      glVertex2i(0, y);
 
+      oldColor = color;
+      glColor3d(color, color, color);
+
+      glVertex2i(0, y);
+      glVertex2i(distribWidth, y);
+    }
+  }
+
+  glVertex2i(distribWidth, height);
+  glVertex2i(0, height);
+  glEnd();
   glPopMatrix();
 }
 
