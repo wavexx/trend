@@ -301,9 +301,11 @@ producer(void*)
       switch(input)
       {
       case Trend::incremental:
-	double tmp = num;
-	num = (num - old);
-	old = tmp;
+        {
+	  double tmp = num;
+	  num = (num - old);
+	  old = tmp;
+        }
 	break;
 
       case Trend::differential:
@@ -1017,7 +1019,7 @@ parseSpec(size_t& hist, size_t& div, const char* spec)
 {
   // find the separator first
   const char* p = strpbrk(spec, "/*");
-  if((p == spec) || (p && *(p + 1) == NULL))
+  if((p == spec) || (p && *(p + 1) == 0))
     return true;
 
   if(!p)
