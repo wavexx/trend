@@ -1,0 +1,17 @@
+Planned features
+================
+
+	* Multiple trends in a single graph.
+
+	* Binary input
+
+	* Rate-limiting for binary input only:
+	specify the frequency of the input values in order to block the
+	'feeder' without the need to code sleeping loops. This has timing
+	implications, and it's too imprecise for ASCII input.
+
+	* More optimizations can be done for: different shading, different
+	inputs, deque.
+
+	* Differential input (initial absolute value and relative ones
+	following).

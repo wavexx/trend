@@ -1,0 +1,20 @@
+Rev #4 09/09/2004 to Rev #11 21/09/2004
+=======================================
+
+	* Several optimisations. Code cleanup.
+
+	* Colours are configurable.
+
+	* All options have a command line flag now.
+
+	* current/min/max values can be shown on the graph.
+
+	* New shading mode.
+
+	* Input can be an incremental counter.
+
+	* Grid positioning was fixed.
+
+	* The grid now disables itself when it's too dense to be drawn.
+
+	* Auto-scaling can be toggled dynamically.

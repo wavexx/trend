@@ -13,6 +13,7 @@ Features:
 - Automatic or fixed graph scaling
 - Two graph scrolling and shading modes
 - Configurable colours/grid
+- Flexible input
 
 Requires:
 
@@ -27,8 +28,9 @@ Building
 ========
 
 Type "make" in the source distribution. The executable "trend" will be created.
-The Makefile is still in embryonic form, so it supports only gcc/IRIX systems
-for now. Any POSIX/OpenGL capable system should be supported.
+The Makefile is still in embryonic form, so it supports only gcc (and IRIX
+systems using pmake and MIPSPro) for now. trend should work on any POSIX/OpenGL
+capable system.
 
 
 Executing
@@ -43,7 +45,9 @@ The data is a space/tab/newline-separated series of ASCII decimal numbers; es:
   -12.4E5
 
 The parser is very lenient, and will silently ignore whatever looks like
-garbage.
+garbage. By default all values are considered absolute. By using the -i switch
+values are considered to be incremental counters (in this case the first one is
+used as the initial zero).
 
 FIFO:
 
@@ -79,8 +83,8 @@ data flow (for now at least).
 
 Options:
 
- -d		dimmed shading mode
- -S		enable antialiasing
+ -d		"dimmed" shading mode
+ -S		enable anti-aliasing
  -s		"scrolling" mode
  -v		visible values
  -m		visible marker
@@ -93,6 +97,7 @@ Options:
  -R colour	grid colour
  -I colour	trend colour
  -M colour	marker colour
+ -i		input is an incremental counter
 
 Shading modes:
 
@@ -102,7 +107,7 @@ others with half opacity.
 
 Colour spec:
 
-A colour is specified in hex RGB format, as follows: #RRGGBB (with or without #).
+A colour is specified in hex RGB format, as follows: #RRGGBB, RRGGBB or 0xRRGGBB,
 Some examples:
 
   #FF0000: red
@@ -112,15 +117,15 @@ Some examples:
 Scrolling modes:
 
 The default visualisation mode is "wrap-around": newer values will simply wrap
-around the screen when new data arrives. The other one is "scrolling": new data
-is always placed at the right edge of the screen, and older values scrolled on
-the left.
+around the screen when new data arrives. The other available one is
+"scrolling": new data is always placed at the right edge of the screen, and
+older values scrolled on the left.
 
 Values:
 
 Three value indicators are drawn on the screen: upper limit, lower limit and
-current data value (respectively on the upper right, lower right and lower left
-of the screen).
+current value (respectively on the upper right, lower right and lower left of
+the screen).
 
 Interactive keys:
 
@@ -138,7 +143,8 @@ Autoscaling:
 
 When autoscaling is enabled the graph will be scaled vertically to fit visible
 values. The grid resolution is used to add some vertical bounds to the
-graph. Disabling autoscaling interactively will retain current limits.
+graph. Disabling autoscaling interactively will retain current limits. When the
+grid is too dense to be displayed it's deactivated automatically.
 
 
 Examples
@@ -154,7 +160,7 @@ Some very sample introductory scripts are included within the package:
 ./net <microseconds> [if]:
 
   Show cumulative (in + out) network consumption in bytes using /proc/net/dev
-  using Perl (defaults to eth0).
+  using Perl (the default network interface is eth0, but you can change it).
 
 ./tstimes:
 
