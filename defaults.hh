@@ -42,6 +42,7 @@ namespace Trend
   const bool latency = false;
   const bool grid = false;
   const double gridres = 1.;
+  const int mayor = 10;
 
   // Colors
   const GLfloat backCol[3] = {0.,  0.,  0. };

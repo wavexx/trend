@@ -42,6 +42,7 @@ using std::strtoul;
 using std::memcpy;
 using std::strlen;
 using std::strpbrk;
+using std::strchr;
 
 #include <math.h>
 #include <stdio.h>
@@ -96,6 +97,19 @@ operator<(const Intr& l, const Intr& r)
 }
 
 
+struct Grid
+{
+  double res;
+  unsigned long mayor;
+};
+
+struct GrSpec
+{
+  Grid x;
+  Grid y;
+};
+
+
 /*
  * Graph/Program state
  */
@@ -114,6 +128,7 @@ namespace
   Value* rrEnd;
   double loLimit;
   double hiLimit;
+  double grZero = 0.;
 
   // Visual/Fixed settings
   size_t history;
@@ -138,7 +153,7 @@ namespace
   bool values = Trend::values;
   bool marker = Trend::marker;
   bool grid = Trend::grid;
-  double gridres = Trend::gridres;
+  GrSpec grSpec;
   bool paused = false;
 
   // Indicator status
@@ -450,35 +465,76 @@ drawOSString(const int x, const int y, const char* str)
 
 
 void
+drawGridX(double gridres)
+{
+  // horizontal lines
+  glBegin(GL_LINES);
+  for(double it = gridres; it <= divisions; it += gridres)
+  {
+    glVertex2d(it, loLimit);
+    glVertex2d(it, hiLimit);
+  }
+  glEnd();
+}
+
+
+void
+drawGridY(double gridres)
+{
+  // vertical lines
+  double it = loLimit - drem(loLimit - grZero, gridres);
+
+  glBegin(GL_LINES);
+  for(; it <= hiLimit; it += gridres)
+  {
+    glVertex2d(0, it);
+    glVertex2d(divisions, it);
+  }
+  glEnd();
+}
+
+
+void
 drawGrid()
 {
   using Trend::maxGridDens;
-  glColor3fv(gridCol);
-  glBegin(GL_LINES);
-  double it;
+  double r, d;
 
-  // horizontal scanlines
-  if(divisions < static_cast<size_t>(width / maxGridDens))
+  // x
+  r = (divisions / grSpec.x.res);
+  d = (width / maxGridDens);
+
+  if(r < (d * grSpec.x.mayor))
   {
-    for(it = 1; it != divisions; ++it)
+    // minor lines
+    if(r < d)
     {
-      glVertex2d(it, loLimit);
-      glVertex2d(it, hiLimit);
+      glColor4f(gridCol[0], gridCol[1], gridCol[2], 0.5);
+      drawGridX(grSpec.x.res);
     }
+
+    // mayor lines
+    glColor3fv(gridCol);
+    drawGridX(grSpec.x.res * grSpec.x.mayor);
   }
 
-  // vertical lines
-  if(((hiLimit - loLimit) / gridres) < (height / maxGridDens))
+  // y
+  r = ((hiLimit - loLimit) / grSpec.y.res);
+  d = (height / maxGridDens);
+  
+  if(r < (d * grSpec.y.mayor))
   {
-    it = loLimit - drem(loLimit, gridres);
-    for(; it <= hiLimit; it += gridres)
+    // minor lines
+    if(r < d)
     {
-      glVertex2d(0, it);
-      glVertex2d(divisions, it);
+      glColor4f(gridCol[0], gridCol[1], gridCol[2], 0.5);
+      drawGridY(grSpec.y.res);
     }
-  }
 
-  glEnd();
+    // mayor lines
+    glColor3fv(gridCol);
+    drawGridY(grSpec.y.res * grSpec.y.mayor);
+  }
 }
 
 
@@ -846,8 +902,8 @@ setLimits()
   }
 
   // some vertical bounds
-  hiLimit = hi + gridres;
-  loLimit = lo - gridres;
+  hiLimit = hi + grSpec.y.res;
+  loLimit = lo - grSpec.y.res;
 }
 
 
@@ -865,6 +921,7 @@ idle(int)
   if(test_and_set((unsigned long*)(&damaged), 0))
     recalc = true;
 #else
+  // linux seems to support some unportable atomic stuff into asm/atomic
   pthread_mutex_lock(&mutex);
   if(damaged)
   {
@@ -898,6 +955,34 @@ idle(int)
  * Keyboard interaction
  */
 
+// Parse a grid (res+mayor)
+void
+parseGrid(Grid& grid, char* spec)
+{
+  char* p = strchr(spec, '+');
+  if(p)
+  {
+    *p++ = NULL;
+    if(*p) grid.mayor = strtoul(p, NULL, 0);
+  }
+  if(*spec) grid.res = strtod(spec, NULL);
+}
+
+
+// Parse a grid-spec
+void
+parseGrSpec(GrSpec& grid, char* spec)
+{
+  char* p = strchr(spec, 'x');
+  if(p)
+  {
+    *p++ = NULL;
+    if(*p) parseGrid(grid.x, p);
+  }
+  if(*spec) parseGrid(grid.y, spec);
+}
+
+
 void
 toggleStatus(const char* str, bool& var)
 {
@@ -914,6 +999,17 @@ getUnit(const char* str)
   cin >> u;
 
   return u;
+}
+
+
+void
+getGrid()
+{
+  char buf[256];
+  cout << "grid-spec? ";
+  cin.get(buf, sizeof(buf));
+  parseGrSpec(grSpec, buf);
+  cin.get();
 }
 
 
@@ -966,7 +1062,7 @@ keyboard(const unsigned char key, const int x, const int y)
     break;
 
   case Trend::setResKey:
-    gridres = getUnit("grid resolution");
+    getGrid();
     break;
 
   case Trend::latKey:
@@ -1015,7 +1111,7 @@ mouse(int button, int state, int x, int y)
 
 // Parse a hist/n, div*n, div spec
 bool
-parseSpec(size_t& hist, size_t& div, const char* spec)
+parseHistSpec(size_t& hist, size_t& div, const char* spec)
 {
   // find the separator first
   const char* p = strpbrk(spec, "/*");
@@ -1056,9 +1152,11 @@ parseOptions(int argc, char* const argv[])
   memcpy(lineCol, Trend::lineCol, sizeof(lineCol));
   memcpy(markCol, Trend::markCol, sizeof(markCol));
   memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
+  grSpec.x.res = grSpec.y.res = Trend::gridres;
+  grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:ir")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:irz:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1094,7 +1192,11 @@ parseOptions(int argc, char* const argv[])
       break;
 
     case 'G':
-      gridres = strtod(optarg, NULL);
+      parseGrSpec(grSpec, optarg);
+      break;
+
+    case 'z':
+      grZero = strtod(optarg, NULL);
       break;
 
     case 't':
@@ -1154,7 +1256,7 @@ parseOptions(int argc, char* const argv[])
   fileName = argv[optind++];
   if(argc == 2 || argc == 4)
   {
-    if(parseSpec(history, divisions, argv[optind++]))
+    if(parseHistSpec(history, divisions, argv[optind++]))
     {
       cerr << argv[0] << ": bad hist-spec\n";
       return -1;

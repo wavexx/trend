@@ -96,9 +96,9 @@ An history specification is another convenient form or defining the pair
 "hist-sz x-div" for common cases. An history specification can be in either one
 of the following formats:
 
- N	Sets x-div to N, and hist-sz to N+1.
- N/M	Sets hist-sz to N, and x-div to N/M.
- N*M	Sets x-div to N, and hist-sz to N*M.
+  N	Sets x-div to N, and hist-sz to N+1.
+  N/M	Sets hist-sz to N, and x-div to N/M.
+  N*M	Sets x-div to N, and hist-sz to N*M.
 
 While this may seem hard at first, "./trend fifo '60*3'" is a much easier way
 of defining "180 values, 60 subdivisions". Note that "*" may be expanded by
@@ -119,7 +119,8 @@ Options:
  -l		visible latency
  -m		visible marker
  -g		visible grid
- -G n		specify grid resolution
+ -G grid-spec	specify grid resolution
+ -z n		specify y grid origin
  -h		help and version info
  -t str		specify a window title
  -A colour	background colour
@@ -159,6 +160,18 @@ Three value indicators are drawn on the screen: upper limit, lower limit and
 current value (respectively on the upper right, lower right and lower left of
 the screen).
 
+Grid specification (grid-spec):
+
+A grid specification is of the form:
+
+  [[A][+C]][x[B][+C]]
+
+(eg: 1.3, 10+5, 1x10+5, +5x+5 etc) where:
+
+  A	y grid resolution
+  B	x grid resolution
+  C	draw a mayor line every C normal grid lines
+
 Interactive keys:
 
   ESC	quit/exit
@@ -172,7 +185,7 @@ Interactive keys:
   l	show real-to-visual latency
   m	activate a marker on the current cursor position
   g	toggle grid
-  G	change grid resolution (enter the new resolution on the console)
+  G	change grid-spec (enter the new spec on the console)
   space	pause visualisation (but still continue to consume input to
 	preserve time coherency)
 
