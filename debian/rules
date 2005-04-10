@@ -36,7 +36,11 @@ install: build
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
-	cp trend $(CURDIR)/debian/trend/usr/bin/
+	dh_install
+	dh_installdocs
+	dh_installexamples
+#	dh_installinfo
+#	dh_installman
 
 
 # Build architecture-independent files
@@ -47,11 +51,6 @@ binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs 
-	dh_installdocs
-	dh_installexamples
-#	dh_install
-#	dh_installinfo
-#	dh_installman
 	dh_link
 	dh_strip
 	dh_compress
