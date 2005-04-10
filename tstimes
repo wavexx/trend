@@ -1,0 +1,14 @@
+#!/bin/sh
+# ts execution times
+
+if [ -z "$1" ]
+then
+	file=/as2d1/Logs/TS.9999.err
+	host=as2
+else
+	file="$1"
+	host="$2"
+fi
+
+ssh "$host" tail -f "'$file'" | sed -une 's/^.* time \([0-9]*\), .*$/\1/p'
+
