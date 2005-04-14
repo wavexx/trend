@@ -1,0 +1,32 @@
+#!/bin/sh
+# generate and tests a new debian trend package
+
+# trap errors
+set -e
+
+# basic data
+DATE="`date '+%Y%m%d'`"
+DIST="trend-$DATE"
+
+# generate the source package
+./gendist
+
+# working directory
+rm -fr trend_*
+tar xvzf "$DIST.tar.gz"
+mv "$DIST.tar.gz" "trend_$DATE.orig.tar.gz"
+cp -r debian "$DIST"
+
+# build the package
+cd "$DIST"
+unset CPP CXX CPPFLAGS CXXFLAGS LDFLAGS
+dpkg-buildpackage -rfakeroot -us -uc
+
+# remove aux. files
+cd ..
+rm -rf "$DIST"
+
+# checks
+lintian trend_$DATE-*.dsc
+lintian trend_$DATE-*_*.deb
+

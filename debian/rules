@@ -4,11 +4,13 @@
 #export DH_VERBOSE=1
 
 
-# Optimization flags
+# General optimization flags
+export CXXFLAGS
+
 ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
+	CXXFLAGS += -O0
 else
-	CFLAGS += -O2
+	CXXFLAGS += -O3
 endif
 
 

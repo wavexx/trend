@@ -2,7 +2,7 @@ Source: trend
 Section: utils
 Priority: optional
 Maintainer: Yuri D'Elia <wavexx@yuv.info>
-Build-Depends: debhelper, freeglut-dev, libgl-dev
+Build-Depends: debhelper (>= 4.0.2), freeglut-dev, xlibmesa-gl-dev | libgl-dev, xlibmesa-glu-dev | libglu-dev
 Standards-Version: 3.6.1
 
 Package: trend
@@ -14,3 +14,5 @@ Description: a general-purpose, efficient trend graph for "live" data
  in real-time into a multipass trend (much like a CRT oscilloscope). trend
  can be used as a rapid analysis tool for progressive or time-based data
  series together with trivial scripting.
+ .
+ Homepage: http://www.yuv.info/~wavexx/hacks/trend/
