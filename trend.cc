@@ -302,7 +302,7 @@ producer(void*)
 
     // first value for incremental data
     double old, num;
-    if(input)
+    if(input != Trend::normal)
       old = readFirstNum(in);
 
     // read all data
@@ -331,11 +331,11 @@ producer(void*)
 
       // append the value
       rrData->push_back(Value(num, pos));
-#ifndef __sgi
+#ifdef __sgi
+      add_then_test((unsigned long*)(&damaged), 1);
+#else
       pthread_mutex_lock(&mutex);
-#endif
-      damaged = 1;
-#ifndef __sgi
+      damaged += 1;
       pthread_mutex_unlock(&mutex);
 #endif
 
@@ -1136,7 +1136,7 @@ bool
 parseHistSpec(size_t& hist, size_t& div, const char* spec)
 {
   // find the separator first
-  const char* p = strpbrk(spec, "/*");
+  const char* p = strpbrk(spec, "/*x");
   if((p == spec) || (p && *(p + 1) == 0))
     return true;
 
@@ -1153,7 +1153,7 @@ parseHistSpec(size_t& hist, size_t& div, const char* spec)
     if(!div) return true;
     div = hist / div;
   }
-  else if(*p == '*')
+  else
   {
     div = strtoul(spec, NULL, 0);
     hist = div * strtoul(p + 1, NULL, 0);

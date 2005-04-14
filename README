@@ -98,12 +98,10 @@ of the following formats:
 
   N	Sets x-div to N, and hist-sz to N+1.
   N/M	Sets hist-sz to N, and x-div to N/M.
-  N*M	Sets x-div to N, and hist-sz to N*M.
+  NxM	Sets x-div to N, and hist-sz to N*M.
 
-While this may seem hard at first, "./trend fifo '60*3'" is a much easier way
-of defining "180 values, 60 subdivisions". Note that "*" may be expanded by
-your shell as a globbing operator, thus you should escape the specification
-with quotes or backslashes.
+While this may seem hard at first, "./trend fifo '60x3'" is an easier way of
+expressing "60 seconds for 3 minutes" and similar idioms.
 
 Standard X11/GLUT options:
 
