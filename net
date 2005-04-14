@@ -4,12 +4,16 @@
 use strict;
 use warnings;
 use Time::HiRes "usleep";
+
+# be sure to flush right away!
 $| = 1;
 
+# arguments
 my $old = 0;
-my $ms = ($ARGV[0]? $ARGV[0]: 100000);
+my $ms = ($ARGV[0]? $ARGV[0]: 1) * 100000;
 my $if = ($ARGV[1]? $ARGV[1]: "eth0");
 
+# main loop
 while()
 {
   open FD, "/proc/net/dev" or die;

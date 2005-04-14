@@ -1,7 +1,9 @@
 #!/bin/sh
 # print out memory usage using PCP
 
+# sleep time
 sec="$1"
 [ -z "$sec" ] && sec=1
 
-pmval -t "$sec" mem.util.free
+# get the data
+pmval -t "$sec" mem.util.user
