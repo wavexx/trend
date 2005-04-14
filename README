@@ -129,6 +129,7 @@ Options:
  -N colour	interactive indicator colour
  -i		input is an incremental counter
  -r		input is differential
+ -f		input format
 
 Shading modes:
 
@@ -169,6 +170,22 @@ A grid specification is of the form:
   A	y grid resolution
   B	x grid resolution
   C	draw a mayor line every C normal grid lines
+
+Input format types:
+
+Trend also supports different input formats, as specified by the -f flag. Note
+however that only the ASCII parser (the default) silently ignores errors. For
+binary formats no errors or invalid values (like NaN) should be written: if
+such a value is read, trend will close and reopen the pipe and pretend to
+restart from scratch. The actual underlying binary format depends on the host
+architecture.
+
+  a	ASCII parser (default)
+  f	binary float
+  d	binary double
+  s	binary short
+  i	binary int
+  l	binary long
 
 Interactive keys:
 
@@ -294,8 +311,9 @@ reason:
   instant of the call-back (sampled atomically). Scheduler latencies apply.
 
 For the non-experts, the scripting convention of sleeping a fixed amount of
-time after sampling the value will lead to cumulative timing
-errors. Variable-length ASCII input by itself adds a variable delay.
+time after sampling the value will lead to cumulative timing errors. ASCII
+input by itself adds a variable delay, so use binary formats when performance
+and latency are a concern.
 
 
 General/support mailing list

@@ -1,9 +1,11 @@
 Rev #35 14/12/2004 to Rev
 ========================================
 
-	* Correctly align x grid lines in scrolling mode.
+	* Correctly align X grid lines in scrolling mode.
 
-	* hist-spec now supports "x" in addition of "*".
+	* hist-spec now supports "x" instead of "*".
+
+	* Support for direct binary input.
 
 
 Rev #27 02/11/2004 to Rev #35 14/12/2004

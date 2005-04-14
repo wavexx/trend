@@ -1,6 +1,6 @@
 /*
  * trend: display live data on a trend graph
- * Copyright(c) 2003-2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2003-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -56,6 +56,7 @@ using std::strchr;
 
 // OpenGL/GLU
 #include <GL/glut.h>
+#include <GL/glu.h>
 
 #ifndef NAN
 #define NAN numeric_limits<double>::quiet_NaN()
@@ -121,6 +122,7 @@ namespace
   pthread_mutex_t mutex;
   volatile unsigned long damaged = 0;
   Trend::input_t input = Trend::input;
+  Trend::format_t format = Trend::format;
 
   // Data and fixed parameters
   rr<Value>* rrData;
@@ -240,45 +242,65 @@ readStr(FILE* fd, char* buf, size_t len)
 }
 
 
-// read a number from the stream
+// read a number from an ascii stream
 double
-readNum(FILE* fd)
+readANum(FILE* fd)
 {
-  // discard initial whitespace
-  skipSpc(fd);
-  if(feof(fd))
-    return NAN;
+  // read a number
+  double num;
 
-  // read the number
-  char buf[Trend::maxNumLen];
-  char* end = readStr(fd, buf, sizeof(buf) - 1);
-  if(feof(fd))
-    return NAN;
-  if(!end)
+  for(;;)
   {
-    // long string, skip it.
-    skipStr(fd);
-    return NAN;
-  }
-  *end = 0;
+    // read
+    skipSpc(fd);
+    char buf[Trend::maxNumLen];
+    char* end = readStr(fd, buf, sizeof(buf) - 1);
+    if(feof(fd))
+      return NAN;
+
+    if(!end)
+    {
+      // long string, skip it.
+      skipStr(fd);
+      continue;
+    }
+    *end = 0;
   
-  // convert the number
-  double num = strtod(buf, &end);
-  if(end == buf)
-    return NAN;
+    // convert the number
+    num = strtod(buf, &end);
+    if(end != buf)
+      break;
+  }
   
   return num;
 }
 
 
-// read up to the first number in the stream
+// read a number from a binary stream
+template <class T> double
+readNum(FILE* fd)
+{
+  T buf;
+  fread(&buf, sizeof(buf), 1, fd);
+  return static_cast<double>(buf);
+}
+
+
+// read up to the first number in the stream using the current format
 double
-readFirstNum(FILE* fd)
+readFNum(FILE* fd)
 {
   double num;
 
-  do { num = readNum(fd); }
-  while(!feof(fd) && isnan(num));
+  switch(format)
+  {
+  case Trend::f_ascii: num = readANum(fd); break;
+  case Trend::f_float: num = readNum<float>(fd); break;
+  case Trend::f_double: num = readNum<double>(fd); break;
+  case Trend::f_short: num = readNum<short>(fd); break;
+  case Trend::f_int: num = readNum<int>(fd); break;
+  case Trend::f_long: num = readNum<long>(fd); break;
+  }
 
   return num;
 }
@@ -303,15 +325,11 @@ producer(void*)
     // first value for incremental data
     double old, num;
     if(input != Trend::normal)
-      old = readFirstNum(in);
+      old = readFNum(in);
 
     // read all data
-    while(!feof(in))
+    while(!isnan((num = readFNum(in))))
     {
-      num = readNum(in);
-      if(isnan(num))
-	continue;
-
       // determine the actual value
       switch(input)
       {
@@ -1163,6 +1181,22 @@ parseHistSpec(size_t& hist, size_t& div, const char* spec)
 }
 
 
+Trend::format_t
+parseFormat(const char* arg)
+{
+  switch(arg[0])
+  {
+  case 'f': return Trend::f_float;
+  case 'd': return Trend::f_double;
+  case 's': return Trend::f_short;
+  case 'i': return Trend::f_int;
+  case 'l': return Trend::f_long;
+  };
+
+  return Trend::f_ascii;
+}
+
+
 // Initialize globals through command line
 int
 parseOptions(int argc, char* const argv[])
@@ -1178,7 +1212,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:irz:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:irz:f:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1255,6 +1289,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'r':
       input = Trend::differential;
+      break;
+
+    case 'f':
+      format = parseFormat(optarg);
       break;
 
     case 'h':

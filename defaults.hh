@@ -1,6 +1,6 @@
 /*
  * defaults: trend defaults and constants
- * Copyright(c) 2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2004-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -31,9 +31,11 @@ namespace Trend
 
   // Some types
   enum input_t {normal, incremental, differential};
+  enum format_t {f_ascii, f_float, f_double, f_short, f_int, f_long};
 
   // Defaults
   const input_t input = normal;
+  const format_t format = f_ascii;
   const bool dimmed = false;
   const bool distrib = false;
   const bool smooth = false;
