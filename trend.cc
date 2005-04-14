@@ -1153,7 +1153,8 @@ mouse(int button, int state, int x, int y)
 bool
 parseHistSpec(size_t& hist, size_t& div, const char* spec)
 {
-  // find the separator first
+  // find the separator first.
+  // TODO: * is deprecated
   const char* p = strpbrk(spec, "/*x");
   if((p == spec) || (p && *(p + 1) == 0))
     return true;
@@ -1181,19 +1182,40 @@ parseHistSpec(size_t& hist, size_t& div, const char* spec)
 }
 
 
-Trend::format_t
-parseFormat(const char* arg)
+bool
+parseInput(Trend::input_t& input, const char* arg)
 {
   switch(arg[0])
   {
-  case 'f': return Trend::f_float;
-  case 'd': return Trend::f_double;
-  case 's': return Trend::f_short;
-  case 'i': return Trend::f_int;
-  case 'l': return Trend::f_long;
+  case 'n': input = Trend::normal; break;
+  case 'i': input = Trend::incremental; break;
+  case 'd': input = Trend::differential; break;
+
+  default:
+    return true;
   };
 
-  return Trend::f_ascii;
+  return false;
+}
+
+
+bool
+parseFormat(Trend::format_t& format, const char* arg)
+{
+  switch(arg[0])
+  {
+  case 'a': format = Trend::f_ascii; break;
+  case 'f': format = Trend::f_float; break;
+  case 'd': format = Trend::f_double; break;
+  case 's': format = Trend::f_short; break;
+  case 'i': format = Trend::f_int; break;
+  case 'l': format = Trend::f_long; break;
+
+  default:
+    return true;
+  };
+
+  return false;
 }
 
 
@@ -1212,7 +1234,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:irz:f:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:irz:f:c:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1283,16 +1305,30 @@ parseOptions(int argc, char* const argv[])
       parseColor(intrCol, optarg);
       break;
 
+    case 'c':
+      if(parseInput(input, optarg))
+      {
+	cerr << argv[0] << ": bad input mode\n";
+	return -1;
+      }
+      break;
+
     case 'i':
+      // TODO: deprecated
       input = Trend::incremental;
       break;
 
     case 'r':
+      // TODO: deprecated
       input = Trend::differential;
       break;
 
     case 'f':
-      format = parseFormat(optarg);
+      if(parseFormat(format, optarg))
+      {
+	cerr << argv[0] << ": bad format type\n";
+	return -1;
+      }
       break;
 
     case 'h':
