@@ -1,0 +1,79 @@
+#!/usr/bin/env perl
+# a very basic and imprecise time quantizer
+
+use strict;
+use warnings;
+use Getopt::Std qw{getopts};
+use Time::HiRes qw{usleep gettimeofday tv_interval};
+
+# be sure to flush right away!
+$| = 1;
+
+# arguments
+my %flags;
+getopts('s', \%flags);
+my $ms = ($ARGV[0]? $ARGV[0]: 1);
+my $dlen = length(pack("d", ()));
+
+# parser 
+sub parser()
+{
+  while(<STDIN>)
+  {
+    my $v = pack("d", ($_ + 0));
+    syswrite(FD, $v, $dlen);
+  }
+}
+
+# quantizer
+sub quantize()
+{
+  my $res = $ms;
+  my $cum = 0;
+  my $num = 0;
+
+  # prepare fds
+  my $fds = '';
+  vec($fds, fileno(STDIN), 1) = 1;
+
+  while($fds)
+  {
+    # select
+    my $pre = [gettimeofday];
+    my $rfs = $fds;
+    my $n = select($rfs, undef, undef, $res);
+    $res -= tv_interval($pre, [gettimeofday]);
+
+    # return values
+    if($n > 0)
+    {
+      my $v;
+      if(!sysread(STDIN, $v, $dlen)) {
+	$fds = undef;
+      } else {
+	++$num;
+	$cum += unpack("d", $v);
+      }
+    }
+
+    # average
+    if($res <= 0)
+    {
+      my $v = ($flags{s}? $cum: ($num? $cum / $num: 0));
+      syswrite(STDOUT, pack("d", $v), $dlen);
+
+      # we should rather compensate than drift
+      $num = $cum = 0;
+      $res += $ms;
+    }
+  }
+}
+
+# execution
+my $pid = open(FD, "|-");
+die unless(defined($pid));
+if($pid) {
+  parser();
+} else {
+  quantize();
+}

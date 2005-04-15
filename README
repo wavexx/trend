@@ -52,10 +52,8 @@ The data is a space/tab/newline-separated series of ASCII decimal numbers; es:
   -12.4E5
 
 The parser is very lenient, and will silently ignore whatever looks like
-garbage. By default all values are considered absolute. By using the -i switch
-values are considered to be an incremental counter. With -r values are
-considered to be relative/differential. With -r or -i the first value is taken
-as the reference value.
+garbage. By default all values are considered absolute, but other input modes
+(like incremental counters) and binary formats can be used too.
 
 FIFO:
 
@@ -127,9 +125,8 @@ Options:
  -I colour	trend colour
  -M colour	marker colour
  -N colour	interactive indicator colour
- -i		input is an incremental counter
- -r		input is differential
- -f		input format
+ -c mode	input counting mode
+ -f format	input format
 
 Shading modes:
 
@@ -171,9 +168,20 @@ A grid specification is of the form:
   B	x grid resolution
   C	draw a mayor line every C normal grid lines
 
+Input counting modes:
+
+By default all input values are considered absolute and displayed "as
+is". However trend can cope with incremental and differential counters too, by
+using the -c flag and taking the first value as the reference value. Available
+modes are:
+
+  n	normal (default)
+  i	incremental counter 
+  d	differential values
+
 Input format types:
 
-Trend also supports different input formats, as specified by the -f flag. Note
+trend also supports different input formats, as specified by the -f flag. Note
 however that only the ASCII parser (the default) silently ignores errors. For
 binary formats no errors or invalid values (like NaN) should be written: if
 such a value is read, trend will close and reopen the pipe and pretend to
@@ -246,26 +254,36 @@ signal. Intensity is proportional to the visible maximum.
 Examples
 ========
 
-Some very sample introductory scripts are included within the package:
+Some simple example scripts are included within the package:
 
-./mem <microseconds>:
+./mem <seconds>:
 
-  Print-out used memory (incl. swap) of a linux kernel using /proc/meminfo
-  using Perl each tenth of second or the specified number of microseconds.
+  Print-out active memory (incl. swap) of a linux kernel using /proc/meminfo
+  using Perl each tenth of second or the specified number of seconds.
 
 ./imem <seconds>:
 
   The same using pmval from Peformance Co-Pilot.
 
-./net <microseconds> [if]:
+./net <seconds> [if]:
 
   Show cumulative (in + out) network consumption in bytes using /proc/net/dev
-  using Perl (the default network interface is eth0, but you can change it).
+  using Perl (the default network interface if you don't specify any is eth0).
 
 ./tstimes:
 
   A more complicated example I use to display server production times without
-  particular requirements (the log is parsed and displayed in realtime)
+  particular requirements (the log is parsed and displayed in realtime).
+
+./timeq [-s] <seconds>:
+
+  Time-quantize ASCII input: show an average (or total with -s) for received
+  values (from stdin) in the specified time-lapse. A common example of usage
+  would be in conjunction with the preceding "tstimes", or see the following
+  example with apache. Note that timeq outputs binary values to avoid
+  double-parses (see -fd). The ASCII parser is not as flexible as trend's and
+  requires each value to be in a separated line. Do not use this sample
+  implementation for any serious work.
 
 In the following example we will display the latest two minutes of network
 activity (with the first one being in front of the other) sampled each tenth of
@@ -278,6 +296,13 @@ second:
 To display the number of current active processes over time you can do:
 
   (while true; do ps -A | wc -l; sleep 1; done) > fifo
+
+Bytes roughly transferred each minute on an apache server?
+
+  ./trend -fd -d fifo 60x24 &
+  tail -f access.log | \
+    sed -une 's/.* \([0-9][0-9]*\) [0-9]*$/\1/p' | \
+    ./timeq -s 60 > fifo
 
 An example of using snmpdelta from the NET-SNMP utilities to monitor a remote
 IF-MIB network interface:
@@ -333,6 +358,11 @@ This problem experienced on some machines is caused by the new joystick support
 present in FreeGLUT 2.2.0. Either use standard GLUT, or upgrade to a later/cvs
 version of FreeGLUT (nightly snapshots are fine), where joystick initialisation
 has been made conditional.
+
+"trend: producer thread exiting" warning:
+
+The data stream finished for some reason (the specified file was invalid at the
+time of the request). For regular or invalid files this warning is normal.
 
 
 Screen-shots

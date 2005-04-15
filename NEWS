@@ -1,11 +1,16 @@
-Rev #35 14/12/2004 to Rev
+Rev #35 14/12/2004 to Rev #40 15/04/2005
 ========================================
 
 	* Correctly align X grid lines in scrolling mode.
 
-	* hist-spec now supports "x" instead of "*".
+	* hist-spec now uses "x" instead of "*".
 
 	* Support for direct binary input.
+
+	* New example (see timeq) and cleanup.
+
+	* DEPRECATES: N*M hist-specs should no longer be used, use NxM
+	instead. -i and -r flags should no longer be used, use -ci -cd.
 
 
 Rev #27 02/11/2004 to Rev #35 14/12/2004

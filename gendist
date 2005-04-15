@@ -8,7 +8,7 @@ REV="`p4 have trend.cc | sed -e 's/^\/\/[^#]*#\([0-9]*\).*/\1/'`"
 HEAD="to Rev #$REV `date '+%d/%m/%Y'`"
 CATALOG="
 	Makefile
-	imem tstimes mem net
+	imem tstimes mem net timeq
 	trend.cc defaults.hh color.cc color.hh rr.hh timer.hh
 	AUTHORS COPYING README TODO NEWS
 "
