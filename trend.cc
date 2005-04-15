@@ -308,19 +308,25 @@ readFNum(FILE* fd)
 
 // producer thread
 void*
-producer(void*)
+producer(void* prg)
 {
   // iostreams under gcc 3.x are completely unusable for advanced tasks such as
   // customizable buffering/locking/etc. They also removed the (really
   // standard) ->fd() access for "encapsulation"...
   FILE* in;
 
-  for(size_t pos = (history % divisions); fileName;)
+  for(size_t pos = (history % divisions);;)
   {
     // open the file and disable buffering
     in = fopen(fileName, "r");
     if(!in) break;
     setvbuf(in, NULL, _IONBF, 0);
+
+    // check for useless file types
+    struct stat stBuf;
+    fstat(fileno(in), &stBuf);
+    if(S_ISDIR(stBuf.st_mode))
+      break;
 
     // first value for incremental data
     double old, num;
@@ -353,7 +359,7 @@ producer(void*)
       add_then_test((unsigned long*)(&damaged), 1);
 #else
       pthread_mutex_lock(&mutex);
-      damaged += 1;
+      ++damaged;
       pthread_mutex_unlock(&mutex);
 #endif
 
@@ -362,16 +368,14 @@ producer(void*)
 	pos = 0;
     }
 
-    // terminate the loop for regular files
-    struct stat stBuf;
-    fstat(fileno(in), &stBuf);
-    if(S_ISREG(stBuf.st_mode))
-      fileName = NULL;
-
-    // close the stream
+    // close the stream and terminate the loop for regular files
     fclose(in);
+    if(S_ISREG(stBuf.st_mode) || S_ISBLK(stBuf.st_mode))
+      break;
   }
 
+  // should never get so far
+  cerr << reinterpret_cast<char*>(prg) << ": producer thread exiting\n";
   return NULL;
 }
 
@@ -1403,7 +1407,7 @@ main(int argc, char* argv[]) try
   // start the producer thread
   pthread_t thrd;
   pthread_mutex_init(&mutex, NULL);
-  pthread_create(&thrd, NULL, producer, NULL);
+  pthread_create(&thrd, NULL, producer, argv[0]);
 
   // display, main mindow and callbacks
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
