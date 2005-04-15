@@ -281,8 +281,8 @@ template <class T> double
 readNum(FILE* fd)
 {
   T buf;
-  fread(&buf, sizeof(buf), 1, fd);
-  return static_cast<double>(buf);
+  return (fread(&buf, sizeof(buf), 1, fd)?
+      static_cast<double>(buf): NAN);
 }
 
 
