@@ -330,7 +330,7 @@ producer(void* prg)
 
     // first value for incremental data
     double old, num;
-    if(input != Trend::normal)
+    if(input != Trend::absolute)
       old = readFNum(in);
 
     // read all data
@@ -1191,7 +1191,7 @@ parseInput(Trend::input_t& input, const char* arg)
 {
   switch(arg[0])
   {
-  case 'n': input = Trend::normal; break;
+  case 'a': input = Trend::absolute; break;
   case 'i': input = Trend::incremental; break;
   case 'd': input = Trend::differential; break;
 

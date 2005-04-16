@@ -175,7 +175,7 @@ is". However trend can cope with incremental and differential counters too, by
 using the -c flag and taking the first value as the reference value. Available
 modes are:
 
-  n	normal (default)
+  a	absolute (default)
   i	incremental counter 
   d	differential values
 
@@ -186,7 +186,7 @@ however that only the ASCII parser (the default) silently ignores errors. For
 binary formats no errors or invalid values (like NaN) should be written: if
 such a value is read, trend will close and reopen the pipe and pretend to
 restart from scratch. The actual underlying binary format depends on the host
-architecture.
+architecture:
 
   a	ASCII parser (default)
   f	binary float
@@ -291,7 +291,7 @@ second:
 
   mkfifo fifo
   ./trend fifo 1200 600 &
-  ./net 100000 > fifo
+  ./net 0.1 > fifo
 
 To display the number of current active processes over time you can do:
 
@@ -381,7 +381,7 @@ trend-distrib:		trend with the distribution graph active, showing a
 trend-intr:		trend -d fifo 1200 600, with the interactive indicators
 			active. Input is from a custom board.
 
-trend-oversample:	trend -S -I 0x00FF00 fifo 10000*3 on a ~700 pixels
+trend-oversample:	trend -S -I 0x00FF00 fifo 10000x3 on a ~700 pixels
 			wide window (implicit 1x14 oversampling), showing
 			buffer and visual latency in respect to the source.
 

@@ -5,12 +5,8 @@ Planned features
 	(how the interface should respond, where to place the values, etc:
 	I don't feel the idea "intuitive" or very convenient anymore).
 
-	* Binary input
-
 	* More optimisations can be done for: different shading modes,
 	different input types.
-
-	* Script or program to time-quantise input.
 
 	* Maybe some basic oscilloscope controls like: graph offsetting,
 	zooming, value skipping.

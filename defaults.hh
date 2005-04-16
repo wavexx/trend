@@ -30,11 +30,11 @@ namespace Trend
   const unsigned char latKey = 'l';
 
   // Some types
-  enum input_t {normal, incremental, differential};
+  enum input_t {absolute, incremental, differential};
   enum format_t {f_ascii, f_float, f_double, f_short, f_int, f_long};
 
   // Defaults
-  const input_t input = normal;
+  const input_t input = absolute;
   const format_t format = f_ascii;
   const bool dimmed = false;
   const bool distrib = false;
