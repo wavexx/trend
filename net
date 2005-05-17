@@ -10,7 +10,7 @@ $| = 1;
 
 # arguments
 my $old = 0;
-my $ms = ($ARGV[0]? $ARGV[0]: 1) * 100000;
+my $ms = ($ARGV[0]? $ARGV[0]: 0.1) * 1000000;
 my $if = ($ARGV[1]? $ARGV[1]: "eth0");
 
 # main loop

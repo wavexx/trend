@@ -514,10 +514,12 @@ void
 drawGridY(double gridres)
 {
   // vertical lines
-  double it = loLimit - drem(loLimit - grZero, gridres);
+  double it = loLimit - fmod(loLimit - grZero, gridres);
+  if(it <= loLimit)
+    it += gridres;
 
   glBegin(GL_LINES);
-  for(; it <= hiLimit; it += gridres)
+  for(; it < hiLimit; it += gridres)
   {
     glVertex2d(0, it);
     glVertex2d(divisions, it);

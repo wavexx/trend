@@ -9,7 +9,7 @@ use Time::HiRes "usleep";
 $| = 1;
 
 # sleep time
-my $ms = ($ARGV[0]? $ARGV[0]: 0.1) * 100000;
+my $ms = ($ARGV[0]? $ARGV[0]: 0.1) * 1000000;
 
 # main loop
 while()
