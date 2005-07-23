@@ -8,7 +8,7 @@
 #define defaults_hh
 
 // GL headers
-#include <GL/gl.h>
+#include "gl.hh"
 
 
 namespace Trend

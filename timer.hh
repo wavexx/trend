@@ -1,6 +1,6 @@
 /*
  * timer: timing utilities
- * Copyright(c) 2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2004-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -8,7 +8,7 @@
 #define timer_hh
 
 // c system headers
-#include <time.h>
+#include <sys/time.h>
 
 
 // Averaging stop-watch timer (with variable-bound precision)
@@ -23,10 +23,10 @@ class ATimer
 
   double now()
   {
-    timespec n;
-    clock_gettime(CLOCK_REALTIME, &n);
+    timeval n;
+    gettimeofday(&n, NULL);
     return (static_cast<double>(n.tv_sec) +
-	.000000001 * static_cast<double>(n.tv_nsec));
+	.000001 * static_cast<double>(n.tv_usec));
   }
 
 

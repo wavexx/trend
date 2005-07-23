@@ -55,8 +55,7 @@ using std::strchr;
 #endif
 
 // OpenGL/GLU
-#include <GL/glut.h>
-#include <GL/glu.h>
+#include "gl.hh"
 
 #ifndef NAN
 #define NAN numeric_limits<double>::quiet_NaN()
@@ -735,7 +734,7 @@ drawIntr()
   glEnd();
 
   // scan for all intersections
-  size_t trX = (static_cast<size_t>(std::floor(intrX)));
+  size_t trX = (static_cast<size_t>(floor(intrX)));
   if(trX == divisions) --trX;
   double mul = (intrX - trX);
   vector<Intr> intrs;
@@ -778,7 +777,7 @@ drawIntr()
       buf.near.count = getPosition(i + 1, next);
     }
     buf.value = it->value + mul * (next.value - it->value);
-    buf.dist = std::abs(buf.value - intrY);
+    buf.dist = fabs(buf.value - intrY);
     intrs.push_back(buf);
   }
 
