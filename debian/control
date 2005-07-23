@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Yuri D'Elia <wavexx@yuv.info>
 Build-Depends: debhelper (>= 4.0.2), freeglut-dev, xlibmesa-gl-dev | libgl-dev, xlibmesa-glu-dev | libglu-dev
-Standards-Version: 3.6.1
+Standards-Version: 3.6.2
 
 Package: trend
 Architecture: any
