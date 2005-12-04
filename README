@@ -125,6 +125,7 @@ Options:
  -I colour	trend colour
  -M colour	marker colour
  -N colour	interactive indicator colour
+ -T colour	edit mode colour
  -c mode	input counting mode
  -f format	input format
 
@@ -206,10 +207,10 @@ Interactive keys:
   s	switch scrolling mode (wrap-around or scrolling)
   v	toggle values
   l	show real-to-visual latency
-  L	set limits on the console
+  L	set limits interactively
   m	activate a marker on the current cursor position
   g	toggle grid
-  G	change grid-spec (enter the new spec on the console)
+  G	change grid-spec interactively
   space	pause visualisation (but still continue to consume input to
 	preserve time coherency)
 

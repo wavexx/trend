@@ -1,3 +1,11 @@
+Rev #44 23/07/2005 to Rev #
+========================================
+
+	* Console is no longer used for input, an embedded line editor is now
+	used (ie when setting limits/grid-spec interactively, stdin will
+	eventually be used for remote controlling).
+
+
 Rev #40 15/04/2005 to Rev #44 23/07/2005
 ========================================
 

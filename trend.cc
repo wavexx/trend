@@ -22,7 +22,6 @@ using std::vector;
 #include <iostream>
 using std::cout;
 using std::cerr;
-using std::cin;
 
 #include <string>
 using std::string;
@@ -60,6 +59,8 @@ using std::strchr;
 #ifndef NAN
 #define NAN numeric_limits<double>::quiet_NaN()
 #endif
+
+typedef void (*EditCallback)(const char* str);
 
 
 /*
@@ -112,6 +113,7 @@ struct GrSpec
 
 /*
  * Graph/Program state
+ * TODO: starting to get a bit crowded/state hell
  */
 
 namespace
@@ -142,6 +144,7 @@ namespace
   GLfloat lineCol[3];
   GLfloat markCol[3];
   GLfloat intrCol[3];
+  GLfloat editCol[3];
 
   // Visual/Changeable settings
   int width;
@@ -170,6 +173,12 @@ namespace
   // Latency
   bool latency = Trend::latency;
   ATimer atLat(Trend::latAvg);
+
+  // Edit form
+  bool edit;
+  EditCallback editCallback;
+  string editTitle;
+  string editStr;
 }
 
 
@@ -465,7 +474,7 @@ drawOSString(const int x, const int y, const char* str)
   using Trend::strSpc;
   using Trend::fontHeight;
 
-  int len(strlen(str) * 8);
+  int len(strlen(str) * Trend::fontWidth);
   int rx(x + strSpc);
   int ry(y + strSpc);
 
@@ -867,6 +876,42 @@ drawLatency()
 }
 
 
+void
+drawEdit()
+{
+  const int height2 = height / 2;
+  const int blockH = Trend::fontHeight * 2;
+  const int blockS = Trend::fontHeight / 2;
+
+  glBegin(GL_QUADS);
+  
+  // background
+  glColor4f(0., 0., 0., 0.9);
+  glVertex2d(0, height2 + blockH);
+  glVertex2d(width, height2 + blockH);
+  glVertex2d(width, height2 - blockH);
+  glVertex2d(0, height2 - blockH);
+  
+  // borders
+  glColor3fv(editCol);
+  glVertex2d(0, height2 + blockH + blockS);
+  glVertex2d(width, height2 + blockH + blockS);
+  glVertex2d(width, height2 + blockH);
+  glVertex2d(0, height2 + blockH);
+  glVertex2d(0, height2 - blockH - blockS);
+  glVertex2d(width, height2 - blockH - blockS);
+  glVertex2d(width, height2 - blockH);
+  glVertex2d(0, height2 - blockH);
+
+  glEnd();
+
+  // strings
+  string buf(editTitle + ": " + editStr);
+  drawString(width / 2 - Trend::fontWidth * buf.size() / 2,
+      height2 - blockS, buf.c_str());
+}
+
+
 // redraw handler
 void
 display()
@@ -899,6 +944,9 @@ display()
   // video stuff
   if(values) drawValues();
   if(latency) drawLatency();
+
+  // editing
+  if(edit) drawEdit();
 
   // flush buffers
   glutSwapBuffers();
@@ -1030,30 +1078,91 @@ toggleStatus(const char* str, bool& var)
 }
 
 
-double
-getUnit(const char* str)
-{
-  cout << str << "? ";
-  double u;
-  cin >> u;
+void
+editMode(bool mode);
 
-  return u;
+
+void
+editMode(const char* str, EditCallback call)
+{
+  editTitle = str;
+  editStr.clear();
+  editCallback = call;
+  editMode(true);
+}
+
+
+bool
+editCall()
+{
+  EditCallback call = editCallback;
+  editCallback = NULL;
+  (*call)(editStr.c_str());
 }
 
 
 void
-getGrid()
+editKeyboard(const unsigned char key, const int, const int)
 {
-  char buf[256];
-  cout << "grid-spec? ";
-  cin.get(buf, sizeof(buf));
+  switch(key)
+  {
+  case 13:
+  case 27:
+    if(key == 27 || !editStr.size() || (editCall(), !editCallback))
+      editMode(false);
+    break;
+
+  case 8:
+  case 127:
+    if(!editStr.size())
+      return;
+    editStr.resize(editStr.size() - 1);
+    break;
+
+  default:
+    if(!isprint(key) && editStr.size() + 1 != Trend::maxNumLen)
+      return;
+    editStr += key;
+  }
+
+  glutPostRedisplay();
+}
+
+
+void
+getLimits2(const char* str)
+{
+  hiLimit = strtod(str, NULL);
+}
+
+
+void
+getLimits1(const char* str)
+{
+  if(autoLimit) toggleStatus("autolimit", autoLimit);
+  loLimit = strtod(str, NULL);
+  editMode("+y", getLimits2);
+}
+
+
+void
+getLimits()
+{
+  editMode("-y", getLimits1);
+}
+
+
+void
+getGrid(const char* str)
+{
+  if(!grid) toggleStatus("grid", grid);
+  char* buf(strdup(str));
   parseGrSpec(grSpec, buf);
-  cin.get();
 }
 
 
 void
-keyboard(const unsigned char key, const int x, const int y)
+dispKeyboard(const unsigned char key, const int x, const int y)
 {
   switch(key)
   {
@@ -1080,9 +1189,7 @@ keyboard(const unsigned char key, const int x, const int y)
     break;
 
   case Trend::setlimKey:
-    loLimit = getUnit("-y");
-    hiLimit = getUnit("+y");
-    autoLimit = false;
+    getLimits();
     break;
 
   case Trend::smoothKey:
@@ -1107,7 +1214,7 @@ keyboard(const unsigned char key, const int x, const int y)
     break;
 
   case Trend::setResKey:
-    getGrid();
+    editMode("grid-spec", getGrid);
     break;
 
   case Trend::latKey:
@@ -1126,7 +1233,7 @@ keyboard(const unsigned char key, const int x, const int y)
 
 
 void
-motion(int x, int y)
+dispMotion(int x, int y)
 {
   unproject(x, y, intrX, intrY);
 
@@ -1141,12 +1248,12 @@ motion(int x, int y)
 
 
 void
-mouse(int button, int state, int x, int y)
+dispMouse(int button, int state, int x, int y)
 {
   // cause a motion event internally
   intr = (button != GLUT_RIGHT_BUTTON);
   intrFg = (glutGetModifiers() & GLUT_ACTIVE_CTRL);
-  motion(x, y);
+  dispMotion(x, y);
 }
 
 
@@ -1235,6 +1342,7 @@ parseOptions(int argc, char* const argv[])
   memcpy(lineCol, Trend::lineCol, sizeof(lineCol));
   memcpy(markCol, Trend::markCol, sizeof(markCol));
   memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
+  memcpy(editCol, Trend::editCol, sizeof(editCol));
   grSpec.x.res = grSpec.y.res = Trend::gridres;
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
@@ -1308,6 +1416,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'N':
       parseColor(intrCol, optarg);
+      break;
+
+    case 'T':
+      parseColor(editCol, optarg);
       break;
 
     case 'c':
@@ -1391,6 +1503,26 @@ parseOptions(int argc, char* const argv[])
 }
 
 
+void
+editMode(bool edit)
+{
+  if(edit)
+  {
+    glutKeyboardFunc(editKeyboard);
+    glutMouseFunc(NULL);
+    glutMotionFunc(NULL);
+  }
+  else
+  {
+    glutKeyboardFunc(dispKeyboard);
+    glutMouseFunc(dispMouse);
+    glutMotionFunc(dispMotion);
+  }
+
+  ::edit = edit;
+}
+
+
 int
 main(int argc, char* argv[]) try
 {
@@ -1415,9 +1547,7 @@ main(int argc, char* argv[]) try
   glutCreateWindow(title? title: argv[0]);
   glutReshapeFunc(reshape);
   glutDisplayFunc(display);
-  glutKeyboardFunc(keyboard);
-  glutMouseFunc(mouse);
-  glutMotionFunc(motion);
+  editMode(false);
 
   // first redraw
   init();
