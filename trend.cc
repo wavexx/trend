@@ -116,7 +116,7 @@ struct GrSpec
 
 /*
  * Graph/Program state
- * TODO: starting to get a bit crowded/state hell
+ * TODO: refactor! refactor! refactor!
  */
 
 namespace
@@ -750,8 +750,11 @@ drawDistrib()
 
 
 void
-drawIntr()
+drawTIntr()
 {
+  // handle side cases
+  const double intrX = (::intrX < 0 || ::intrX > divisions? 0: ::intrX);
+
   // initial color and current position
   glColor3fv(intrCol);
   glBegin(GL_LINES);
@@ -825,7 +828,6 @@ drawIntr()
     mean += it->value;
     glVertex2d(0, it->value);
     glVertex2d(divisions, it->value);
-
   }
   glEnd();
   mean /= intrs.size();
@@ -861,6 +863,27 @@ drawIntr()
 
   // restore model space
   glPopMatrix();
+}
+
+
+void
+drawDIntr()
+{
+  // handle side cases
+  int x, y;
+  project(intrX, intrY, x, y);
+  int nY = (y < 0? 0: (y >= height? height - 1: y));
+
+  // initial color and current position
+  glColor3fv(intrCol);
+  glBegin(GL_LINES);
+  glVertex2d(0, y);
+  glVertex2d(width, y);
+  glEnd();
+
+  char buf[256];
+  sprintf(buf, "%g: %g", intrY, (y != nY? NAN: distribData[nY]));
+  drawString(Trend::strSpc, height - Trend::strSpc - Trend::fontHeight, buf);
 }
 
 
@@ -980,7 +1003,8 @@ display()
   // other data
   if(distrib) drawDistrib();
   if(marker) drawMarker(pos);
-  if(intr) drawIntr();
+  if(intr && (!distrib || intrX >= 0))
+    drawTIntr();
 
   // setup video coordinates
   glLoadIdentity();
@@ -989,6 +1013,8 @@ display()
   // video stuff
   if(values) drawValues();
   if(latency) drawLatency();
+  if(intr && distrib && intrX < 0)
+    drawDIntr();
 
   // editing
   if(edit) drawEdit();
@@ -1295,13 +1321,6 @@ void
 dispMotion(int x, int y)
 {
   unproject(x, y, intrX, intrY);
-
-  // the x position must be adjusted
-  if(intrX < 0)
-    intrX = 0.;
-  else if(intrX > divisions)
-    intrX = static_cast<double>(divisions);
-
   glutPostRedisplay();
 }
 

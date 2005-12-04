@@ -5,10 +5,13 @@ Rev #44 23/07/2005 to Rev #
 	used (ie when setting limits/grid-spec interactively, stdin will
 	eventually be used for remote controlling).
 
-	* Console is no longer used for output (except for errors), messages
-	are now displayed on screen.
+	* Console is no longer used for output (except for fatal errors),
+	messages are now displayed on screen.
 
-	* Zero can be set interactively.
+	* Zero can be set interactively with 'z'.
+
+	* Dragging inside the distribution graph now shows the distribution
+	count for the selected value.
 
 
 Rev #40 15/04/2005 to Rev #44 23/07/2005

@@ -244,6 +244,9 @@ refers to the three intersections.
 By holding down the CTRL key while clicking/dragging only "foreground" values
 will be considered.
 
+When clicking inside the distribution graph, the current count for the selected
+value is displayed instead.
+
 The indicators can be removed by clicking anywhere with the third mouse button.
 
 Distribution graph:
