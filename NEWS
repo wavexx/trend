@@ -1,17 +1,17 @@
-Rev #44 23/07/2005 to Rev #
+Rev #44 23/07/2005 to Rev #49 04/12/2005
 ========================================
 
 	* Console is no longer used for input, an embedded line editor is now
-	used (ie when setting limits/grid-spec interactively, stdin will
-	eventually be used for remote controlling).
+	  used (ie when setting limits/grid-spec interactively, stdin will
+	  eventually be used for remote controlling).
 
 	* Console is no longer used for output (except for fatal errors),
-	messages are now displayed on screen.
+	  messages are now displayed on screen.
 
 	* Zero can be set interactively with 'z'.
 
 	* Dragging inside the distribution graph now shows the distribution
-	count for the selected value.
+	  count for the selected value.
 
 
 Rev #40 15/04/2005 to Rev #44 23/07/2005
@@ -34,14 +34,14 @@ Rev #35 14/12/2004 to Rev #40 15/04/2005
 	* New example (see timeq) and cleanup.
 
 	* DEPRECATES: N*M hist-specs should no longer be used, use NxM
-	instead. -i and -r flags should no longer be used, use -ci -cd.
+	  instead. -i and -r flags should no longer be used, use -ci -cd.
 
 
 Rev #27 02/11/2004 to Rev #35 14/12/2004
 ========================================
 
 	* An "history specification" can be used on the command line as a
-	simplified alternative to the hist-sz/x-div pair.
+	  simplified alternative to the hist-sz/x-div pair.
 
 	* Visual latency sampling/visualisation.
 
@@ -54,7 +54,7 @@ Rev #23 29/10/2004 to Rev #27 02/11/2004
 ========================================
 
 	* Incorrectly initialised buffers could cause interactive
-	indicators to malfunction for first values.
+	  indicators to malfunction for first values.
 
 	* Visualisation can be paused while still consuming data.
 
@@ -88,8 +88,7 @@ Rev #15 27/09/2004 to Rev #20 21/10/2004
 Rev #11 21/09/2004 to Rev #15 27/09/2004
 ========================================
 
-	* Fixed standard X11/GLUT options
-	(-display, -geometry, etc)
+	* Fixed standard X11/GLUT options (-display, -geometry, etc)
 
 	* Implemented interactive indicators.
 

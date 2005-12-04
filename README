@@ -1,5 +1,5 @@
-General Description
-===================
+Trend
+=====
 
 trend is a general-purpose, efficient trend graph for "live" data. Data is read
 in ASCII form from a file or continuously from a FIFO and displayed in
@@ -7,7 +7,11 @@ real-time into a multi-pass trend (much like a CRT oscilloscope). trend can be
 used as a rapid analysis tool for progressive or time-based data series
 together with trivial scripting.
 
-Features:
+.. contents::
+
+
+Features
+--------
 
 - OpenGL graphics
 - Automatic or fixed graph scaling
@@ -16,13 +20,14 @@ Features:
 - Flexible input
 - Interactivity
 
-Requires:
+Requirements
+------------
 
 - OpenGL
 - GLUT (http://www.opengl.org/resources/libraries/glut.html) or
   (preferably) FreeGLUT (http://freeglut.sourceforge.net/)
 - A recent C++ compiler
-- POSIX system
+- POSIX system (currently tested on Solaris, FreeBSD, OS X, Linux and IRIX).
 
 
 Building
@@ -33,7 +38,7 @@ The Makefile is still in embryonic form, so it supports only gcc (and IRIX
 systems using pmake and MIPSPro) for now. trend should work on any POSIX/OpenGL
 capable system.
 
-Compiler optimisations are left to the user. Usually doing
+Compiler optimisations are left to the user. Usually doing::
 
   CXXFLAGS="-O2" make -e
 
@@ -43,9 +48,10 @@ should suffice.
 Executing
 =========
 
-Data:
+Data
+----
 
-The data is a space/tab/newline-separated series of ASCII decimal numbers; es:
+The data is a space/tab/newline-separated series of ASCII decimal numbers; eg::
 
   1 2 3 4
   5.1 6 0x12
@@ -55,10 +61,11 @@ The parser is very lenient, and will silently ignore whatever looks like
 garbage. By default all values are considered absolute, but other input modes
 (like incremental counters) and binary formats can be used too.
 
-FIFO:
+FIFO
+----
 
 To display real-time data you should create a special FIFO file using the
-mkfifo command:
+mkfifo command::
 
   mkfifo fifofilename
 
@@ -66,21 +73,23 @@ and redirect your script's output to that file. FIFOs are automatically
 re-opened upon EOF. Alternatively you can store your data in a plain file and
 simply display its last values non-interactively.
 
-Executing:
+Executing
+---------
 
-Execute trend as follows:
+Execute trend as follows::
 
   ./trend [options] fifofilename <hist-spec|hist-sz x-div> [low high]
 
 where:
 
-- options is a list of optional flags (explained later)
-- fifofilename is the named fifo you just created.
-- hist-spec is an "history specification" as explained later, or replaced
-  by the old combination of hist-sz (total number of values to retain) and
-  x-div (number of horizontal subdivisions in the graph).
-- low and high are the optional graph vertical limits (respectively the lower
-  and upper limit). If none are specified the graph will auto-scale itself.
+- `options` is a list of optional flags (explained later)
+- `fifofilename` is the named fifo you just created.
+- `hist-spec` is an "history specification" as explained later, or replaced
+  by the old combination of `hist-sz` (total number of values to retain) and
+  `x-div` (number of horizontal subdivisions in the graph).
+- `low` and `high` are the optional graph vertical limits (respectively the
+  lower and upper limit). If none are specified the graph will auto-scale
+  itself.
 
 When new data arrives, the value is plotted and the cursor position is
 advanced. That is, the graph scrolling speed is determined by the speed of the
@@ -88,99 +97,119 @@ data flow (for now at least). When the number of received values is above the
 number of horizontal subdivisions, the graph will wrap or scroll, depending on
 your settings.
 
-History specification (hist-spec):
+History specification (`hist-spec`)
+-----------------------------------
 
 An history specification is another convenient form or defining the pair
-"hist-sz x-div" for common cases. An history specification can be in either one
-of the following formats:
+`hist-sz x-div` for common cases. An history specification can be in either one
+of the following formats
 
-  N	Sets x-div to N, and hist-sz to N+1.
-  N/M	Sets hist-sz to N, and x-div to N/M.
-  NxM	Sets x-div to N, and hist-sz to N*M.
+  ==== =======================================================================
+  N    Sets x-div to N, and hist-sz to N+1.
+  N/M  Sets hist-sz to N, and x-div to N/M.
+  NxM  Sets x-div to N, and hist-sz to N*M.
+  ==== =======================================================================
 
-While this may seem hard at first, "./trend fifo '60x3'" is an easier way of
+While this may seem hard at first, ``./trend fifo '60x3'`` is an easier way of
 expressing "60 seconds for 3 minutes" and similar idioms.
 
-Standard X11/GLUT options:
+Standard X11/GLUT options
+-------------------------
 
- -display, -geometry, -iconic
+-display, -geometry, -iconic
 
-Options:
+Options
+-------
 
- -d		"dimmed" shading mode
- -D		visible distribution graph
- -S		enable anti-aliasing
- -s		"scrolling" mode
- -v		visible values
- -l		visible latency
- -m		visible marker
- -g		visible grid
- -G grid-spec	specify grid resolution
- -z n		specify y grid origin
- -h		help and version info
- -t str		specify a window title
- -A colour	background colour
- -E colour	text (values) colour
- -R colour	grid colour
- -I colour	trend colour
- -M colour	marker colour
- -N colour	interactive indicator colour
- -T colour	edit mode colour
- -c mode	input counting mode
- -f format	input format
+  == ========== ==============================================================
+  -d		"dimmed" shading mode
+  -D		visible distribution graph
+  -S		enable anti-aliasing
+  -s		"scrolling" mode
+  -v		visible values
+  -l		visible latency
+  -m		visible marker
+  -g		visible grid
+  -G grid-spec	specify grid resolution
+  -z n		specify y grid origin
+  -h		help and version info
+  -t str	specify a window title
+  -A colour	background colour
+  -E colour	text (values) colour
+  -R colour	grid colour
+  -I colour	trend colour
+  -M colour	marker colour
+  -N colour	interactive indicator colour
+  -T colour	edit mode colour
+  -c mode	input counting mode
+  -f format	input format
+  == ========== ==============================================================
 
-Shading modes:
+Shading modes
+-------------
 
 The default is to shade uniformly old values to complete transparency. The
 "dimmed" shading mode draws the foreground values with full opacity and the
 others with half opacity.
 
-Colour spec:
+Colour spec
+-----------
 
 A colour is specified in hex RGB format, as follows: #RRGGBB, RRGGBB or
 0xRRGGBB; some examples:
 
+  =============	==============================================================
   #FF0000	red
   #00FF00	green
   #A020F0	purple
+  =============	==============================================================
 
-Scrolling modes:
+Scrolling modes
+---------------
 
 The default visualisation mode is "wrap-around": newer values will simply wrap
 around the screen when new data arrives. The other available one is
 "scrolling": new data is always placed at the right edge of the screen, and
 older values scrolled on the left.
 
-Values:
+Values
+------
 
 Three value indicators are drawn on the screen: upper limit, lower limit and
 current value (respectively on the upper right, lower right and lower left of
 the screen).
 
-Grid specification (grid-spec):
+Grid specification (grid-spec)
+------------------------------
 
-A grid specification is of the form:
+A grid specification is of the form::
 
   [[A][+C]][x[B][+C]]
 
 (eg: 1.3, 10+5, 1x10+5, +5x+5; +1x+1 gets the old behaviour) where:
 
+  =====	======================================================================
   A	y grid resolution
   B	x grid resolution
   C	draw a mayor line every C normal grid lines
+  =====	======================================================================
 
-Input counting modes:
+Input counting modes
+--------------------
 
 By default all input values are considered absolute and displayed "as
 is". However trend can cope with incremental and differential counters too, by
 using the -c flag and taking the first value as the reference value. Available
 modes are:
 
+  =====	======================================================================
   a	absolute (default)
   i	incremental counter 
   d	differential values
+  =====	======================================================================
 
-Input format types:
+Input format types
+------------------
 
 trend also supports different input formats, as specified by the -f flag. Note
 however that only the ASCII parser (the default) silently ignores errors. For
@@ -189,15 +218,19 @@ such a value is read, trend will close and reopen the pipe and pretend to
 restart from scratch. The actual underlying binary format depends on the host
 architecture:
 
+  =====	======================================================================
   a	ASCII parser (default)
   f	binary float
   d	binary double
   s	binary short
   i	binary int
   l	binary long
+  =====	======================================================================
 
-Interactive keys:
+Interactive keys
+----------------
 
+  =====	======================================================================
   ESC	quit/exit
   a	toggle auto-scaling
   A	re-scale the graph without activating auto-scaling
@@ -214,15 +247,18 @@ Interactive keys:
   z	change grid zero interactively
   space	pause visualisation (but still continue to consume input to
 	preserve time coherency)
+  =====	======================================================================
 
-Autoscaling:
+Autoscaling
+-----------
 
 When autoscaling is enabled the graph will be scaled vertically to fit visible
 values. The grid resolution is used to add some vertical bounds to the
 graph. Disabling autoscaling interactively will retain current limits. When the
 grid is too dense to be displayed it's deactivated automatically.
 
-Latency indicator:
+Latency indicator
+-----------------
 
 The latency indicator shows a 5s average of the time-frame (always in seconds)
 between real value updates and the final output you're seeing: it includes
@@ -232,7 +268,8 @@ value 5ms is unavoidable (unless your graphic card supports asynchronous
 blits). Sampling accuracy is also subject to RTC precision and system
 scheduling.
 
-Interactive indicators:
+Interactive indicators
+----------------------
 
 You can query interactively the graph for any value in the history by clicking
 with the first mouse button. This will enable a permanent indicator in the
@@ -249,7 +286,8 @@ value is displayed instead.
 
 The indicators can be removed by clicking anywhere with the third mouse button.
 
-Distribution graph:
+Distribution graph
+------------------
 
 D or -D enable a distribution graph on the left side of the window. This is
 especially useful when analysing the continuity of a function or
@@ -261,26 +299,26 @@ Examples
 
 Some simple example scripts are included within the package:
 
-./mem <seconds>:
+``./mem <seconds>``:
 
   Print-out active memory (incl. swap) of a linux kernel using /proc/meminfo
   using Perl each tenth of second or the specified number of seconds.
 
-./imem <seconds>:
+``./imem <seconds>``:
 
   The same using pmval from Peformance Co-Pilot.
 
-./net <seconds> [if]:
+``./net <seconds> [if]``:
 
   Show cumulative (in + out) network consumption in bytes using /proc/net/dev
   using Perl (the default network interface if you don't specify any is eth0).
 
-./tstimes:
+``./tstimes``:
 
   A more complicated example I use to display server production times without
   particular requirements (the log is parsed and displayed in realtime).
 
-./timeq [-s] <seconds>:
+``./timeq [-s] <seconds>``:
 
   Time-quantize ASCII input: show an average (or total with -s) for received
   values (from stdin) in the specified time-lapse. A common example of usage
@@ -292,17 +330,17 @@ Some simple example scripts are included within the package:
 
 In the following example we will display the latest two minutes of network
 activity (with the first one being in front of the other) sampled each tenth of
-second:
+second::
 
   mkfifo fifo
   ./trend fifo 1200 600 &
   ./net 0.1 > fifo
 
-To display the number of current active processes over time you can do:
+To display the number of current active processes over time you can do::
 
   (while true; do ps -A | wc -l; sleep 1; done) > fifo
 
-Bytes roughly transferred each minute on an apache server?
+Bytes roughly transferred each minute on an apache server?::
 
   ./trend -fd -d fifo 60x24 &
   tail -f access.log | \
@@ -310,7 +348,7 @@ Bytes roughly transferred each minute on an apache server?
     ./timeq -s 60 > fifo
 
 An example of using snmpdelta from the NET-SNMP utilities to monitor a remote
-IF-MIB network interface:
+IF-MIB network interface::
 
   snmpdelta -v1 -CT -c public router ifInOctets.1 > fifo
 
@@ -376,19 +414,26 @@ Screen-shots
 Due to popular demand, here's how the screen-shots as found in
 http://www.yuv.info/~wavexx/hacks/trend/ were generated:
 
-trend-and-ion:		Several instances of trend running under the ION window
-			manager: http://freshmeat.net/projects/ion/
-			Data source: /proc/ and mrtg-utils.
+trend-and-ion:
 
-trend-distrib:		trend with the distribution graph active, showing a
-			sine, tangent, random-incremental and random function.
+	Several instances of trend running under the ION window manager:
+	http://freshmeat.net/projects/ion/ Data source: /proc/ and mrtg-utils.
 
-trend-intr:		trend -d fifo 1200 600, with the interactive indicators
-			active. Input is from a custom board.
+trend-distrib:
 
-trend-oversample:	trend -S -I 0x00FF00 fifo 10000x3 on a ~700 pixels
-			wide window (implicit 1x14 oversampling), showing
-			buffer and visual latency in respect to the source.
+	trend with the distribution graph active, showing a sine, tangent,
+	random-incremental and random function.
+
+trend-intr:
+
+	trend -d fifo 1200 600, with the interactive indicators active. Input
+	is from a custom board.
+
+trend-oversample:
+	
+	``trend -S -I 0x00FF00 fifo 10000x3`` on a ~700 pixels wide window
+	(implicit 1x14 oversampling), showing buffer and visual latency in
+	respect to the source (taken before the actual release).
 
 
 Further customisation
