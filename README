@@ -426,8 +426,8 @@ trend-distrib:
 
 trend-intr:
 
-	trend -d fifo 1200 600, with the interactive indicators active. Input
-	is from a custom board.
+	``trend -d fifo 1200 600``, with the interactive indicators active.
+	Input is from a custom board.
 
 trend-oversample:
 	
@@ -448,7 +448,7 @@ Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+Copyright(c) 2003-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate. Latest trend versions can be downloaded from
 http://www.yuv.info/~wavexx/hacks/trend/
