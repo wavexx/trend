@@ -5,6 +5,11 @@ Rev #44 23/07/2005 to Rev #
 	used (ie when setting limits/grid-spec interactively, stdin will
 	eventually be used for remote controlling).
 
+	* Console is no longer used for output (except for errors), messages
+	are now displayed on screen.
+
+	* Zero can be set interactively.
+
 
 Rev #40 15/04/2005 to Rev #44 23/07/2005
 ========================================

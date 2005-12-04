@@ -26,6 +26,7 @@ namespace Trend
   const unsigned char markerKey = 'm';
   const unsigned char gridKey = 'g';
   const unsigned char setResKey = 'G';
+  const unsigned char setZeroKey = 'z';
   const unsigned char pauseKey = ' ';
   const unsigned char latKey = 'l';
 
@@ -71,6 +72,8 @@ namespace Trend
   const int distribWidth = 30;
   const int maxGridDens = 4;
   const int latAvg = 5;
+  const int persist = 2;
+  const int maxPersist = 5;
 }
 
 #endif

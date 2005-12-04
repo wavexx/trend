@@ -211,6 +211,7 @@ Interactive keys:
   m	activate a marker on the current cursor position
   g	toggle grid
   G	change grid-spec interactively
+  z	change grid zero interactively
   space	pause visualisation (but still continue to consume input to
 	preserve time coherency)
 

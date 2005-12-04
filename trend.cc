@@ -19,6 +19,9 @@
 #include <vector>
 using std::vector;
 
+#include <deque>;
+using std::deque;
+
 #include <iostream>
 using std::cout;
 using std::cerr;
@@ -60,7 +63,7 @@ using std::strchr;
 #define NAN numeric_limits<double>::quiet_NaN()
 #endif
 
-typedef void (*EditCallback)(const char* str);
+typedef void (*EditCallback)(const string& str);
 
 
 /*
@@ -159,6 +162,7 @@ namespace
   bool grid = Trend::grid;
   GrSpec grSpec;
   bool paused = false;
+  deque<pair<time_t, string> > messages;
 
   // Indicator status
   bool intr = false;
@@ -451,30 +455,43 @@ reshape(const int w, const int h)
 
 // write a normal string
 void
-drawString(const int x, const int y, const char* str)
+drawString(const int x, const int y, const string& str)
 {
-  glRasterPos2i(x, y);
-  for(const char* p = str; *p; ++p)
+  glRasterPos2i(0, 0);
+  glBitmap(0, 0, 0, 0, x, y, NULL);
+
+  for(string::const_iterator p = str.begin(); p != str.end(); ++p)
     glutBitmapCharacter(GLUT_BITMAP_8_BY_13, *p);
 }
 
 
 // write strings in the lower-left corner
 void
-drawLEString(const char* str)
+drawLEString(const string& str)
 {
   drawString(Trend::strSpc, Trend::strSpc + Trend::fontHeight * lc++, str);
 }
 
 
+// push a message
+void
+pushMessage(const string& str)
+{
+  messages.push_back(pair<time_t, string>(time(NULL), str));
+  while(messages.size() > Trend::maxPersist)
+    messages.pop_front();
+}
+
+
 // write an on-screen string using video coordinates
 void
-drawOSString(const int x, const int y, const char* str)
+drawOSString(const int x, const int y, const string& str)
 {
   using Trend::strSpc;
   using Trend::fontHeight;
+  using Trend::fontWidth;
 
-  int len(strlen(str) * Trend::fontWidth);
+  int len(str.size() * fontWidth);
   int rx(x + strSpc);
   int ry(y + strSpc);
 
@@ -879,9 +896,13 @@ drawLatency()
 void
 drawEdit()
 {
+  using Trend::fontHeight;
+  using Trend::fontWidth;
+
   const int height2 = height / 2;
-  const int blockH = Trend::fontHeight * 2;
-  const int blockS = Trend::fontHeight / 2;
+  const int width2 = width / 2;
+  const int blockH = fontHeight * 2;
+  const int blockS = fontHeight / 2;
 
   glBegin(GL_QUADS);
   
@@ -905,10 +926,34 @@ drawEdit()
 
   glEnd();
 
-  // strings
+  // edit string
   string buf(editTitle + ": " + editStr);
-  drawString(width / 2 - Trend::fontWidth * buf.size() / 2,
-      height2 - blockS, buf.c_str());
+  drawString(width2 - fontWidth * buf.size() / 2, height2 - blockS, buf);
+}
+
+
+void
+drawMessages()
+{
+  // purge old messages
+  time_t maxTime = time(NULL) - Trend::persist;
+  while(messages.size() && messages.front().first <= maxTime)
+    messages.pop_front();
+
+  // draw messages
+  using Trend::fontHeight;
+  using Trend::fontWidth;
+  const int width2 = width / 2;
+
+  int y = height - Trend::strSpc - fontHeight;
+  glColor3fv(editCol);
+
+  for(deque<pair<time_t, string> >::const_iterator it = messages.begin();
+      it != messages.end(); ++it, y -= fontHeight)
+  {
+    int len = it->second.size() * fontWidth;
+    drawString(width2 - len / 2, y, it->second);
+  }
 }
 
 
@@ -947,6 +992,7 @@ display()
 
   // editing
   if(edit) drawEdit();
+  if(messages.size()) drawMessages();
 
   // flush buffers
   glutSwapBuffers();
@@ -1071,10 +1117,10 @@ parseGrSpec(GrSpec& grid, char* spec)
 
 
 void
-toggleStatus(const char* str, bool& var)
+toggleStatus(const string& str, bool& var)
 {
   var = !var;
-  std::cout << str << ": " << (var? "enabled": "disabled") << std::endl;
+  pushMessage(str + ": " + (var? "enabled": "disabled"));
 }
 
 
@@ -1083,7 +1129,7 @@ editMode(bool mode);
 
 
 void
-editMode(const char* str, EditCallback call)
+editMode(const string& str, EditCallback call)
 {
   editTitle = str;
   editStr.clear();
@@ -1097,7 +1143,7 @@ editCall()
 {
   EditCallback call = editCallback;
   editCallback = NULL;
-  (*call)(editStr.c_str());
+  (*call)(editStr);
 }
 
 
@@ -1130,17 +1176,17 @@ editKeyboard(const unsigned char key, const int, const int)
 
 
 void
-getLimits2(const char* str)
+getLimits2(const string& str)
 {
-  hiLimit = strtod(str, NULL);
+  hiLimit = strtod(str.c_str(), NULL);
 }
 
 
 void
-getLimits1(const char* str)
+getLimits1(const string& str)
 {
   if(autoLimit) toggleStatus("autolimit", autoLimit);
-  loLimit = strtod(str, NULL);
+  loLimit = strtod(str.c_str(), NULL);
   editMode("+y", getLimits2);
 }
 
@@ -1153,11 +1199,20 @@ getLimits()
 
 
 void
-getGrid(const char* str)
+getGrid(const string& str)
 {
   if(!grid) toggleStatus("grid", grid);
-  char* buf(strdup(str));
+  char* buf(strdup(str.c_str()));
   parseGrSpec(grSpec, buf);
+  free(buf);
+}
+
+
+void
+getGrZero(const string& str)
+{
+  if(!grid) toggleStatus("grid", grid);
+  grZero = strtod(str.c_str(), NULL);
 }
 
 
@@ -1185,7 +1240,7 @@ dispKeyboard(const unsigned char key, const int x, const int y)
 
   case Trend::resetlimKey:
     setLimits();
-    cout << "limits reset\n";
+    pushMessage("limits reset");
     break;
 
   case Trend::setlimKey:
@@ -1215,6 +1270,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
 
   case Trend::setResKey:
     editMode("grid-spec", getGrid);
+    break;
+
+  case Trend::setZeroKey:
+    editMode("zero", getGrZero);
     break;
 
   case Trend::latKey:
