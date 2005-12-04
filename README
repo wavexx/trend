@@ -1,5 +1,6 @@
-Trend
-=====
+===============================================
+Trend: a general-purpose, efficient trend graph
+===============================================
 
 trend is a general-purpose, efficient trend graph for "live" data. Data is read
 in ASCII form from a file or continuously from a FIFO and displayed in
@@ -10,8 +11,10 @@ together with trivial scripting.
 .. contents::
 
 
-Features
---------
+Features and requirements
+=========================
+
+Features:
 
 - OpenGL graphics
 - Automatic or fixed graph scaling
@@ -20,8 +23,7 @@ Features
 - Flexible input
 - Interactivity
 
-Requirements
-------------
+Requirements:
 
 - OpenGL
 - GLUT (http://www.opengl.org/resources/libraries/glut.html) or
@@ -45,8 +47,8 @@ Compiler optimisations are left to the user. Usually doing::
 should suffice.
 
 
-Executing
-=========
+Usage
+=====
 
 Data
 ----
