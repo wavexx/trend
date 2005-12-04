@@ -88,7 +88,7 @@ struct Intr
 {
   // nearest value
   Value near;
-  
+
   // intersection
   double value;
   double dist;
@@ -277,13 +277,13 @@ readANum(FILE* fd)
       continue;
     }
     *end = 0;
-  
+
     // convert the number
     num = strtod(buf, &end);
     if(end != buf)
       break;
   }
-  
+
   return num;
 }
 
@@ -352,17 +352,19 @@ producer(void* prg)
       switch(input)
       {
       case Trend::incremental:
-        {
+	{
 	  double tmp = num;
 	  num = (num - old);
 	  old = tmp;
-        }
+	}
 	break;
 
       case Trend::differential:
 	old += num;
 	num = old;
 	break;
+
+      default:;
       }
 
       // append the value
@@ -478,7 +480,7 @@ void
 pushMessage(const string& str)
 {
   messages.push_back(pair<time_t, string>(time(NULL), str));
-  while(messages.size() > Trend::maxPersist)
+  while(messages.size() > static_cast<size_t>(Trend::maxPersist))
     messages.pop_front();
 }
 
@@ -583,7 +585,7 @@ drawGrid()
   // y
   r = ((hiLimit - loLimit) / grSpec.y.res);
   d = (height / maxGridDens);
-  
+
   if(r < (d * grSpec.y.mayor))
   {
     // minor lines
@@ -652,7 +654,7 @@ drawLine()
     double alpha(dimmed?
 	(i > mark? 1.: .5):
 	(static_cast<float>(i - offset) / history));
-	
+
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
     pos = getPosition(i, *it);
     if(!pos)
@@ -793,7 +795,7 @@ drawTIntr()
 
     // fetch the next value
     Value next = *(it + 1);
-    
+
     Intr buf;
     if(mul < 0.5)
     {
@@ -857,7 +859,7 @@ drawTIntr()
   for(vector<Intr>::const_iterator it = intrs.begin();
       it != intrs.end(); ++i, ++it)
   {
-    sprintf(buf, "%d: %g", i, it->value);
+    sprintf(buf, "%lu: %g", i, it->value);
     drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
   }
 
@@ -928,14 +930,14 @@ drawEdit()
   const int blockS = fontHeight / 2;
 
   glBegin(GL_QUADS);
-  
+
   // background
   glColor4f(0., 0., 0., 0.9);
   glVertex2d(0, height2 + blockH);
   glVertex2d(width, height2 + blockH);
   glVertex2d(width, height2 - blockH);
   glVertex2d(0, height2 - blockH);
-  
+
   // borders
   glColor3fv(editCol);
   glVertex2d(0, height2 + blockH + blockS);
@@ -1164,12 +1166,13 @@ editMode(const string& str, EditCallback call)
 }
 
 
-bool
+EditCallback
 editCall()
 {
   EditCallback call = editCallback;
   editCallback = NULL;
   (*call)(editStr);
+  return editCallback;
 }
 
 
@@ -1180,7 +1183,7 @@ editKeyboard(const unsigned char key, const int, const int)
   {
   case 13:
   case 27:
-    if(key == 27 || !editStr.size() || (editCall(), !editCallback))
+    if(key == 27 || !editStr.size() || !editCall())
       editMode(false);
     break;
 
@@ -1192,7 +1195,8 @@ editKeyboard(const unsigned char key, const int, const int)
     break;
 
   default:
-    if(!isprint(key) && editStr.size() + 1 != Trend::maxNumLen)
+    if(!isprint(key) && editStr.size() + 1 !=
+	static_cast<size_t>(Trend::maxNumLen))
       return;
     editStr += key;
   }
