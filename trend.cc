@@ -1429,7 +1429,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:irz:f:c:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:T:irz:f:c:")) != -1)
     switch(arg)
     {
     case 'd':
