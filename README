@@ -399,15 +399,16 @@ Troubleshooting
 
 trend crashes on start with SIGBUS/SIGSEGV:
 
-This problem experienced on some machines is caused by the new joystick support
-present in FreeGLUT 2.2.0. Either use standard GLUT, or upgrade to a later/cvs
-version of FreeGLUT (nightly snapshots are fine), where joystick initialisation
-has been made conditional.
+  This problem experienced on some machines is caused by the new joystick
+  support present in FreeGLUT 2.2.0. Either use standard GLUT, or upgrade to a
+  later/cvs version of FreeGLUT (nightly snapshots are fine), where joystick
+  initialisation has been made conditional.
 
 "trend: producer thread exiting" warning:
 
-The data stream finished for some reason (the specified file was invalid at the
-time of the request). For regular or invalid files this warning is normal.
+  The data stream finished for some reason (the specified file was invalid at
+  the time of the request). For regular or invalid files this warning is
+  normal.
 
 
 Screen-shots
@@ -435,7 +436,8 @@ trend-oversample:
 	
 	``trend -S -I 0x00FF00 fifo 10000x3`` on a ~700 pixels wide window
 	(implicit 1x14 oversampling), showing buffer and visual latency in
-	respect to the source (taken before the actual release).
+	respect to the source (taken before the actual release, blat + vlat are
+	now summed).
 
 
 Further customisation
@@ -443,7 +445,8 @@ Further customisation
 
 Almost all internal aspects and defaults of trend can be changed by modifying
 "defaults.hh" and recompiling. If you feel that a default should be changed or
-an internal constant be exposed, contact me.
+an internal constant be exposed contact me to make the change customizable
+instead.
 
 
 Authors and Copyright
