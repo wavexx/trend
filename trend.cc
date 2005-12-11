@@ -1137,7 +1137,7 @@ parseGrid(Grid& grid, char* spec)
     *p++ = 0;
     if(*p) grid.mayor = strtoul(p, NULL, 0);
   }
-  if(*spec) grid.res = strtod(spec, NULL);
+  if(*spec) grid.res = fabs(strtod(spec, NULL));
 }
 
 
@@ -1252,12 +1252,13 @@ getGrid(const string& str)
 void
 getZero(const string& str)
 {
-  if(!grid) toggleStatus("grid", grid);
   double nZero = strtod(str.c_str(), NULL);
   if(nZero != zero)
   {
     rrShift(nZero - zero);
     zero = nZero;
+    if(autoLimit)
+      setLimits();
   }
 }
 
