@@ -63,7 +63,7 @@ using std::strchr;
 #define NAN numeric_limits<double>::quiet_NaN()
 #endif
 
-typedef void (*EditCallback)(const string& str);
+typedef void (*edit_callback_t)(const string& str);
 
 
 /*
@@ -180,7 +180,7 @@ namespace
 
   // Edit form
   bool edit;
-  EditCallback editCallback;
+  edit_callback_t editCallback;
   string editTitle;
   string editStr;
 }
@@ -1157,7 +1157,7 @@ editMode(bool mode);
 
 
 void
-editMode(const string& str, EditCallback call)
+editMode(const string& str, edit_callback_t call)
 {
   editTitle = str;
   editStr.clear();
@@ -1166,10 +1166,10 @@ editMode(const string& str, EditCallback call)
 }
 
 
-EditCallback
+edit_callback_t
 editCall()
 {
-  EditCallback call = editCallback;
+  edit_callback_t call = editCallback;
   editCallback = NULL;
   (*call)(editStr);
   return editCallback;
