@@ -133,7 +133,7 @@ Options
   -m		visible marker
   -g		visible grid
   -G grid-spec	specify grid resolution
-  -z n		specify y grid origin
+  -z n		specify y zero
   -h		help and version info
   -t str	specify a window title
   -A colour	background colour
@@ -246,7 +246,7 @@ Interactive keys
   m	activate a marker on the current cursor position
   g	toggle grid
   G	change grid-spec interactively
-  z	change grid zero interactively
+  z	change zero interactively
   space	pause visualisation (but still continue to consume input to
 	preserve time coherency)
   =====	======================================================================

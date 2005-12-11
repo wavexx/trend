@@ -134,7 +134,7 @@ namespace
   Value* rrEnd;
   double loLimit;
   double hiLimit;
-  double grZero = 0.;
+  double zero = 0.;
 
   // Visual/Fixed settings
   size_t history;
@@ -541,7 +541,7 @@ void
 drawGridY(double gridres)
 {
   // vertical lines
-  double it = loLimit - fmod(loLimit - grZero, gridres);
+  double it = loLimit - fmod(loLimit, gridres);
   if(it <= loLimit)
     it += gridres;
 
@@ -643,12 +643,11 @@ size_t
 drawLine()
 {
   const Value* it = rrBuf;
-  const Value* end = rrEnd;
   const size_t mark(history + offset - divisions);
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
-  for(size_t i = offset; it != end; ++i, ++it)
+  for(size_t i = offset; it != rrEnd; ++i, ++it)
   {
     // shade the color
     double alpha(dimmed?
@@ -657,7 +656,10 @@ drawLine()
 
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
     pos = getPosition(i, *it);
-    if(!pos)
+
+    if(pos)
+      glVertex2d(pos, it->value);
+    else
     {
       // Cursor at the end
       glVertex2d(divisions, it->value);
@@ -665,8 +667,6 @@ drawLine()
       glBegin(GL_LINE_STRIP);
       glVertex2d(0, it->value);
     }
-    else
-      glVertex2d(pos, it->value);
   }
   glEnd();
 
@@ -1046,15 +1046,22 @@ removeNANs()
 
 
 void
+rrShift(double v)
+{
+  for(Value* it = rrBuf; it != rrEnd; ++it)
+    it->value -= v;
+}
+
+
+void
 setLimits()
 {
   const Value* it = rrBuf;
-  const Value* end = rrEnd;
 
   double lo(it->value);
   double hi(lo);
 
-  for(; it != end; ++it)
+  for(; it != rrEnd; ++it)
   {
     if(it->value > hi)
       hi = it->value;
@@ -1102,6 +1109,10 @@ idle(int)
     // and we don't want to handle this lone-case everywhere.
     if(isnan(rrBuf->value))
       removeNANs();
+
+    // shift values if requested
+    if(zero)
+      rrShift(zero);
 
     // recalculate limits seldom
     if(autoLimit)
@@ -1239,10 +1250,15 @@ getGrid(const string& str)
 
 
 void
-getGrZero(const string& str)
+getZero(const string& str)
 {
   if(!grid) toggleStatus("grid", grid);
-  grZero = strtod(str.c_str(), NULL);
+  double nZero = strtod(str.c_str(), NULL);
+  if(nZero != zero)
+  {
+    rrShift(nZero - zero);
+    zero = nZero;
+  }
 }
 
 
@@ -1303,7 +1319,7 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     break;
 
   case Trend::setZeroKey:
-    editMode("zero", getGrZero);
+    editMode("zero", getZero);
     break;
 
   case Trend::latKey:
@@ -1469,7 +1485,7 @@ parseOptions(int argc, char* const argv[])
       break;
 
     case 'z':
-      grZero = strtod(optarg, NULL);
+      zero = strtod(optarg, NULL);
       break;
 
     case 't':
