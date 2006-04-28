@@ -1,6 +1,6 @@
 /*
  * trend: display live data on a trend graph
- * Copyright(c) 2003-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2003-2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 

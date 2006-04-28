@@ -106,11 +106,11 @@ An history specification is another convenient form or defining the pair
 `hist-sz x-div` for common cases. An history specification can be in either one
 of the following formats
 
-  ==== =======================================================================
-  N    Sets x-div to N, and hist-sz to N+1.
-  N/M  Sets hist-sz to N, and x-div to N/M.
-  NxM  Sets x-div to N, and hist-sz to N*M.
-  ==== =======================================================================
+  ===== ======================================================================
+  N     Sets x-div to N, and hist-sz to N+1.
+  N/M   Sets hist-sz to N, and x-div to N/M.
+  NxM   Sets x-div to N, and hist-sz to N*M.
+  ===== ======================================================================
 
 While this may seem hard at first, ``./trend fifo '60x3'`` is an easier way of
 expressing "60 seconds for 3 minutes" and similar idioms.
@@ -123,29 +123,29 @@ Standard X11/GLUT options
 Options
 -------
 
-  == ========== ==============================================================
-  -d		"dimmed" shading mode
-  -D		visible distribution graph
-  -S		enable anti-aliasing
-  -s		"scrolling" mode
-  -v		visible values
-  -l		visible latency
-  -m		visible marker
-  -g		visible grid
-  -G grid-spec	specify grid resolution
-  -z n		specify y zero
-  -h		help and version info
-  -t str	specify a window title
-  -A colour	background colour
-  -E colour	text (values) colour
-  -R colour	grid colour
-  -I colour	trend colour
-  -M colour	marker colour
-  -N colour	interactive indicator colour
-  -T colour	edit mode colour
-  -c mode	input counting mode
-  -f format	input format
-  == ========== ==============================================================
+  ===== ========== ===========================================================
+  -d		   "dimmed" shading mode
+  -D		   visible distribution graph
+  -S		   enable anti-aliasing
+  -s		   "scrolling" mode
+  -v		   visible values
+  -l		   visible latency
+  -m		   visible marker
+  -g		   visible grid
+  -G    grid-spec  specify grid resolution
+  -z    n	   specify y zero
+  -h		   help and version info
+  -t    str	   specify a window title
+  -A    colour	   background colour
+  -E    colour	   text (values) colour
+  -R    colour	   grid colour
+  -I    colour	   trend colour
+  -M    colour	   marker colour
+  -N    colour	   interactive indicator colour
+  -T    colour	   edit mode colour
+  -c    mode       input counting mode
+  -f    format     input format
+  ===== ========== ===========================================================
 
 Shading modes
 -------------
@@ -206,7 +206,7 @@ modes are:
 
   =====	======================================================================
   a	absolute (default)
-  i	incremental counter 
+  i	incremental counter
   d	differential values
   =====	======================================================================
 
@@ -433,7 +433,7 @@ trend-intr:
 	Input is from a custom board.
 
 trend-oversample:
-	
+
 	``trend -S -I 0x00FF00 fifo 10000x3`` on a ~700 pixels wide window
 	(implicit 1x14 oversampling), showing buffer and visual latency in
 	respect to the source (taken before the actual release, blat + vlat are
@@ -453,7 +453,7 @@ Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
+Copyright(c) 2003-2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate. Latest trend versions can be downloaded from
 http://www.yuv.info/~wavexx/hacks/trend/
