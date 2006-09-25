@@ -10,7 +10,7 @@ LDADD = -lpthread -L/usr/freeware/lib32 -L/usr/local/lib32 -lm -lglut -lGL -lGLU
 #else
 ifeq ($(shell uname), Darwin)
 # OS X (_nice_ framework system, I admit)
-CPPFLAGS = -F GLUT -F OpenGL
+CPPFLAGS =
 LDFLAGS =
 LDADD = -framework GLUT -framework OpenGL
 else
