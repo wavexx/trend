@@ -2,10 +2,12 @@
 # generate and tests a trend distribution
 
 # basic data
-DATE="`date '+%Y%m%d'`"
+LOG="`p4 filelog -m1 trend.cc`"
+REV="`echo $LOG | sed -ne 's/.* \.\.\. #\([0-9]*\) .*/\1/p'`"
+ISODATE="`echo $LOG | sed -ne 's/.* on \([0-9]*\)\/\([0-9]*\)\/\([0-9]*\) by .*/\3\/\2\/\1/p'`"
+DATE="`echo $LOG | sed -ne 's/.* on \([0-9]*\)\/\([0-9]*\)\/\([0-9]*\) by .*/\1\2\3/p'`"
 DIST="trend-$DATE"
-REV="`p4 have trend.cc | sed -e 's/^\/\/[^#]*#\([0-9]*\).*/\1/'`"
-HEAD=" to Rev #$REV "
+HEAD=" to Rev #$REV $ISODATE"
 CATALOG="
 	Makefile
 	imem tstimes mem net timeq
