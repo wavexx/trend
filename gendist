@@ -5,7 +5,7 @@
 DATE="`date '+%Y%m%d'`"
 DIST="trend-$DATE"
 REV="`p4 have trend.cc | sed -e 's/^\/\/[^#]*#\([0-9]*\).*/\1/'`"
-HEAD="to Rev #$REV `date '+%d/%m/%Y'`"
+HEAD=" to Rev #$REV "
 CATALOG="
 	Makefile
 	imem tstimes mem net timeq
@@ -20,8 +20,11 @@ set -e
 
 # check ancillary files
 echo "1: checking files"
-head -1 NEWS | fgrep -s "$HEAD"
-grep -q '\<TODO\>' README || true
+if [ "$1" != "-" ]
+then
+	head -1 NEWS | fgrep -s "$HEAD"
+	grep -q '\<TODO\>' README || true
+fi
 
 
 # creating distribution
@@ -29,7 +32,8 @@ echo "2: creating distribution"
 rm -rf "$DIST"
 mkdir "$DIST"
 cp -p $CATALOG "$DIST"
-tar cf - "$DIST" | gzip -9 > "$DIST.tar.gz"
+{ tar -cf - --owner 0 --group 0 "$DIST" || tar -cf - "$DIST"; } | \
+	gzip -9 > "$DIST.tar.gz"
 rm -rf "$DIST"
 
 
