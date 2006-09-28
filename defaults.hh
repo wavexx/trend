@@ -29,6 +29,7 @@ namespace Trend
   const unsigned char setZeroKey = 'z';
   const unsigned char pauseKey = ' ';
   const unsigned char latKey = 'l';
+  const unsigned char fillKey = 'f';
 
   // Some types
   enum input_t {absolute, incremental, differential};
@@ -44,6 +45,7 @@ namespace Trend
   const bool values = false;
   const bool marker = true;
   const bool latency = false;
+  const bool filled = false;
   const bool grid = false;
   const double gridres = 1.;
   const int mayor = 10;

@@ -18,7 +18,7 @@ Features:
 
 - OpenGL graphics
 - Automatic or fixed graph scaling
-- Two graph scrolling and shading modes
+- Two graph scrolling, shading and filling modes
 - Configurable colours/grid
 - Flexible input
 - Interactivity
@@ -136,6 +136,7 @@ Options
   -v		   visible values
   -l		   visible latency
   -m		   visible marker
+  -F		   enable filling
   -g		   visible grid
   -G    grid-spec  specify grid resolution
   -z    n	   specify y zero
@@ -249,6 +250,7 @@ Interactive keys
   l	show real-to-visual latency
   L	set limits interactively
   m	activate a marker on the current cursor position
+  f	toggle filling
   g	toggle grid
   G	change grid-spec interactively
   z	change zero interactively
@@ -299,6 +301,11 @@ Distribution graph
 D or -D enable a distribution graph on the left side of the window. This is
 especially useful when analysing the continuity of a function or
 signal. Intensity is proportional to the visible maximum.
+
+Filling
+-------
+
+TODO
 
 
 Examples

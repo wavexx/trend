@@ -16,6 +16,7 @@
 
 // system headers
 #include <stdexcept>
+#include <algorithm>
 #include <vector>
 using std::vector;
 
@@ -159,6 +160,7 @@ namespace
   bool scroll = Trend::scroll;
   bool values = Trend::values;
   bool marker = Trend::marker;
+  bool filled = Trend::filled;
   bool grid = Trend::grid;
   GrSpec grSpec;
   bool paused = false;
@@ -643,7 +645,7 @@ size_t
 drawLine()
 {
   const Value* it = rrBuf;
-  const size_t mark(history + offset - divisions);
+  const size_t mark(history + offset - divisions - 1);
   size_t pos;
 
   glBegin(GL_LINE_STRIP);
@@ -671,6 +673,49 @@ drawLine()
   glEnd();
 
   return pos;
+}
+
+
+void
+drawFill()
+{
+  const size_t m = std::min(history, divisions + 1);
+  const size_t mark(history + offset - m);
+  const Value* it = rrEnd - m;
+  double last = it->value;
+  size_t pos;
+
+  glColor4f(lineCol[0], lineCol[1], lineCol[2], 0.25);
+  glBegin(GL_QUAD_STRIP);
+  for(size_t i = mark; it != rrEnd; last = it->value, ++i, ++it)
+  {
+    pos = getPosition(i, *it);
+
+    if(last < 0 != it->value < 0)
+    {
+      // extra truncation needed
+      double zt = (pos? pos: divisions) - it->value / (it->value - last);
+      glVertex2d(zt, 0);
+      glVertex2d(zt, 0);
+    }
+
+    if(pos)
+    {
+      glVertex2d(pos, it->value);
+      glVertex2d(pos, 0);
+    }
+    else
+    {
+      // cursor at the end
+      glVertex2d(divisions, it->value);
+      glVertex2d(divisions, 0);
+      glEnd();
+      glBegin(GL_QUAD_STRIP);
+      glVertex2d(0, it->value);
+      glVertex2d(0, 0);
+    }
+  }
+  glEnd();
 }
 
 
@@ -1000,6 +1045,7 @@ display()
 
   // background grid
   if(grid) drawGrid();
+  if(filled) drawFill();
   size_t pos = drawLine();
 
   // other data
@@ -1311,6 +1357,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     toggleStatus("marker", marker);
     break;
 
+  case Trend::fillKey:
+    toggleStatus("fill", filled);
+    break;
+
   case Trend::gridKey:
     toggleStatus("grid", grid);
     break;
@@ -1446,7 +1496,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmgG:ht:A:E:R:I:M:N:T:irz:f:c:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:irz:f:c:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1475,6 +1525,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'm':
       marker = !marker;
+      break;
+
+    case 'F':
+      filled = !filled;
       break;
 
     case 'g':
@@ -1581,14 +1635,19 @@ parseOptions(int argc, char* const argv[])
   }
 
   // parameters may still be buggy
-  if(!history || !divisions)
+  if(!divisions)
   {
-    cerr << argv[0] << ": hist-sz or x-div can't be zero\n";
+    cerr << argv[0] << ": x-div can't be zero\n";
+    return -1;
+  }
+  if(history < 2)
+  {
+    cerr << argv[0] << ": history must be at least 2\n";
     return -1;
   }
   offset = divisions - (history % divisions) + 1;
 
-  // optional limiting factors
+  // optional y limits
   if(argc == 4 || argc == 5)
   {
     loLimit = strtod(argv[optind++], NULL);
