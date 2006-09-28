@@ -141,7 +141,7 @@ Options
   -R    colour	   grid colour
   -I    colour	   trend colour
   -M    colour	   marker colour
-  -N    colour	   interactive indicator colour
+  -N    colour	   interactive examiner colour
   -T    colour	   edit mode colour
   -c    mode       input counting mode
   -f    format     input format
@@ -270,11 +270,11 @@ value 5ms is unavoidable (unless your graphic card supports asynchronous
 blits). Sampling accuracy is also subject to RTC precision and system
 scheduling.
 
-Interactive indicators
-----------------------
+Interactive examiners
+---------------------
 
 You can query interactively the graph for any value in the history by clicking
-with the first mouse button. This will enable a permanent indicator in the
+with the first mouse button. This will enable a permanent examiner in the
 selected position and display up to the three nearest values in the upper-left
 corner of the screen. Intersections are projected horizontally, while a small
 circle will show the position of the nearest sampled value. The mean value
@@ -286,7 +286,7 @@ will be considered.
 When clicking inside the distribution graph, the current count for the selected
 value is displayed instead.
 
-The indicators can be removed by clicking anywhere with the third mouse button.
+The examiners can be removed by clicking anywhere with the third mouse button.
 
 Distribution graph
 ------------------
@@ -429,7 +429,7 @@ trend-distrib:
 
 trend-intr:
 
-	``trend -d fifo 1200 600``, with the interactive indicators active.
+	``trend -d fifo 1200 600``, with the interactive examiners active.
 	Input is from a custom board.
 
 trend-oversample:
