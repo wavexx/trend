@@ -75,12 +75,17 @@ and redirect your script's output to that file. FIFOs are automatically
 re-opened upon EOF. Alternatively you can store your data in a plain file and
 simply display its last values non-interactively.
 
+Both `/dev/stdin` and `/dev/fd/0` (where available) can be used as valid FIFOs
+for pipelining purposes without the need of extra filesystem objects::
+
+  command | trend /dev/stdin ...
+
 Executing
 ---------
 
 Execute trend as follows::
 
-  ./trend [options] fifofilename <hist-spec|hist-sz x-div> [low high]
+  trend [options] fifofilename <hist-spec|hist-sz x-div> [low high]
 
 where:
 
@@ -112,7 +117,7 @@ of the following formats
   NxM   Sets x-div to N, and hist-sz to N*M.
   ===== ======================================================================
 
-While this may seem hard at first, ``./trend fifo '60x3'`` is an easier way of
+While this may seem hard at first, ``trend fifo '60x3'`` is an easier way of
 expressing "60 seconds for 3 minutes" and similar idioms.
 
 Standard X11/GLUT options
@@ -335,7 +340,7 @@ activity (with the first one being in front of the other) sampled each tenth of
 second::
 
   mkfifo fifo
-  ./trend fifo 1200 600 &
+  trend fifo 1200 600 &
   ./net 0.1 > fifo
 
 To display the number of current active processes over time you can do::
@@ -344,7 +349,7 @@ To display the number of current active processes over time you can do::
 
 Bytes roughly transferred each minute on an apache server?::
 
-  ./trend -fd -d fifo 60x24 &
+  trend -fd -d fifo 60x24 &
   tail -f access.log | \
     sed -une 's/.* \([0-9][0-9]*\) [0-9]*$/\1/p' | \
     ./timeq -s 60 > fifo
