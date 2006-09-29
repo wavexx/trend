@@ -677,7 +677,7 @@ drawLine()
 
 
 void
-drawFill()
+drawFillZero()
 {
   const size_t m = std::min(history, divisions + 1);
   const size_t mark(history + offset - m);
@@ -716,6 +716,65 @@ drawFill()
     }
   }
   glEnd();
+}
+
+
+void
+drawFillDelta()
+{
+  const size_t m = std::min(history - divisions, divisions + 1);
+  const size_t mark(history + offset - m);
+  const Value* it = rrEnd - m;
+  double l1 = it->value;
+  double l2 = (it - divisions)->value;
+  size_t pos;
+
+  glColor4f(lineCol[0], lineCol[1], lineCol[2], 0.25);
+  glBegin(GL_QUAD_STRIP);
+  for(size_t i = mark; it != rrEnd; ++i, ++it)
+  {
+    pos = getPosition(i, *it);
+    double v1 = it->value;
+    double v2 = (it - divisions)->value;
+
+    if(v1 < v2 != l1 < l2)
+    {
+      // extra truncation needed
+      double r = (l1 - l2) / (l1 - v1 - l2 + v2);
+      double zx = (pos? pos: divisions) - 1 + r;
+      double zy = l1 + (v1 - l1) * r;
+      glVertex2d(zx, zy);
+      glVertex2d(zx, zy);
+    }
+
+    if(pos)
+    {
+      glVertex2d(pos, v1);
+      glVertex2d(pos, v2);
+    }
+    else
+    {
+      // cursor at the end
+      glVertex2d(divisions, v1);
+      glVertex2d(divisions, v2);
+      glEnd();
+      glBegin(GL_QUAD_STRIP);
+      glVertex2d(0, v1);
+      glVertex2d(0, v2);
+    }
+
+    l1 = v1;
+    l2 = v2;
+  }
+  glEnd();
+}
+
+
+void
+drawFill()
+{
+  if(!dimmed) drawFillZero();
+  else if(history > divisions) drawFillDelta();
 }
 
 

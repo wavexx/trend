@@ -305,7 +305,9 @@ signal. Intensity is proportional to the visible maximum.
 Filling
 -------
 
-TODO
+f or -F enable filling. In standard mode, the non-zero area of the curve will
+be filled. In dimmed mode, the area between the "foreground" and "background"
+values is filled instead.
 
 
 Examples

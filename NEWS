@@ -1,3 +1,9 @@
+Rev #54 28/04/2006 to Rev #
+
+	* Graph filling can be enabled with 'f'.
+	* 'd' now affects filling mode as well.
+
+
 Rev #49 05/12/2005 to Rev #54 28/04/2006
 
 	* Changing zero now aligns the graph instead of the grid.
