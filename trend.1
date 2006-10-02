@@ -1,0 +1,386 @@
+.\" trend.1: trend manual
+.\" Copyright(c) 2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+.\" Distributed under GNU LGPL WITHOUT ANY WARRANTY.
+.\"
+.Dd October 2, 2006
+.Dt TREND 1
+.\"
+.\"
+.Sh NAME
+.Nm trend
+.Nd a general-purpose, efficient trend graph
+.\"
+.\"
+.Sh SYNOPSIS
+.Nm
+.Op Fl dDSsvlmFgGhtAERIMNTirzfc
+.Op Fl display
+.Op Fl geometry
+.Op Fl iconic
+.Ar fifo
+.Aq Ar hist-spec | hist-sz x-div
+.Op Ar low high
+.\"
+.\"
+.Sh DESCRIPTION
+.Nm
+is a general-purpose, efficient trend graph for "live" data. Data is read in
+ASCII form from a file or continuously from a FIFO and displayed in real-time
+into a multi-pass trend (much like a CRT oscilloscope). trend can be used as a
+rapid analysis tool for progressive or time-based data series together with
+trivial scripting.
+.Pp
+.Nm
+requires at least a valid
+.Ar fifo
+to read from and an history specification
+.Ar ( hist-spec )
+or, for advanced usage, a combination of history size and horizontal size
+.Ar ( hist-sz No and Ar x-div No respectively).
+Optionally, to disable auto-scaling, the vertical limits can be specified
+directly through the command line via
+.Ar low No and Ar high .
+The default input format is ASCII, in absolute counting mode. Many settings
+can be changed directly during execution.
+.\"
+.\"
+.Sh INPUT
+.\"
+.Ss FIFO
+To display real-time data you should use a FIFO. A named FIFO can be created
+using the
+.Xr mkfifo 1
+command. You should then redirect your program's output to that file. FIFOs are
+automatically re-opened upon EOF.
+.Pp
+Both
+.Pa /dev/stdin
+and
+.Pa /dev/fd/0
+(where available) can be used as valid FIFOs for pipelining purposes without
+the need of extra filesystem objects. See the
+.Sx EXAMPLES
+section.
+.Pp
+Alternatively you can store your data in a plain file and simply display its
+last values non-interactively.
+.Pp
+When new data is written, the value is plotted and the cursor position is
+advanced. That is, the graph scrolling speed is determined by the speed of the
+data flow. When the number of received values is above the specified horizontal
+size, the graph will wrap or scroll, depending on your settings.
+.\"
+.Ss ASCII DATA
+The default data format is a space/tab/newline-separated series of parseable
+ASCII numbers; eg:
+.Bd -literal -offset indent
+1 2 3 4 5.1 0642
+0x12 -12.4E5 .987
+.Ed
+.Pp
+The parser is very lenient, and will silently ignore whatever looks like
+garbage.
+.\"
+.Ss INPUT COUNTING MODES
+By default all input values are considered absolute and displayed "as
+is". However trend can cope with incremental and differential counters too, by
+using the -c flag and taking the first value as the reference value. Available
+modes are:
+.Pp
+.Bl -tag -offset indent -compact -width " a "
+.It a
+absolute (default)
+.It i
+incremental counter
+.It d
+differential values
+.El
+.\"
+.Ss INPUT FORMAT TYPES
+trend also supports different input formats, as specified by the -f flag. Note
+however that only the ASCII parser (the default) silently ignores errors. For
+binary formats no errors or invalid values (like NaN) should be written: if
+such a value is read, trend will close and reopen the pipe and pretend to
+restart from scratch. The actual underlying binary format depends on the host
+architecture:
+.Pp
+.Bl -tag -offset indent -compact -width " a "
+.It a
+ASCII parser (default)
+.It f
+Binary float
+.It d
+binary double
+.It s
+binary short
+.It i
+binary int
+.It l
+binary long
+.El
+.\"
+.\"
+.Sh OPTIONS
+.\"
+.Ss FLAGS
+.Bl -tag -compact -width " -G grid-spec "
+.It Fl d
+"dimmed" shading mode
+.It Fl D
+visible distribution graph
+.It Fl S
+enable anti-aliasing
+.It Fl s
+"scrolling" mode
+.It Fl v
+visible values
+.It Fl l
+visible latency
+.It Fl m
+visible marker
+.It Fl F
+enable filling
+.It Fl g
+visible grid
+.It Fl G Ar grid-spec
+specify grid resolution
+.It Fl z Ar n
+specify y zero
+.It Fl h
+help and version info
+.It Fl t Ar str
+specify a window title
+.It Fl A Ar colour
+background colour
+.It Fl E Ar colour
+text (values) colour
+.It Fl R Ar colour
+grid colour
+.It Fl I Ar colour
+trend colour
+.It Fl M Ar colour
+marker colour
+.It Fl N Ar colour
+interactive examiner colour
+.It Fl T Ar colour
+edit mode colour
+.It Fl c Ar mode
+input counting mode
+.It Fl f Ar format
+input format
+.It Fl display
+.No See Xr X 7 .
+.It Fl geometry
+.No See Xr X 7 .
+.It Fl iconic
+.No See Xr X 7 .
+.El
+.\"
+.Ss HIST-SPEC
+An history specification is another convenient form or defining the pair
+`hist-sz x-div` for common cases. An history specification can be in either one
+of the following formats:
+.Pp
+.Bl -tag -compact -offset indent -width " NxM "
+.It N
+Sets x-div to N, and hist-sz to N+1.
+.It N/M
+Sets hist-sz to N, and x-div to N/M.
+.It NxM
+Sets x-div to N, and hist-sz to N*M.
+.El
+.Pp
+While this may seem hard at first,
+.Ic trend fifo '60x3'
+is an easier way of
+expressing "60 seconds for 3 minutes" and similar idioms.
+.\"
+.Ss COLOUR
+A colour is specified in hex RGB format, as follows:
+.Li #RRGGBB , RRGGBB No or Li 0xRRGGBB ;
+some examples:
+.Pp
+.Bl -tag -compact -offset indent -width " #000000 "
+.It #FF0000
+red
+.It #00FF00
+green
+.It #A020F0
+purple
+.El
+.\"
+.Ss GRID-SPEC
+A grid specification is of the form:
+.Pp
+.Dl [[A][+C]][x[B][+C]]
+.Pp
+(eg:
+.Li 1.3 , 10+5 , 1x10+5 , +5x+5 ; +1x+1
+gets the old behaviour) where:
+.Pp
+.Bl -tag -compact -offset indent -width " A "
+.It A
+y grid resolution
+.It B
+x grid resolution
+.It C
+draw a mayor line every C normal grid lines
+.El
+.\"
+.\"
+.Sh DISPLAY
+.\"
+.Ss INTERACTIVE KEYS
+.Bl -tag -compact -offset indent -width " space "
+.It ESC
+quit/exit
+.It a
+toggle auto-scaling
+.It A
+re-scale the graph without activating auto-scaling
+.It d
+toggle dimmed shading mode
+.It D
+toggle distribution graph
+.It S
+toggle anti-aliasing
+.It s
+switch scrolling mode (wrap-around or scrolling)
+.It v
+toggle values
+.It l
+show real-to-visual latency
+.It L
+set limits interactively
+.It m
+activate a marker on the current cursor position
+.It f
+toggle filling
+.It g
+toggle grid
+.It G
+change grid-spec interactively
+.It z
+change zero interactively
+.It space
+pause visualisation (but still continue to consume input to preserve time
+coherency)
+.El
+.\"
+.Ss AUTOSCALING
+When autoscaling is enabled the graph will be scaled vertically to fit visible
+values. The grid resolution is used to add some vertical bounds to the
+graph. Disabling autoscaling interactively will retain current limits. When the
+grid is too dense to be displayed it's deactivated automatically.
+.\"
+.Ss LATENCY INDICATOR
+The latency indicator shows a 5s average of the time-frame (always in seconds)
+between real value updates and the final output you're seeing: it includes
+copy/redraw times (which varies depending on enabled layers) plus video
+sync. This means that on CRT monitors with eg. 85hz of vertical refresh, a mean
+value 5ms is unavoidable (unless your graphic card supports asynchronous
+blits). Sampling accuracy is also subject to RTC precision and system
+scheduling.
+.\"
+.Ss SHADING MODES
+The default is to shade uniformly old values to complete transparency. The
+"dimmed" shading mode draws the foreground values with full opacity and the
+others with half opacity.
+.\"
+.Ss SCROLLING MODES
+The default visualisation mode is "wrap-around": newer values will simply wrap
+around the screen when new data arrives. The other available one is
+"scrolling": new data is always placed at the right edge of the screen, and
+older values scrolled on the left.
+.\"
+.Ss VALUE INDICATORS
+Three value indicators are drawn on the screen: upper limit, lower limit and
+current value (respectively on the upper right, lower right and lower left of
+the screen).
+.\"
+.Ss INTERACTIVE EXAMINERS
+You can query interactively the graph for any value in the history by clicking
+with the first mouse button. This will enable a permanent examiner in the
+selected position and display up to the three nearest values in the upper-left
+corner of the screen. Intersections are projected horizontally, while a small
+circle will show the position of the nearest sampled value. The mean value
+refers to the three intersections.
+.Pp
+By holding down the CTRL key while clicking/dragging only "foreground" values
+will be considered.
+.Pp
+When clicking inside the distribution graph, the current count for the selected
+value is displayed instead.
+.Pp
+The examiners can be removed by clicking anywhere with the third mouse button.
+.\"
+.Ss DISTRIBUTION GRAPH
+D or -D enable a distribution graph on the left side of the window. This is
+especially useful when analysing the continuity of a function or
+signal. Intensity is proportional to the visible maximum.
+.\"
+.Ss FILLING
+f or -F enable filling. In standard mode, the area between the curve and zero
+will be filled. In dimmed mode, the area between the "foreground" and
+"background" values is filled instead.
+.\"
+.\"
+.Sh UPDATE POLICY
+.Bl -item
+.It
+The fifo is read and managed asynchronously from the graphics. Delays at the
+display end will not interfere with the data feed.
+.It
+The fifo is unbuffered and the feeder thread is synchronously locked on it
+waiting for new data.
+.It
+The value is accepted (and displayed thereafter) when a separator character is
+received after the value, or, for binary input, when the needed amount of bytes
+is read (in this case each value is read with a single read call).
+.It
+The display is updated within the next millisecond after at least one value is
+read or when a redisplay is needed (if another sample was read while drawing),
+with the data available at the instant of the call-back (sampled
+atomically). Scheduler latencies apply.
+.El
+.\"
+.\"
+.Sh ENVIRONMENT
+.Ev DISPLAY See Xr X 7 .
+.\"
+.\"
+.Sh EXAMPLES
+Running trend without a FIFO:
+.Pp
+.Dl command | trend /dev/stdin ...
+.Pp
+Display the number of current active processes over time:
+.Pp
+.Dl trend fifo 60x24 &
+.Dl (while true; do ps -A | wc -l; sleep 1; done) > fifo
+.\"
+.\"
+.Sh DIAGNOSTICS
+.Ex -std
+.\"
+.\"
+.Sh ERRORS
+.Bl -diag
+.It trend: producer thread exiting
+The data stream finished for some reason (the specified file was invalid at
+the time of the request). For regular or invalid files this warning is
+normal.
+.El
+.\"
+.\"
+.Sh SEE ALSO
+.Xr mkfifo 1 ,
+.Xr stdin 4 ,
+.Xr fd 4 ,
+.Pa /usr/share/doc/trend/examples/
+.\"
+.\"
+.Sh AUTHORS
+trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
+Copyright(c) 2003-2006 by
+.An "Yuri D'Elia" Aq wavexx@users.sf.net .
