@@ -1186,7 +1186,11 @@ idle(int)
   // re-register the callback
   glutTimerFunc(1, idle, 0);
   if(paused)
+  {
+    if(messages.size())
+      glutPostRedisplay();
     return;
+  }
 
   // check if a redraw is really necessary
   bool recalc = false;
