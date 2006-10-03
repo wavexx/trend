@@ -18,7 +18,7 @@
 .Op Fl geometry
 .Op Fl iconic
 .Ar fifo
-.Aq Ar hist-spec | hist-sz x-div
+.Aq Ar hist-spec | hist-sz x-sz
 .Op Ar low high
 .\"
 .\"
@@ -36,7 +36,7 @@ requires at least a valid
 to read from and an history specification
 .Ar ( hist-spec )
 or, for advanced usage, a combination of history size and horizontal size
-.Ar ( hist-sz No and Ar x-div No respectively).
+.Ar ( hist-sz No and Ar x-sz No respectively).
 Optionally, to disable auto-scaling, the vertical limits can be specified
 directly through the command line via
 .Ar low No and Ar high .
@@ -178,16 +178,16 @@ input format
 .\"
 .Ss HIST-SPEC
 An history specification is another convenient form or defining the pair
-`hist-sz x-div` for common cases. An history specification can be in either one
+`hist-sz x-sz` for common cases. An history specification can be in either one
 of the following formats:
 .Pp
 .Bl -tag -compact -offset indent -width " NxM "
 .It N
-Sets x-div to N, and hist-sz to N+1.
+Sets x-sz to N, and hist-sz to N+1.
 .It N/M
-Sets hist-sz to N, and x-div to N/M.
+Sets hist-sz to N, and x-sz to N/M.
 .It NxM
-Sets x-div to N, and hist-sz to N*M.
+Sets x-sz to N, and hist-sz to N*M.
 .El
 .Pp
 While this may seem hard at first,
@@ -320,9 +320,9 @@ especially useful when analysing the continuity of a function or
 signal. Intensity is proportional to the visible maximum.
 .\"
 .Ss FILLING
-f or -F enable filling. In standard mode, the area between the curve and zero
-will be filled. In dimmed mode, the area between the "foreground" and
-"background" values is filled instead.
+f or -F enable filling. In standard mode, or when hist-sz is smaller than x-sz,
+the area between the curve and zero will be filled. Otherwise, in dimmed mode,
+the area between the "foreground" and "background" values is filled instead.
 .\"
 .\"
 .Sh UPDATE POLICY

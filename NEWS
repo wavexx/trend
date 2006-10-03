@@ -3,6 +3,7 @@ Rev #54 28/04/2006 to Rev #
 	* Graph filling can be enabled with 'f'.
 	* 'd' now affects filling mode as well.
 	* Messages are now removed also when paused.
+	* Created a man page (trend.1).
 
 
 Rev #49 05/12/2005 to Rev #54 28/04/2006
