@@ -773,8 +773,8 @@ drawFillDelta()
 void
 drawFill()
 {
-  if(!dimmed) drawFillZero();
-  else if(history > divisions) drawFillDelta();
+  if(!dimmed || history < divisions + 2) drawFillZero();
+  else drawFillDelta();
 }
 
 
@@ -1666,7 +1666,7 @@ parseOptions(int argc, char* const argv[])
 
     case 'h':
       cout << argv[0] << " usage: " <<
-	argv[0] << " [options] fifo <hist-spec|hist-sz x-div> [-y +y]\n" <<
+	argv[0] << " [options] fifo <hist-spec|hist-sz x-sz> [-y +y]\n" <<
 	argv[0] << " version: $Revision$ $Date$\n";
       return 1;
 
@@ -1700,7 +1700,7 @@ parseOptions(int argc, char* const argv[])
   // parameters may still be buggy
   if(!divisions)
   {
-    cerr << argv[0] << ": x-div can't be zero\n";
+    cerr << argv[0] << ": x-sz can't be zero\n";
     return -1;
   }
   if(history < 2)
