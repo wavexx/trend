@@ -50,8 +50,8 @@ should suffice.
 Usage
 =====
 
-Trend now comes with exhaustive manual documentation. See the `manual page`_
-for details.
+Trend now comes with exhaustive online documentation.
+See the `manual page`_ for details.
 
 .. _manual page: trend.1.html
 
@@ -124,8 +124,9 @@ Accurate timing
 ===============
 
 trend was designed with accuracy and speed in mind (I use it literally as a
-virtual oscilloscope). For this reasons trend offloads to caller both the
-timing and sampling.
+virtual oscilloscope). For this reasons trend offloads to the caller both the
+timing and sampling responsibility, allowing trend to be used for any purpose
+with maximum precision.
 
 For the non-experts, the scripting convention of sleeping a fixed amount of
 time after sampling the value will lead to cumulative timing errors. ASCII
@@ -179,6 +180,11 @@ trend-oversample:
 	(implicit 1x14 oversampling), showing buffer and visual latency in
 	respect to the source (taken before the actual release, blat + vlat are
 	now summed).
+
+trend-qtac:
+
+	Multiple instances of trend running as a server room monitoring system.
+	Courtesy of Liam MacKenzie and qtac.edu.au
 
 
 Further customisation

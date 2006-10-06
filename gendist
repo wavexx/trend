@@ -12,7 +12,7 @@ CATALOG="
 	Makefile
 	imem tstimes mem net timeq
 	trend.cc defaults.hh color.cc color.hh rr.hh timer.hh gl.hh
-	AUTHORS COPYING README TODO NEWS trend.1
+	AUTHORS THANKS COPYING README TODO NEWS trend.1
 "
 
 
