@@ -1,3 +1,9 @@
+Rev #58 03/10/2006 to Rev #
+
+    	* Polling rate limits can now be configured.
+	* Latency sampling now also shows maximal sync times.
+
+
 Rev #54 28/04/2006 to Rev #58 03/10/2006
 
 	* Graph filling can be enabled with 'f'.

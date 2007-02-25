@@ -178,8 +178,7 @@ trend-oversample:
 
 	``trend -S -I 0x00FF00 fifo 10000x3`` on a ~700 pixels wide window
 	(implicit 1x14 oversampling), showing buffer and visual latency in
-	respect to the source (taken before the actual release, blat + vlat are
-	now summed).
+	respect to the source (taken before the actual release).
 
 trend-qtac:
 

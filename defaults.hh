@@ -30,6 +30,7 @@ namespace Trend
   const unsigned char pauseKey = ' ';
   const unsigned char latKey = 'l';
   const unsigned char fillKey = 'f';
+  const unsigned char pollRateKey = 'p';
 
   // Some types
   enum input_t {absolute, incremental, differential};
@@ -49,6 +50,7 @@ namespace Trend
   const bool grid = false;
   const double gridres = 1.;
   const int mayor = 10;
+  const int pollMs = 1;
 
   // Colors
   const GLfloat backCol[3] = {0.,  0.,  0. };

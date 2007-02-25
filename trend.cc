@@ -1,6 +1,6 @@
 /*
  * trend: display live data on a trend graph
- * Copyright(c) 2003-2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2003-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -53,9 +53,6 @@ using std::strchr;
 #include <sys/stat.h>
 #include <unistd.h>
 #include <pthread.h>
-#ifdef __sgi
-#include <mutex.h>
-#endif
 
 // OpenGL/GLU
 #include "gl.hh"
@@ -125,7 +122,7 @@ namespace
   // Basic data
   const char* fileName;
   pthread_mutex_t mutex;
-  volatile unsigned long damaged = 0;
+  volatile bool damaged = false;
   Trend::input_t input = Trend::input;
   Trend::format_t format = Trend::format;
 
@@ -165,6 +162,7 @@ namespace
   GrSpec grSpec;
   bool paused = false;
   deque<pair<time_t, string> > messages;
+  int pollMs = Trend::pollMs;
 
   // Indicator status
   bool intr = false;
@@ -178,7 +176,10 @@ namespace
 
   // Latency
   bool latency = Trend::latency;
-  ATimer atLat(Trend::latAvg);
+  ATimer atVLat(Trend::latAvg);
+  ATimer atBLat(Trend::latAvg);
+  double bLat = 0.;
+  double vLat = 0.;
 
   // Edit form
   bool edit;
@@ -371,13 +372,14 @@ producer(void* prg)
 
       // append the value
       rrData->push_back(Value(num, pos));
-#ifdef __sgi
-      add_then_test((unsigned long*)(&damaged), 1);
-#else
+
       pthread_mutex_lock(&mutex);
-      ++damaged;
+      if(!damaged)
+      {
+	atBLat.start();
+	damaged = true;
+      }
       pthread_mutex_unlock(&mutex);
-#endif
 
       // wrap pos when possible
       if(!(++pos % divisions))
@@ -1017,7 +1019,7 @@ drawLatency()
   char buf[Trend::maxNumLen];
   glColor3fv(textCol);
 
-  sprintf(buf, "lat: %g", atLat.avg());
+  sprintf(buf, "lat: %g/%g", vLat, bLat);
   drawLEString(buf);
 }
 
@@ -1129,7 +1131,8 @@ display()
 
   // flush buffers
   glutSwapBuffers();
-  atLat.stop();
+  atVLat.stop();
+  vLat = atVLat.avg();
 }
 
 
@@ -1181,36 +1184,24 @@ setLimits()
 
 
 void
-idle(int)
+check()
 {
-  // re-register the callback
-  glutTimerFunc(1, idle, 0);
-  if(paused)
-  {
-    if(messages.size())
-      glutPostRedisplay();
-    return;
-  }
-
   // check if a redraw is really necessary
   bool recalc = false;
-#ifdef __sgi
-  if(test_and_set((unsigned long*)(&damaged), 0))
-    recalc = true;
-#else
-  // linux seems to support some unportable atomic stuff into asm/atomic
+
   pthread_mutex_lock(&mutex);
   if(damaged)
   {
-    damaged = 0;
+    damaged = false;
+    atBLat.stop();
+    bLat = atBLat.avg();
     recalc = true;
   }
   pthread_mutex_unlock(&mutex);
-#endif
 
   if(recalc)
   {
-    atLat.start();
+    atVLat.start();
     rrData->copy(rrBuf);
 
     // since we swiched from deque to rr, the size now is always fixed, and
@@ -1229,6 +1220,24 @@ idle(int)
 
     glutPostRedisplay();
   }
+}
+
+
+void
+idle(int = 0)
+{
+  // re-register the callback
+  glutTimerFunc(pollMs, idle, 0);
+
+  // consume messages when paused
+  if(paused)
+  {
+    if(messages.size())
+      glutPostRedisplay();
+    return;
+  }
+
+  check();
 }
 
 
@@ -1373,6 +1382,21 @@ getZero(const string& str)
 
 
 void
+setPollRate(const double rate)
+{
+  pollMs = static_cast<int>(1000. / rate);
+}
+
+
+void
+getPollRate(const string& str)
+{
+  double rate = strtod(str.c_str(), NULL);
+  if(rate > 0) setPollRate(rate);
+}
+
+
+void
 dispKeyboard(const unsigned char key, const int x, const int y)
 {
   switch(key)
@@ -1438,6 +1462,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
 
   case Trend::latKey:
     toggleStatus("latency", latency);
+    break;
+
+  case Trend::pollRateKey:
+    editMode("poll rate", getPollRate);
     break;
 
   case Trend::pauseKey:
@@ -1559,7 +1587,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:irz:f:c:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:irz:f:c:p:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1654,6 +1682,18 @@ parseOptions(int argc, char* const argv[])
     case 'r':
       // TODO: deprecated
       input = Trend::differential;
+      break;
+
+    case 'p':
+      {
+	double rate = strtod(optarg, NULL);
+	if(!rate)
+	{
+	  cerr << argv[0] << "bad polling rate";
+	  return -1;
+	}
+	setPollRate(rate);
+      }
       break;
 
     case 'f':
@@ -1771,8 +1811,9 @@ main(int argc, char* argv[]) try
   editMode(false);
 
   // first redraw
+  atVLat.start();
   init();
-  idle(0);
+  idle();
 
   // processing
   glutMainLoop();

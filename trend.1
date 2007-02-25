@@ -13,7 +13,7 @@
 .\"
 .Sh SYNOPSIS
 .Nm
-.Op Fl dDSsvlmFgGhtAERIMNTzfc
+.Op Fl dDSsvlmFgGhtAERIMNTzfcp
 .Op Fl display
 .Op Fl geometry
 .Op Fl iconic
@@ -140,7 +140,7 @@ enable anti-aliasing
 .It Fl v
 visible values
 .It Fl l
-visible latency
+visible visual/max sync latency
 .It Fl m
 visible marker
 .It Fl F
@@ -175,6 +175,8 @@ input counting mode (See
 .It Fl f Ar format
 input format (See
 .Sx FORMAT TYPES )
+.It Fl p Ar rate
+polling rate (hz)
 .It Fl display
 .No See Xr X 7 .
 .It Fl geometry
@@ -256,7 +258,7 @@ switch scrolling mode (wrap-around or scrolling)
 .It Ic v
 toggle values
 .It Ic l
-show real-to-visual latency
+show visual and maximal sync latency
 .It Ic L
 set limits interactively
 .It Ic m
@@ -269,6 +271,8 @@ toggle grid
 change grid-spec interactively
 .It Ic z
 change zero interactively
+.It Ic p
+change polling rate interactively
 .It Ic space
 pause visualisation (but still continue to consume input to preserve time
 coherency)
@@ -281,13 +285,15 @@ graph. Disabling autoscaling interactively will retain current limits. When the
 grid is too dense to be displayed it's deactivated automatically.
 .\"
 .Ss LATENCY INDICATOR
-The latency indicator shows a 5s average of the time-frame (always in seconds)
-between real value updates and the final output you're seeing: it includes
-copy/redraw times (which varies depending on enabled layers) plus video
-sync. This means that on CRT monitors with eg. 85hz of vertical refresh, a mean
-value 5ms is unavoidable (unless your graphic card supports asynchronous
-blits). Sampling accuracy is also subject to RTC precision and system
-scheduling.
+The latency indicator shows a 5s average of the visual and maximal sync latency
+(in seconds). The visual latency is the time-frame between real value updates
+and the final output you're seeing: it includes copy/redraw times, which varies
+depending on enabled layers, plus video sync. The maximal sync latency is the
+maximal time ever required for any received value to be synced with the
+display: since the display is updated atomically, values received while
+redrawing are implicitly delayed. See the
+.Sx UPDATE POLICY
+section for further details.
 .\"
 .Ss SHADING MODES
 The default is to shade uniformly old values to complete transparency. The
@@ -343,14 +349,19 @@ display end will not interfere with the data feed.
 The fifo is unbuffered and the feeder thread is synchronously locked on it
 waiting for new data.
 .It
-The value is accepted (and displayed thereafter) when a separator character is
-received after the value, or, for binary input, when the needed amount of bytes
-is read (in this case each value is read with a single read call).
+The value is put in the history buffer when a separator character is received
+after the value, or, for binary input, when the needed amount of bytes is read
+(in this case each value is read with a single read call).
 .It
-The display is updated within the next millisecond after at least one value is
-read or when a redisplay is needed (if another sample was read while drawing),
-with the data available at the instant of the call-back (sampled
-atomically). Scheduler latencies apply.
+The polling rate (as defined by
+.Ic p No or Fl p
+and defaulting to 1000) defines how often the history buffer should be checked
+for updates and kept in sync with the visual. Values greater than 1000 result
+in continuous scanning (note that this only affects the maximal sync latency,
+and not the display rate, which is handled automatically).
+.It
+Syncing occurs atomically, reflecting the actual state at the instant of the
+update. Scheduler latencies apply.
 .El
 .\"
 .\"
