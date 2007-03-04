@@ -58,7 +58,11 @@ using std::strchr;
 #include "gl.hh"
 
 #ifndef NAN
-#define NAN numeric_limits<double>::quiet_NaN()
+#define NAN (numeric_limits<double>::quiet_NaN())
+#endif
+
+#ifndef INF
+#define INF (numeric_limits<double>::infinity())
 #endif
 
 typedef void (*edit_callback_t)(const string& str);
@@ -158,6 +162,7 @@ namespace
   bool values = Trend::values;
   bool marker = Trend::marker;
   bool filled = Trend::filled;
+  bool showUndef = Trend::showUndef;
   bool grid = Trend::grid;
   GrSpec grSpec;
   bool paused = false;
@@ -258,12 +263,9 @@ readStr(FILE* fd, char* buf, size_t len)
 
 
 // read a number from an ascii stream
-double
-readANum(FILE* fd)
+bool
+readANum(FILE* fd, double& v)
 {
-  // read a number
-  double num;
-
   for(;;)
   {
     // read
@@ -271,7 +273,7 @@ readANum(FILE* fd)
     char buf[Trend::maxNumLen];
     char* end = readStr(fd, buf, sizeof(buf) - 1);
     if(feof(fd))
-      return NAN;
+      return false;
 
     if(!end)
     {
@@ -282,42 +284,70 @@ readANum(FILE* fd)
     *end = 0;
 
     // convert the number
-    num = strtod(buf, &end);
+    v = strtod(buf, &end);
     if(end != buf)
       break;
   }
 
-  return num;
+  return true;
 }
 
 
 // read a number from a binary stream
-template <class T> double
-readNum(FILE* fd)
+template <class T> bool
+readNum(FILE* fd, double& v)
 {
   T buf;
-  return (fread(&buf, sizeof(buf), 1, fd)?
-      static_cast<double>(buf): NAN);
+  if(fread(&buf, sizeof(buf), 1, fd) != 1)
+    return false;
+
+  v = static_cast<double>(buf);
+  return true;
 }
 
 
 // read up to the first number in the stream using the current format
-double
-readFNum(FILE* fd)
+bool
+readFNum(FILE* fd, double& v)
 {
-  double num;
+  bool st;
 
   switch(format)
   {
-  case Trend::f_ascii: num = readANum(fd); break;
-  case Trend::f_float: num = readNum<float>(fd); break;
-  case Trend::f_double: num = readNum<double>(fd); break;
-  case Trend::f_short: num = readNum<short>(fd); break;
-  case Trend::f_int: num = readNum<int>(fd); break;
-  case Trend::f_long: num = readNum<long>(fd); break;
+  case Trend::f_ascii: st = readANum(fd, v); break;
+  case Trend::f_float: st = readNum<float>(fd, v); break;
+  case Trend::f_double: st = readNum<double>(fd, v); break;
+  case Trend::f_short: st = readNum<short>(fd, v); break;
+  case Trend::f_int: st = readNum<int>(fd, v); break;
+  case Trend::f_long: st = readNum<long>(fd, v); break;
   }
 
-  return num;
+  return st;
+}
+
+
+// read/handle incoming escape sequences
+bool
+readEsc(FILE* fd)
+{
+  // TODO: incomplete
+  return true;
+}
+
+
+// read the next valid element from the stream
+bool
+readNext(FILE* fd, double& v)
+{
+  while(readFNum(fd, v))
+  {
+    if(!isinf(v))
+      return true;
+    if(!readEsc(fd))
+      break;
+  }
+
+  return false;
 }
 
 
@@ -346,10 +376,10 @@ producer(void* prg)
     // first value for incremental data
     double old, num;
     if(input != Trend::absolute)
-      old = readFNum(in);
+      readNext(in, old);
 
     // read all data
-    while(!isnan((num = readFNum(in))))
+    while(readNext(in, num))
     {
       // determine the actual value
       switch(input)
@@ -647,12 +677,19 @@ size_t
 drawLine()
 {
   const Value* it = rrBuf;
+  const Value* nit = it + 1;
   const size_t mark(history + offset - divisions - 1);
+  bool st = false;
   size_t pos;
 
-  glBegin(GL_LINE_STRIP);
-  for(size_t i = offset; it != rrEnd; ++i, ++it)
+  for(size_t i = offset; it != rrEnd; ++i, ++it, ++nit)
   {
+    if(!st && !isnan(it->value) && (nit == rrEnd || !isnan(nit->value)))
+    {
+      st = true;
+      glBegin(GL_LINE_STRIP);
+    }
+
     // shade the color
     double alpha(dimmed?
 	(i > mark? 1.: .5):
@@ -661,25 +698,50 @@ drawLine()
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
     pos = getPosition(i, *it);
 
-    if(pos)
-      glVertex2d(pos, it->value);
-    else
+    if(st)
     {
-      // Cursor at the end
-      glVertex2d(divisions, it->value);
+      if(pos)
+	glVertex2d(pos, it->value);
+      else
+      {
+	// Cursor at the end
+	glVertex2d(divisions, it->value);
+	glEnd();
+	glBegin(GL_LINE_STRIP);
+	glVertex2d(0, it->value);
+      }
+    }
+    else if(!isnan(it->value))
+    {
+      glBegin(GL_LINES);
+      if(pos)
+      {
+	glVertex2d(pos - 0.5, it->value);
+	glVertex2d(pos + 0.5, it->value);
+      }
+      else
+      {
+	glVertex2d(0, it->value);
+	glVertex2d(0.5, it->value);
+	glVertex2d(divisions, it->value);
+	glVertex2d(divisions - 0.5, it->value);
+      }
       glEnd();
-      glBegin(GL_LINE_STRIP);
-      glVertex2d(0, it->value);
+    }
+
+    if(st && (nit == rrEnd || isnan(nit->value)))
+    {
+      glEnd();
+      st = false;
     }
   }
-  glEnd();
 
   return pos;
 }
 
 
 void
-drawFillZero()
+drawFillZero() //TODO:undef
 {
   const size_t m = std::min(history, divisions + 1);
   const size_t mark(history + offset - m);
@@ -687,7 +749,7 @@ drawFillZero()
   double last = it->value;
   size_t pos;
 
-  glColor4f(lineCol[0], lineCol[1], lineCol[2], 0.25);
+  glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
   glBegin(GL_QUAD_STRIP);
   for(size_t i = mark; it != rrEnd; last = it->value, ++i, ++it)
   {
@@ -722,7 +784,7 @@ drawFillZero()
 
 
 void
-drawFillDelta()
+drawFillDelta() //TODO:undef
 {
   const size_t m = std::min(history - divisions, divisions + 1);
   const size_t mark(history + offset - m);
@@ -731,7 +793,7 @@ drawFillDelta()
   double l2 = (it - divisions)->value;
   size_t pos;
 
-  glColor4f(lineCol[0], lineCol[1], lineCol[2], 0.25);
+  glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
   glBegin(GL_QUAD_STRIP);
   for(size_t i = mark; it != rrEnd; ++i, ++it)
   {
@@ -781,7 +843,55 @@ drawFill()
 
 
 void
-drawDistrib()
+drawFillUndef()
+{
+  const size_t m = std::min(history, divisions + 1);
+  const size_t mark(history + offset - m);
+  const Value* it = rrEnd - m;
+  const Value* nit = it + 1;
+  bool st = false;
+  size_t pos;
+
+  glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillUndefAlpha);
+  for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
+  {
+    if(!st && ((nit == rrEnd && isnan(it->value)) || isnan(nit->value)))
+    {
+      st = true;
+      glBegin(GL_QUAD_STRIP);
+    }
+
+    if(st)
+    {
+      pos = getPosition(i, *it);
+
+      if(pos)
+      {
+	glVertex2d(pos, loLimit);
+	glVertex2d(pos, hiLimit);
+      }
+      else
+      {
+	glVertex2d(divisions, loLimit);
+	glVertex2d(divisions, hiLimit);
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+	glVertex2d(0, loLimit);
+	glVertex2d(0, hiLimit);
+      }
+    }
+
+    if(st && (nit == rrEnd || (!isnan(it->value) && !isnan(nit->value))))
+    {
+      glEnd();
+      st = false;
+    }
+  }
+}
+
+
+void
+drawDistrib() //TODO:undef
 {
   // reallocate only if necessary. we must avoid to reallocate in order to
   // not fragment memory (resize() on gcc 3 isn't very friendly)
@@ -858,7 +968,7 @@ drawDistrib()
 
 
 void
-drawTIntr()
+drawTIntr() //TODO:undef
 {
   // handle side cases
   const double intrX = (::intrX < 0 || ::intrX > divisions? 0: ::intrX);
@@ -1038,7 +1148,7 @@ drawEdit()
   glBegin(GL_QUADS);
 
   // background
-  glColor4f(0., 0., 0., 0.9);
+  glColor4f(0., 0., 0., Trend::fillTextAlpha);
   glVertex2d(0, height2 + blockH);
   glVertex2d(width, height2 + blockH);
   glVertex2d(width, height2 - blockH);
@@ -1107,11 +1217,12 @@ display()
   // background grid
   if(grid) drawGrid();
   if(filled) drawFill();
+  if(showUndef) drawFillUndef();
   size_t pos = drawLine();
 
   // other data
   if(distrib) drawDistrib();
-  if(marker) drawMarker(pos);
+  if(marker && !scroll) drawMarker(pos);
   if(intr && (!distrib || intrX >= 0))
     drawTIntr();
 
@@ -1137,23 +1248,6 @@ display()
 
 
 void
-removeNANs()
-{
-  const Value* begin = rrBuf;
-  Value* it = rrEnd;
-  double old = NAN;
-
-  while(it-- != begin)
-  {
-    if(isnan(it->value))
-      it->value = old;
-    else if(it->value != old)
-      old = it->value;
-  }
-}
-
-
-void
 rrShift(double v)
 {
   for(Value* it = rrBuf; it != rrEnd; ++it)
@@ -1167,14 +1261,22 @@ setLimits()
   const Value* it = rrBuf;
 
   double lo(it->value);
-  double hi(lo);
+  double hi;
 
   for(; it != rrEnd; ++it)
   {
-    if(it->value > hi)
-      hi = it->value;
-    if(it->value < lo)
-      lo = it->value;
+    if(!isnan(it->value))
+    {
+      if(isnan(lo))
+	hi = lo = it->value;
+      else
+      {
+	if(it->value > hi)
+	  hi = it->value;
+	if(it->value < lo)
+	  lo = it->value;
+      }
+    }
   }
 
   // some vertical bounds
@@ -1203,12 +1305,6 @@ check()
   {
     atVLat.start();
     rrData->copy(rrBuf);
-
-    // since we swiched from deque to rr, the size now is always fixed, and
-    // the initial buffer is filled with NANs. We don't want NANs however,
-    // and we don't want to handle this lone-case everywhere.
-    if(isnan(rrBuf->value))
-      removeNANs();
 
     // shift values if requested
     if(zero)
@@ -1448,6 +1544,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     toggleStatus("fill", filled);
     break;
 
+  case Trend::showUndefKey:
+    toggleStatus("show undefined", showUndef);
+    break;
+
   case Trend::gridKey:
     toggleStatus("grid", grid);
     break;
@@ -1587,7 +1687,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:irz:f:c:p:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:irz:f:c:p:u:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1620,6 +1720,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'F':
       filled = !filled;
+      break;
+
+    case 'u':
+      showUndef = !showUndef;
       break;
 
     case 'g':

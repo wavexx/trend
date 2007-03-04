@@ -13,7 +13,7 @@
 .\"
 .Sh SYNOPSIS
 .Nm
-.Op Fl dDSsvlmFgGhtAERIMNTzfcp
+.Op Fl dDSsvlmFgGhtAERIMNTzfcpu
 .Op Fl display
 .Op Fl geometry
 .Op Fl iconic
@@ -103,11 +103,13 @@ differential values
 Different input formats are supported, as specified by the
 .Fl f
 flag. Note however that only the ASCII parser (the default) silently ignores
-errors. For binary formats no errors or invalid values (like NaN) should be
-written: if such a value is read,
+errors. NaNs and Infinity have special treatment, see the
+.Sx SPECIAL VALUES
+section. Internally, 
 .Nm
-will close and reopen the pipe and pretend to restart from scratch. The actual
-underlying binary format depends on the host architecture:
+always works with double precision floating points: conversion toward these is
+performed with the default FPU conversion rules. The actual underlying binary
+format depends on the host architecture:
 .Pp
 .Bl -tag -offset indent -compact -width " a "
 .It Ar a
@@ -123,6 +125,12 @@ binary int
 .It Ar l
 binary long
 .El
+.\"
+.Ss SPECIAL VALUES
+ASCII and binary floating point input have special treatment for NaNs and
+Infinity (entered in any representable form). NaNs are considered as "undefined
+values". Undefined values can be highlighted, but aren't otherwise
+rendered. Infinity is reserved for future use as an escape sequence.
 .\"
 .\"
 .Sh OPTIONS
@@ -177,6 +185,8 @@ input format (See
 .Sx FORMAT TYPES )
 .It Fl p Ar rate
 polling rate (hz)
+.It Fl u
+show undefined values
 .It Fl display
 .No See Xr X 7 .
 .It Fl geometry
@@ -273,6 +283,8 @@ change grid-spec interactively
 change zero interactively
 .It Ic p
 change polling rate interactively
+.It Ic u
+toggle display of undefined values
 .It Ic space
 pause visualisation (but still continue to consume input to preserve time
 coherency)

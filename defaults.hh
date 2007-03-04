@@ -30,6 +30,7 @@ namespace Trend
   const unsigned char pauseKey = ' ';
   const unsigned char latKey = 'l';
   const unsigned char fillKey = 'f';
+  const unsigned char showUndefKey = 'u';
   const unsigned char pollRateKey = 'p';
 
   // Some types
@@ -47,6 +48,7 @@ namespace Trend
   const bool marker = true;
   const bool latency = false;
   const bool filled = false;
+  const bool showUndef = false;
   const bool grid = false;
   const double gridres = 1.;
   const int mayor = 10;
@@ -60,6 +62,10 @@ namespace Trend
   const GLfloat markCol[3] = {0.5, 0.5, 0. };
   const GLfloat intrCol[3] = {0.,  1.,  0. };
   const GLfloat editCol[3] = {1.,  0.,  0. };
+
+  const GLfloat fillTrendAlpha = 0.25;
+  const GLfloat fillUndefAlpha = 0.125;
+  const GLfloat fillTextAlpha = 0.9;
 
   // Exit
   const int success = 0;
