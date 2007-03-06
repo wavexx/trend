@@ -987,7 +987,7 @@ drawDistrib() //TODO:undef
 
 
 void
-drawTIntr() //TODO:undef
+drawTIntr()
 {
   // handle side cases
   const double intrX = (::intrX < 0 || ::intrX > divisions? 0: ::intrX);
@@ -1026,25 +1026,33 @@ drawTIntr() //TODO:undef
   const Value* end = rrEnd - 1;
   for(; it < end; i += divisions, it += divisions)
   {
-    size_t pos = getPosition(i, *it);
-
     // fetch the next value
     Value next = *(it + 1);
+    if(isnan(it->value) && isnan(next.value)) continue;
 
     Intr buf;
+    double far;
+
     if(mul < 0.5)
     {
       buf.near.value = it->value;
-      buf.near.count = pos;
+      buf.near.count = getPosition(i, *it);
+      far = next.value;
     }
     else
     {
       buf.near.value = next.value;
       buf.near.count = getPosition(i + 1, next);
+      far = it->value;
     }
-    buf.value = it->value + mul * (next.value - it->value);
-    buf.dist = fabs(buf.value - intrY);
-    intrs.push_back(buf);
+
+    if(!isnan(buf.near.value))
+    {
+      buf.value = (isnan(far)? buf.near.value:
+	  it->value + mul * (next.value - it->value));
+      buf.dist = fabs(buf.value - intrY);
+      intrs.push_back(buf);
+    }
   }
 
   // no intersections found
