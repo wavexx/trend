@@ -741,42 +741,61 @@ drawLine()
 
 
 void
-drawFillZero() //TODO:undef
+drawFillZero()
 {
   const size_t m = std::min(history, divisions + 1);
   const size_t mark(history + offset - m);
   const Value* it = rrEnd - m;
-  double last = it->value;
+  const Value* nit = it + 1;
+  bool st = false;
+  double last;
   size_t pos;
 
   glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
-  glBegin(GL_QUAD_STRIP);
-  for(size_t i = mark; it != rrEnd; last = it->value, ++i, ++it)
+  for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
   {
-    pos = getPosition(i, *it);
-
-    if(last < 0 != it->value < 0)
+    if(!st && !isnan(it->value) && (nit == rrEnd || !isnan(nit->value)))
     {
-      // extra truncation needed
-      double zt = (pos? pos: divisions) - it->value / (it->value - last);
-      glVertex2d(zt, 0);
-      glVertex2d(zt, 0);
-    }
-
-    if(pos)
-    {
-      glVertex2d(pos, it->value);
-      glVertex2d(pos, 0);
-    }
-    else
-    {
-      // cursor at the end
-      glVertex2d(divisions, it->value);
-      glVertex2d(divisions, 0);
-      glEnd();
+      last = it->value;
+      st = true;
       glBegin(GL_QUAD_STRIP);
-      glVertex2d(0, it->value);
-      glVertex2d(0, 0);
+    }
+
+    if(st)
+    {
+      pos = getPosition(i, *it);
+
+      if(last < 0 != it->value < 0)
+      {
+	// extra truncation needed
+	double zt = (pos? pos: divisions) - it->value / (it->value - last);
+	glVertex2d(zt, 0);
+	glVertex2d(zt, 0);
+      }
+
+      last = it->value;
+
+      if(pos)
+      {
+	glVertex2d(pos, it->value);
+	glVertex2d(pos, 0);
+      }
+      else
+      {
+	// cursor at the end
+	glVertex2d(divisions, it->value);
+	glVertex2d(divisions, 0);
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+	glVertex2d(0, it->value);
+	glVertex2d(0, 0);
+      }
+    }
+
+    if(st && (nit == rrEnd || isnan(nit->value)))
+    {
+      glEnd();
+      st = false;
     }
   }
   glEnd();
