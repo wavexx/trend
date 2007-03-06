@@ -790,66 +790,85 @@ drawFillZero()
 	glVertex2d(0, it->value);
 	glVertex2d(0, 0);
       }
-    }
 
-    if(st && (nit == rrEnd || isnan(nit->value)))
-    {
-      glEnd();
-      st = false;
+      if(nit == rrEnd || isnan(nit->value))
+      {
+	glEnd();
+	st = false;
+      }
     }
   }
-  glEnd();
 }
 
 
 void
-drawFillDelta() //TODO:undef
+drawFillDelta()
 {
   const size_t m = std::min(history - divisions, divisions + 1);
   const size_t mark(history + offset - m);
   const Value* it = rrEnd - m;
-  double l1 = it->value;
-  double l2 = (it - divisions)->value;
+  const Value* nit = it + 1;
+  bool st = false;
+  double l1;
+  double l2;
   size_t pos;
 
   glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
   glBegin(GL_QUAD_STRIP);
-  for(size_t i = mark; it != rrEnd; ++i, ++it)
+  for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
   {
-    pos = getPosition(i, *it);
     double v1 = it->value;
     double v2 = (it - divisions)->value;
 
-    if(v1 < v2 != l1 < l2)
+    if(!st && (!isnan(v1) && (nit == rrEnd || !isnan(nit->value)))
+	&& (!isnan(v2) && !isnan((nit - divisions)->value)))
     {
-      // extra truncation needed
-      double r = (l1 - l2) / (l1 - v1 - l2 + v2);
-      double zx = (pos? pos: divisions) - 1 + r;
-      double zy = l1 + (v1 - l1) * r;
-      glVertex2d(zx, zy);
-      glVertex2d(zx, zy);
-    }
-
-    if(pos)
-    {
-      glVertex2d(pos, v1);
-      glVertex2d(pos, v2);
-    }
-    else
-    {
-      // cursor at the end
-      glVertex2d(divisions, v1);
-      glVertex2d(divisions, v2);
-      glEnd();
+      l1 = v1;
+      l2 = v2;
+      st = true;
       glBegin(GL_QUAD_STRIP);
-      glVertex2d(0, v1);
-      glVertex2d(0, v2);
     }
 
-    l1 = v1;
-    l2 = v2;
+    if(st)
+    {
+      pos = getPosition(i, *it);
+
+      if(v1 < v2 != l1 < l2)
+      {
+	// extra truncation needed
+	double r = (l1 - l2) / (l1 - v1 - l2 + v2);
+	double zx = (pos? pos: divisions) - 1 + r;
+	double zy = l1 + (v1 - l1) * r;
+	glVertex2d(zx, zy);
+	glVertex2d(zx, zy);
+      }
+
+      if(pos)
+      {
+	glVertex2d(pos, v1);
+	glVertex2d(pos, v2);
+      }
+      else
+      {
+	// cursor at the end
+	glVertex2d(divisions, v1);
+	glVertex2d(divisions, v2);
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+	glVertex2d(0, v1);
+	glVertex2d(0, v2);
+      }
+
+      l1 = v1;
+      l2 = v2;
+
+      if(nit == rrEnd || isnan(nit->value) || isnan((nit - divisions)->value))
+      {
+	glEnd();
+	st = false;
+      }
+    }
   }
-  glEnd();
 }
 
 
@@ -898,19 +917,19 @@ drawFillUndef()
 	glVertex2d(0, loLimit);
 	glVertex2d(0, hiLimit);
       }
-    }
 
-    if(st && (nit == rrEnd || (!isnan(it->value) && !isnan(nit->value))))
-    {
-      glEnd();
-      st = false;
+      if(nit == rrEnd || (!isnan(it->value) && !isnan(nit->value)))
+      {
+	glEnd();
+	st = false;
+      }
     }
   }
 }
 
 
 void
-drawDistrib() //TODO:undef
+drawDistrib()
 {
   // reallocate only if necessary. we must avoid to reallocate in order to
   // not fragment memory (resize() on gcc 3 isn't very friendly)
@@ -928,6 +947,7 @@ drawDistrib() //TODO:undef
   {
     const Value* a = it;
     const Value* b = (it + 1);
+    if(isnan(a->value) || isnan(b->value)) continue;
 
     // projection
     double mul = (static_cast<double>(height) / (hiLimit - loLimit));
