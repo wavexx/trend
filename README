@@ -86,9 +86,15 @@ Some simple example scripts are included within the package:
   values (from stdin) in the specified time-lapse. A common example of usage
   would be in conjunction with the preceding "tstimes", or see the following
   example with apache. Note that timeq outputs binary values to avoid
-  double-parses (see -fd). The ASCII parser is not as flexible as trend's and
-  requires each value to be in a separated line. Do not use this sample
-  implementation for any serious work.
+  double-parses (see/use -fd on the command line). The ASCII parser is not as
+  flexible as trend's and requires each value to be in a separated line. Do not
+  use this sample implementation for any serious work.
+
+``./trendmtr <host> [max-hops]``:
+
+  Plot mtr_ output to ``<host>`` using trend's scattered input mode, up to
+  ``[max-hops]`` away (defaulting to 15). This example starts the required
+  trend instance automatically.
 
 In the following example we will display the latest two minutes of network
 activity (with the first one being in front of the other) sampled each tenth of
@@ -118,6 +124,8 @@ A collection of contributed data-gathering scripts is kept at
 http://www.yuv.info/~wavexx/hacks/trend/contrib/ (if you want to make a
 contribution just mail me). Alternatively, many (if not all) of the contributed
 MRTG scripts are a valuable resource to system administrators in particular.
+
+.. _mtr: http://www.bitwizard.nl/mtr/
 
 
 Accurate timing

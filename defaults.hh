@@ -34,7 +34,7 @@ namespace Trend
   const unsigned char pollRateKey = 'p';
 
   // Some types
-  enum input_t {absolute, incremental, differential};
+  enum input_t {absolute, incremental, differential, scattered};
   enum format_t {f_ascii, f_float, f_double, f_short, f_int, f_long};
 
   // Defaults
