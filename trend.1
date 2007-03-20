@@ -2,7 +2,7 @@
 .\" Copyright(c) 2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
 .\" Distributed under GNU LGPL WITHOUT ANY WARRANTY.
 .\"
-.Dd March 6, 2007
+.Dd October 3, 2006
 .Dt TREND 1
 .\"
 .\"
@@ -83,12 +83,12 @@ The parser is very lenient, and will silently ignore whatever looks like
 garbage.
 .\"
 .Ss COUNTING MODES
-By default all input values are considered absolute and displayed "as is". In
-incremental and differential mode, each value is calculated using the previous
-value as a reference except for the first, which is taken as
-absolute. Scattered mode is similar to absolute mode (in that each value is
-absolute), but each value must be followed by its relative position. Available
-modes are:
+By default all input values are considered absolute and displayed "as
+is". However
+.Nm
+can cope with incremental and differential counters too, by using the
+.Fl c
+flag and taking the first value as the reference value. Available modes are:
 .Pp
 .Bl -tag -offset indent -compact -width " a "
 .It Ar a
@@ -97,24 +97,15 @@ absolute (default)
 incremental counter
 .It Ar d
 differential values
-.It Ar s
-scattered values
 .El
-.\"
-.Ss SCATTERED MODE
-In scattered mode each value must be followed by it's relative cursor
-position. In ascii format, an ascii number is parsed after the value; in other
-formats instead, a binary long is read independently of the format type. A
-position P, with P>0, advances the cursor by P positions and replaces the
-latest value. P then becomes the new cursor/reference position. A position N
-with N<=0, replaces the (history - |N|)th value in the buffer, without changing
-the current cursor position.
 .\"
 .Ss FORMAT TYPES
 Different input formats are supported, as specified by the
 .Fl f
 flag. Note however that only the ASCII parser (the default) silently ignores
-errors. NaNs and Infinity have special treatment. Internally, 
+errors. NaNs and Infinity have special treatment, see the
+.Sx SPECIAL VALUES
+section. Internally, 
 .Nm
 always works with double precision floating points: conversion toward these is
 performed with the default FPU conversion rules. The actual underlying binary

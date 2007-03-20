@@ -13,7 +13,6 @@
 #include "color.hh"
 #include "timer.hh"
 #include "rr.hh"
-#include "srr.hh"
 
 // system headers
 #include <stdexcept>
@@ -132,7 +131,7 @@ namespace
   Trend::format_t format = Trend::format;
 
   // Data and fixed parameters
-  srr<Value>* rrData;
+  rr<Value>* rrData;
   Value* rrBuf;
   Value* rrEnd;
   double loLimit;
@@ -352,9 +351,9 @@ readNext(FILE* fd, double& v)
 }
 
 
-// standard producer thread
+// producer thread
 void*
-producerStd(void* prg)
+producer(void* prg)
 {
   // iostreams under gcc 3.x are completely unusable for advanced tasks such as
   // customizable buffering/locking/etc. They also removed the (really
@@ -427,80 +426,6 @@ producerStd(void* prg)
   cerr << reinterpret_cast<char*>(prg) << ": producer thread exiting\n";
   return NULL;
 }
-
-
-void*
-producerSct(void* prg)
-{
-  FILE* in;
-
-  for(size_t pos = (history % divisions);;)
-  {
-    // open the file and disable buffering
-    in = fopen(fileName, "r");
-    if(!in) break;
-    setvbuf(in, NULL, _IONBF, 0);
-
-    // check for useless file types
-    struct stat stBuf;
-    fstat(fileno(in), &stBuf);
-    if(S_ISDIR(stBuf.st_mode))
-      break;
-
-    // first value for incremental data
-    double old, num;
-    if(input != Trend::absolute)
-      readNext(in, old);
-
-    // read all data
-    while(readNext(in, num))
-    {
-      // determine the actual value
-      switch(input)
-      {
-      case Trend::incremental:
-	{
-	  double tmp = num;
-	  num = (num - old);
-	  old = tmp;
-	}
-	break;
-
-      case Trend::differential:
-	old += num;
-	num = old;
-	break;
-
-      default:;
-      }
-
-      // append the value
-      rrData->push_back(Value(num, pos));
-
-      pthread_mutex_lock(&mutex);
-      if(!damaged)
-      {
-	atBLat.start();
-	damaged = true;
-      }
-      pthread_mutex_unlock(&mutex);
-
-      // wrap pos when possible
-      if(!(++pos % divisions))
-	pos = 0;
-    }
-
-    // close the stream and terminate the loop for regular files
-    fclose(in);
-    if(S_ISREG(stBuf.st_mode) || S_ISBLK(stBuf.st_mode))
-      break;
-  }
-
-  // should never get so far
-  cerr << reinterpret_cast<char*>(prg) << ": producer thread exiting\n";
-  return NULL;
-}
-
 
 
 /*
@@ -2019,7 +1944,7 @@ main(int argc, char* argv[]) try
     return Trend::args;
 
   // initialize rr buffers
-  rrData = new srr<Value>(history);
+  rrData = new rr<Value>(history);
   rrBuf = new Value[history];
   rrEnd = rrBuf + history;
   fillRr(NAN);
@@ -2027,7 +1952,7 @@ main(int argc, char* argv[]) try
   // start the producer thread
   pthread_t thrd;
   pthread_mutex_init(&mutex, NULL);
-  pthread_create(&thrd, NULL, producerStd, argv[0]);
+  pthread_create(&thrd, NULL, producer, argv[0]);
 
   // display, main mindow and callbacks
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);

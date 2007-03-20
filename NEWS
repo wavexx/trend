@@ -3,7 +3,6 @@ Rev #58 03/10/2006 to Rev #
 	* Polling rate limits can now be configured.
 	* Latency sampling now also shows maximal sync times.
 	* NaNs can now be entered in the stream.
-	* Support for scattered input (see the new "trendmtr" example).
 
 
 Rev #54 28/04/2006 to Rev #58 03/10/2006
