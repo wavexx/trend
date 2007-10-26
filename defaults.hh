@@ -27,6 +27,7 @@ namespace Trend
   const unsigned char gridKey = 'g';
   const unsigned char setResKey = 'G';
   const unsigned char setZeroKey = 'z';
+  const unsigned char setCAKey = 'Z';
   const unsigned char pauseKey = ' ';
   const unsigned char latKey = 'l';
   const unsigned char fillKey = 'f';
@@ -34,6 +35,7 @@ namespace Trend
   const unsigned char pollRateKey = 'p';
 
   // Some types
+  typedef double Value;
   enum input_t {absolute, incremental, differential};
   enum format_t {f_ascii, f_float, f_double, f_short, f_int, f_long};
 

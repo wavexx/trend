@@ -1,6 +1,6 @@
 /*
  * rr: thread-safe round robin container
- * Copyright(c) 2004 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2004-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -45,7 +45,7 @@ template<typename T>
       pthread_mutex_init(&mutex, NULL);
     }
 
-    
+
     ~rr() throw()
     {
       pthread_mutex_destroy(&mutex);
@@ -57,23 +57,23 @@ template<typename T>
     push_back(const_reference value)
     {
       pthread_mutex_lock(&mutex);
-      memcpy(data + pos, &value, sizeof(value_type));
-      if(++pos == size)
-	pos = 0;
+      memcpy(data + pos++ % size, &value, sizeof(value_type));
       pthread_mutex_unlock(&mutex);
     }
 
 
-    void
+    size_type
     copy(pointer buf)
     {
       // try harder to reduce latency
       pthread_mutex_lock(&mutex);
       const size_type p = pos;
-      const size_type res = (size - p);
-      memcpy(buf, data + p, sizeof(value_type) * res);
+      const size_type mp = p % size;
+      const size_type res = (size - mp);
+      memcpy(buf, data + mp, sizeof(value_type) * res);
       pthread_mutex_unlock(&mutex);
-      memcpy(buf + res, data, sizeof(value_type) * p);
+      memcpy(buf + res, data, sizeof(value_type) * mp);
+      return p;
     }
   };
 

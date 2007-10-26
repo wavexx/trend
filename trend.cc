@@ -13,6 +13,7 @@
 #include "color.hh"
 #include "timer.hh"
 #include "rr.hh"
+using Trend::Value;
 
 // system headers
 #include <stdexcept>
@@ -72,24 +73,11 @@ typedef void (*edit_callback_t)(const string& str);
  * Data structures
  */
 
-struct Value
-{
-  Value()
-  {}
-
-  Value(double value, size_t count)
-  : value(value), count(count)
-  {}
-
-  double value;
-  size_t count;
-};
-
-
 struct Intr
 {
   // nearest value
-  Value near;
+  double near;
+  size_t pos;
 
   // intersection
   double value;
@@ -134,6 +122,7 @@ namespace
   rr<Value>* rrData;
   Value* rrBuf;
   Value* rrEnd;
+  size_t rrPos;
   double loLimit;
   double hiLimit;
   double zero = 0.;
@@ -200,18 +189,10 @@ namespace
 
 // fill the round robin consistently with a single value
 void
-fillRr(double value, size_t start = 0)
+fillRr(double value)
 {
-  Value buf;
-  buf.count = start;
-  buf.value = value;
-
   for(size_t i = 0; i != history; ++i)
-  {
-    rrData->push_back(buf);
-    if(!(++buf.count % divisions))
-      buf.count = 0;
-  }
+    rrData->push_back(value);
 }
 
 
@@ -360,7 +341,7 @@ producer(void* prg)
   // standard) ->fd() access for "encapsulation"...
   FILE* in;
 
-  for(size_t pos = (history % divisions);;)
+  for(;;)
   {
     // open the file and disable buffering
     in = fopen(fileName, "r");
@@ -401,7 +382,7 @@ producer(void* prg)
       }
 
       // append the value
-      rrData->push_back(Value(num, pos));
+      rrData->push_back(num);
 
       pthread_mutex_lock(&mutex);
       if(!damaged)
@@ -410,10 +391,6 @@ producer(void* prg)
 	damaged = true;
       }
       pthread_mutex_unlock(&mutex);
-
-      // wrap pos when possible
-      if(!(++pos % divisions))
-	pos = 0;
     }
 
     // close the stream and terminate the loop for regular files
@@ -665,11 +642,18 @@ drawCircle(const int x, const int y)
 }
 
 
-// get drawing position based on current settings
+// get count/drawing position based on current settings
 size_t
-getPosition(size_t pos, const Value& value)
+getCount(const Value* value)
 {
-  return ((scroll? pos: value.count) % divisions);
+  return rrPos - (rrEnd - value);
+}
+
+
+size_t
+getPosition(size_t pos, const Value* value)
+{
+  return ((scroll? pos: getCount(value)) % divisions);
 }
 
 
@@ -684,7 +668,7 @@ drawLine()
 
   for(size_t i = offset; it != rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && !isnan(it->value) && (nit == rrEnd || !isnan(nit->value)))
+    if(!st && !isnan(*it) && (nit == rrEnd || !isnan(*nit)))
     {
       st = true;
       glBegin(GL_LINE_STRIP);
@@ -696,40 +680,40 @@ drawLine()
 	(static_cast<float>(i - offset) / history));
 
     glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
-    pos = getPosition(i, *it);
+    pos = getPosition(i, it);
 
     if(st)
     {
       if(pos)
-	glVertex2d(pos, it->value);
+	glVertex2d(pos, *it);
       else
       {
 	// Cursor at the end
-	glVertex2d(divisions, it->value);
+	glVertex2d(divisions, *it);
 	glEnd();
 	glBegin(GL_LINE_STRIP);
-	glVertex2d(0, it->value);
+	glVertex2d(0, *it);
       }
     }
-    else if(!isnan(it->value))
+    else if(!isnan(*it))
     {
       glBegin(GL_LINES);
       if(pos)
       {
-	glVertex2d(pos - 0.5, it->value);
-	glVertex2d(pos + 0.5, it->value);
+	glVertex2d(pos - 0.5, *it);
+	glVertex2d(pos + 0.5, *it);
       }
       else
       {
-	glVertex2d(0, it->value);
-	glVertex2d(0.5, it->value);
-	glVertex2d(divisions, it->value);
-	glVertex2d(divisions - 0.5, it->value);
+	glVertex2d(0, *it);
+	glVertex2d(0.5, *it);
+	glVertex2d(divisions, *it);
+	glVertex2d(divisions - 0.5, *it);
       }
       glEnd();
     }
 
-    if(st && (nit == rrEnd || isnan(nit->value)))
+    if(st && (nit == rrEnd || isnan(*nit)))
     {
       glEnd();
       st = false;
@@ -754,44 +738,44 @@ drawFillZero()
   glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
   for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && !isnan(it->value) && (nit == rrEnd || !isnan(nit->value)))
+    if(!st && !isnan(*it) && (nit == rrEnd || !isnan(*nit)))
     {
-      last = it->value;
+      last = *it;
       st = true;
       glBegin(GL_QUAD_STRIP);
     }
 
     if(st)
     {
-      pos = getPosition(i, *it);
+      pos = getPosition(i, it);
 
-      if(last < 0 != it->value < 0)
+      if(last < 0 != *it < 0)
       {
 	// extra truncation needed
-	double zt = (pos? pos: divisions) - it->value / (it->value - last);
+	double zt = (pos? pos: divisions) - *it / (*it - last);
 	glVertex2d(zt, 0);
 	glVertex2d(zt, 0);
       }
 
-      last = it->value;
+      last = *it;
 
       if(pos)
       {
-	glVertex2d(pos, it->value);
+	glVertex2d(pos, *it);
 	glVertex2d(pos, 0);
       }
       else
       {
 	// cursor at the end
-	glVertex2d(divisions, it->value);
+	glVertex2d(divisions, *it);
 	glVertex2d(divisions, 0);
 	glEnd();
 	glBegin(GL_QUAD_STRIP);
-	glVertex2d(0, it->value);
+	glVertex2d(0, *it);
 	glVertex2d(0, 0);
       }
 
-      if(nit == rrEnd || isnan(nit->value))
+      if(nit == rrEnd || isnan(*nit))
       {
 	glEnd();
 	st = false;
@@ -817,11 +801,11 @@ drawFillDelta()
   glBegin(GL_QUAD_STRIP);
   for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
   {
-    double v1 = it->value;
-    double v2 = (it - divisions)->value;
+    double v1 = *it;
+    double v2 = *(it - divisions);
 
-    if(!st && (!isnan(v1) && (nit == rrEnd || !isnan(nit->value)))
-	&& (!isnan(v2) && !isnan((nit - divisions)->value)))
+    if(!st && (!isnan(v1) && (nit == rrEnd || !isnan(*nit)))
+	&& (!isnan(v2) && !isnan(*(nit - divisions))))
     {
       l1 = v1;
       l2 = v2;
@@ -831,7 +815,7 @@ drawFillDelta()
 
     if(st)
     {
-      pos = getPosition(i, *it);
+      pos = getPosition(i, it);
 
       if(v1 < v2 != l1 < l2)
       {
@@ -862,7 +846,7 @@ drawFillDelta()
       l1 = v1;
       l2 = v2;
 
-      if(nit == rrEnd || isnan(nit->value) || isnan((nit - divisions)->value))
+      if(nit == rrEnd || isnan(*nit) || isnan(*(nit - divisions)))
       {
 	glEnd();
 	st = false;
@@ -893,7 +877,7 @@ drawFillUndef()
   glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillUndefAlpha);
   for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && ((nit == rrEnd && isnan(it->value)) || isnan(nit->value)))
+    if(!st && ((nit == rrEnd && isnan(*it)) || isnan(*nit)))
     {
       st = true;
       glBegin(GL_QUAD_STRIP);
@@ -901,7 +885,7 @@ drawFillUndef()
 
     if(st)
     {
-      pos = getPosition(i, *it);
+      pos = getPosition(i, it);
 
       if(pos)
       {
@@ -918,7 +902,7 @@ drawFillUndef()
 	glVertex2d(0, hiLimit);
       }
 
-      if(nit == rrEnd || (!isnan(it->value) && !isnan(nit->value)))
+      if(nit == rrEnd || (!isnan(*it) && !isnan(*nit)))
       {
 	glEnd();
 	st = false;
@@ -947,12 +931,12 @@ drawDistrib()
   {
     const Value* a = it;
     const Value* b = (it + 1);
-    if(isnan(a->value) || isnan(b->value)) continue;
+    if(isnan(*a) || isnan(*b)) continue;
 
     // projection
     double mul = (static_cast<double>(height) / (hiLimit - loLimit));
-    int begin = static_cast<int>(mul * (a->value - loLimit));
-    int end = static_cast<int>(mul * (b->value - loLimit));
+    int begin = static_cast<int>(mul * (*a - loLimit));
+    int end = static_cast<int>(mul * (*b - loLimit));
     if(begin > end) std::swap(begin, end);
 
     // fixation
@@ -1026,18 +1010,9 @@ drawTIntr()
   vector<Intr> intrs;
 
   // starting position
-  size_t i;
-  const Value* it;
-  if(scroll)
-  {
-    it = rrBuf + (trX - offset % divisions);
-    i = trX;
-  }
-  else
-  {
-    it = rrBuf + (trX - rrBuf->count);
-    i = 0;
-  }
+  size_t i = trX;
+  const Value* it = rrBuf + (trX - (scroll?
+	  offset: getCount(rrBuf)) % divisions);
   if(it < rrBuf)
     it += divisions;
   if(intrFg)
@@ -1047,29 +1022,28 @@ drawTIntr()
   for(; it < end; i += divisions, it += divisions)
   {
     // fetch the next value
-    Value next = *(it + 1);
-    if(isnan(it->value) && isnan(next.value)) continue;
+    const Value* nit = (it + 1);
+    if(isnan(*it) && isnan(*nit)) continue;
 
     Intr buf;
     double far;
 
     if(mul < 0.5)
     {
-      buf.near.value = it->value;
-      buf.near.count = getPosition(i, *it);
-      far = next.value;
+      buf.near = *it;
+      buf.pos = getPosition(i, it);
+      far = *nit;
     }
     else
     {
-      buf.near.value = next.value;
-      buf.near.count = getPosition(i + 1, next);
-      far = it->value;
+      buf.near = *nit;
+      buf.pos = getPosition(i + 1, nit);
+      far = *it;
     }
 
-    if(!isnan(buf.near.value))
+    if(!isnan(buf.near))
     {
-      buf.value = (isnan(far)? buf.near.value:
-	  it->value + mul * (next.value - it->value));
+      buf.value = (isnan(far)? buf.near: *it + mul * (*nit - *it));
       buf.dist = fabs(buf.value - intrY);
       intrs.push_back(buf);
     }
@@ -1104,9 +1078,9 @@ drawTIntr()
 
   // nearest point
   int nearX, nearY;
-  project(intrs[0].near.count, intrs[0].near.value, nearX, nearY);
+  project(intrs[0].pos, intrs[0].near, nearX, nearY);
   drawCircle(nearX, nearY);
-  if(!intrs[0].near.count)
+  if(!intrs[0].pos)
     drawCircle(width, nearY);
 
   // plot values
@@ -1115,7 +1089,7 @@ drawTIntr()
   char buf[256];
   int curY = height;
 
-  sprintf(buf, "nearest: %g, mean: %g", intrs[0].near.value, mean);
+  sprintf(buf, "nearest: %g, mean: %g", intrs[0].near, mean);
   drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
 
   i = 1;
@@ -1165,7 +1139,7 @@ drawValues()
   sprintf(buf, "%g", hiLimit);
   drawOSString(width, height, buf);
 
-  sprintf(buf, "%g", last.value);
+  sprintf(buf, "%g", last);
   drawLEString(buf);
 }
 
@@ -1228,12 +1202,23 @@ drawMessages()
   while(messages.size() && messages.front().first <= maxTime)
     messages.pop_front();
 
-  // draw messages
+  // draw background
   using Trend::fontHeight;
   using Trend::fontWidth;
+  using Trend::strSpc;
   const int width2 = width / 2;
 
-  int y = height - Trend::strSpc - fontHeight;
+  int ty = height - fontHeight * messages.size() - strSpc * 4;
+  glColor4f(0., 0., 0., Trend::fillTextAlpha);
+  glBegin(GL_QUADS);
+  glVertex2d(0, ty);
+  glVertex2d(width, ty);
+  glVertex2d(width, height);
+  glVertex2d(0, height);
+  glEnd();
+
+  // draw messages
+  int y = height - strSpc - fontHeight;
   glColor3fv(editCol);
 
   for(deque<pair<time_t, string> >::const_iterator it = messages.begin();
@@ -1298,7 +1283,7 @@ void
 rrShift(double v)
 {
   for(Value* it = rrBuf; it != rrEnd; ++it)
-    it->value -= v;
+    *it -= v;
 }
 
 
@@ -1307,21 +1292,21 @@ setLimits()
 {
   const Value* it = rrBuf;
 
-  double lo(it->value);
+  double lo(*it);
   double hi;
 
   for(; it != rrEnd; ++it)
   {
-    if(!isnan(it->value))
+    if(!isnan(*it))
     {
       if(isnan(lo))
-	hi = lo = it->value;
+	hi = lo = *it;
       else
       {
-	if(it->value > hi)
-	  hi = it->value;
-	if(it->value < lo)
-	  lo = it->value;
+	if(*it > hi)
+	  hi = *it;
+	if(*it < lo)
+	  lo = *it;
       }
     }
   }
@@ -1351,7 +1336,7 @@ check()
   if(recalc)
   {
     atVLat.start();
-    rrData->copy(rrBuf);
+    rrPos = rrData->copy(rrBuf);
 
     // shift values if requested
     if(zero)
@@ -1501,6 +1486,35 @@ getLimits()
 
 
 void
+getCenterAmp2(const string& str)
+{
+  double amp2 = strtod(str.c_str(), NULL) / 2;
+  double c = loLimit + (hiLimit - loLimit) / 2;
+  loLimit = c - amp2;
+  hiLimit = c + amp2;
+}
+
+
+void
+getCenterAmp1(const string& str)
+{
+  if(autoLimit) toggleStatus("autolimit", autoLimit);
+  double c = strtod(str.c_str(), NULL);
+  double amp2 = (hiLimit - loLimit) / 2;
+  loLimit = c - amp2;
+  hiLimit = c + amp2;
+  editMode("amplitude", getCenterAmp2);
+}
+
+
+void
+getCenterAmp()
+{
+  editMode("center", getCenterAmp1);
+}
+
+
+void
 getGrid(const string& str)
 {
   if(!grid) toggleStatus("grid", grid);
@@ -1605,6 +1619,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
 
   case Trend::setZeroKey:
     editMode("zero", getZero);
+    break;
+
+  case Trend::setCAKey:
+    getCenterAmp();
     break;
 
   case Trend::latKey:
