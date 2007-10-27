@@ -115,7 +115,7 @@ IF-MIB network interface::
   snmpdelta -v1 -CT -c public router ifInOctets.1 > fifo
 
 A collection of contributed data-gathering scripts is kept at
-http://www.yuv.info/~wavexx/hacks/trend/contrib/ (if you want to make a
+http://www.thregr.org/~wavexx/software/trend/contrib/ (if you want to make a
 contribution just mail me). Alternatively, many (if not all) of the contributed
 MRTG scripts are a valuable resource to system administrators in particular.
 
@@ -138,8 +138,8 @@ General/support mailing list
 ============================
 
 If you feel to discuss improvements and suggestions, and/or test beta releases
-before announcement you can subscribe to <trend-users@yuv.info> by sending an
-email to <minimalist@yuv.info> with a subject of "subscribe trend-users".
+before announcement you can subscribe to <trend-users@thregr.org> by sending an
+email to <minimalist@thregr.org> with a subject of "subscribe trend-users".
 
 
 Troubleshooting
@@ -157,7 +157,7 @@ Screen-shots
 ============
 
 Due to popular demand, here's how the screen-shots as found in
-http://www.yuv.info/~wavexx/hacks/trend/ were generated:
+http://www.thregr.org/~wavexx/software/trend/ were generated:
 
 trend-and-ion:
 
@@ -199,7 +199,7 @@ Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
+Copyright(c) 2003-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate. Latest trend versions can be downloaded from
-http://www.yuv.info/~wavexx/hacks/trend/
+http://www.thregr.org/~wavexx/software/trend/
