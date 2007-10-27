@@ -1,8 +1,8 @@
 .\" trend.1: trend manual
-.\" Copyright(c) 2006 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+.\" Copyright(c) 2006-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
 .\" Distributed under GNU LGPL WITHOUT ANY WARRANTY.
 .\"
-.Dd October 26, 2007
+.Dd October 27, 2007
 .Dt TREND 1
 .\"
 .\"
@@ -13,7 +13,7 @@
 .\"
 .Sh SYNOPSIS
 .Nm
-.Op Fl dDSsvlmFgGhtAERIMNTzfcpu
+.Op Fl dDSsvlmFgGhtAERIMNTLzfcpu
 .Op Fl display
 .Op Fl geometry
 .Op Fl iconic
@@ -83,10 +83,13 @@ The parser is very lenient, and will silently ignore whatever looks like
 garbage.
 .\"
 .Ss COUNTING MODES
-By default all input values are considered absolute and displayed "as is". In
-incremental and differential mode, each value is calculated using the previous
-value as a reference except for the first, which is taken as absolute.
-Available modes are:
+By default all input values are considered absolute and displayed "as is" in a
+single graph.
+.Pp
+The
+.Fl c Ar [N]mode
+flag allows to specify an alternate counting mode and the number of available
+graphs. Available modes are:
 .Pp
 .Bl -tag -offset indent -compact -width " a "
 .It Ar a
@@ -96,6 +99,15 @@ incremental counter
 .It Ar d
 differential values
 .El
+.Pp
+In incremental and differential mode, each value is calculated using the
+previous value as a reference except for the first, which is taken as
+absolute. The number of graphs can be specified by prefixing a multiplier
+before the counting mode (eg:
+.Ar 2a
+draws two graphs in absolute mode). See
+.Sx MULTIPLE GRAPHS
+for more details on how this affects the input stream.
 .\"
 .Ss FORMAT TYPES
 Different input formats are supported, as specified by the
@@ -128,11 +140,40 @@ Infinity (entered in any representable form). NaNs are considered as "undefined
 values". Undefined values can be highlighted, but aren't otherwise
 rendered. Infinity is reserved for future use as an escape sequence.
 .\"
+.Ss MULTIPLE GRAPHS
+Multiple graphs can be displayed inside a single trend instance by specifying
+a prefix number N for the
+.Fl c
+flag. The input is interleaved, but otherwise unchanged: the reference value,
+if needed, is expected to be seen N times, one for each graph. Thus, for three
+graphs (A, B and C), the input order is:
+.Bd -literal -offset indent
+.Op A0 B0 C0
+A1 B1 C1
+A2 B2 C2
+.. .. ..
+.Ed
+.Pp
+The display is updated only once all graph values are read. The color, label
+and origin for each graph can be specified through the usual command-line flags,
+separating each value with a comma; in the same order as the input. Default
+colors and labels are assigned if not completely specified.
+.Pp
+All graphs share and are affected by the same settings, except for the origin
+(zero) which can be changed independently. Filling, values and the
+examiners only work on the current graph. The current graph can be cycled
+dynamically with the
+.Ic TAB
+key and differentiated using the
+.Ic N
+key, which cycles between "normal", "dim others" and "hide others" views. The
+legend, if enabled, also highlights the current graph.
+.\"
 .\"
 .Sh OPTIONS
 .\"
 .Ss FLAGS
-.Bl -tag -compact -width " -G grid-spec "
+.Bl -tag -compact -width " -I colour[,colour...] "
 .It Fl d
 "dimmed" shading mode
 .It Fl D
@@ -153,7 +194,7 @@ enable filling
 visible grid
 .It Fl G Ar grid-spec
 specify grid resolution
-.It Fl z Ar n
+.It Fl z Ar zero[,zero...]
 specify y zero
 .It Fl h
 help and version info
@@ -165,16 +206,18 @@ background colour
 text (values) colour
 .It Fl R Ar colour
 grid colour
-.It Fl I Ar colour
-trend colour
+.It Fl I Ar colour[,colour...]
+trend colour/s
 .It Fl M Ar colour
 marker colour
 .It Fl N Ar colour
 interactive examiner colour
 .It Fl T Ar colour
 edit mode colour
+.It Fl L Ar label[,label...]
+trend label/s
 .It Fl c Ar mode
-input counting mode (See
+input number/counting mode (See
 .Sx COUNTING MODES )
 .It Fl f Ar format
 input format (See
@@ -249,6 +292,8 @@ draw a mayor line every C normal grid lines
 .Bl -tag -compact -offset indent -width " space "
 .It Ic ESC
 quit/exit
+.It Ic TAB
+cycle current graph
 .It Ic a
 toggle auto-scaling
 .It Ic A
@@ -281,6 +326,10 @@ change zero interactively
 change polling rate interactively
 .It Ic u
 toggle display of undefined values
+.It Ic n
+toggle legend
+.It Ic N
+cycle view mode (normal, dim others or hide others)
 .It Ic space
 pause visualisation (but still continue to consume input to preserve time
 coherency)
@@ -388,6 +437,10 @@ Display the number of current active processes over time:
 .Pp
 .Dl trend fifo 60x24 &
 .Dl (while true; do ps -A | wc -l; sleep 1; done) > fifo
+.Pp
+Display two graphs:
+.Pp
+.Dl trend -c2a -L"graph 1, graph 2" fifo ...
 .\"
 .\"
 .Sh DIAGNOSTICS
@@ -414,5 +467,5 @@ normal.
 .Nm
 is distributed under LGPL (see COPYING)
 .Em WITHOUT ANY WARRANTY .
-Copyright(c) 2003-2006 by
+Copyright(c) 2003-2007 by
 .An "Yuri D'Elia" Aq wavexx@users.sf.net .

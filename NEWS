@@ -1,10 +1,11 @@
 Rev #58 03/10/2006 to Rev #
 
-	* Polling rate limits can now be configured.
+	* Polling rate limits can now be configured dynamically.
 	* Latency sampling now also shows maximal sync times.
 	* NaNs can now be entered in the stream and highlighted.
 	* Memory usage reduction (reduced in half).
 	* 'Z' allows to specify view limits by center and amplitude.
+	* Support for multiple graphs in a single instance.
 
 
 Rev #54 28/04/2006 to Rev #58 03/10/2006

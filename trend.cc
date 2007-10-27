@@ -48,6 +48,7 @@ using std::strlen;
 using std::strpbrk;
 using std::strchr;
 
+#include <string.h>
 #include <math.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -84,6 +85,19 @@ struct Intr
   double dist;
 };
 
+
+struct Graph
+{
+  rr<Value>* rrData;
+  Value* rrBuf;
+  Value* rrEnd;
+  size_t rrPos;
+  double zero;
+  GLfloat lineCol[3];
+  string label;
+};
+
+
 bool
 operator<(const Intr& l, const Intr& r)
 {
@@ -118,14 +132,17 @@ namespace
   Trend::input_t input = Trend::input;
   Trend::format_t format = Trend::format;
 
-  // Data and fixed parameters
-  rr<Value>* rrData;
-  Value* rrBuf;
-  Value* rrEnd;
-  size_t rrPos;
+  // Main graph data
+  vector<Graph> graphs;
+  Graph* graph;
   double loLimit;
   double hiLimit;
-  double zero = 0.;
+  bool autoLimit;
+
+  // Graph defaults
+  vector<string> lineCol;
+  vector<string> labels;
+  vector<double> zeros;
 
   // Visual/Fixed settings
   size_t history;
@@ -135,7 +152,6 @@ namespace
   GLfloat backCol[3];
   GLfloat textCol[3];
   GLfloat gridCol[3];
-  GLfloat lineCol[3];
   GLfloat markCol[3];
   GLfloat intrCol[3];
   GLfloat editCol[3];
@@ -144,7 +160,6 @@ namespace
   int width;
   int height;
   int lc;
-  bool autoLimit;
   bool dimmed = Trend::dimmed;
   bool smooth = Trend::smooth;
   bool scroll = Trend::scroll;
@@ -152,11 +167,17 @@ namespace
   bool marker = Trend::marker;
   bool filled = Trend::filled;
   bool showUndef = Trend::showUndef;
+  Trend::view_t view = Trend::view;
   bool grid = Trend::grid;
   GrSpec grSpec;
   bool paused = false;
   deque<pair<time_t, string> > messages;
   int pollMs = Trend::pollMs;
+
+  // Legend
+  bool legend;
+  size_t maxLabel = 0;
+  size_t maxValue = 0;
 
   // Indicator status
   bool intr = false;
@@ -189,10 +210,19 @@ namespace
 
 // fill the round robin consistently with a single value
 void
-fillRr(double value)
+rrFill(const Graph& g, double v)
 {
   for(size_t i = 0; i != history; ++i)
-    rrData->push_back(value);
+    g.rrData->push_back(v);
+}
+
+
+// shift values
+void
+rrShift(const Graph& g, double v)
+{
+  for(Value* it = g.rrBuf; it != g.rrEnd; ++it)
+    *it -= v;
 }
 
 
@@ -341,6 +371,10 @@ producer(void* prg)
   // standard) ->fd() access for "encapsulation"...
   FILE* in;
 
+  // some buffers
+  size_t ng = graphs.size();
+  double* old = new double[ng];
+
   for(;;)
   {
     // open the file and disable buffering
@@ -355,35 +389,44 @@ producer(void* prg)
       break;
 
     // first value for incremental data
-    double old, num;
     if(input != Trend::absolute)
-      readNext(in, old);
+      for(size_t i = 0; i != ng; ++i)
+	if(!readNext(in, old[i]))
+	  goto end;
 
     // read all data
-    while(readNext(in, num))
+    for(;;)
     {
-      // determine the actual value
-      switch(input)
+      for(size_t i = 0; i != ng; ++i)
       {
-      case Trend::incremental:
+	double num;
+	if(!readNext(in, num))
+	  goto end;
+
+	// determine the actual value
+	switch(input)
 	{
-	  double tmp = num;
-	  num = (num - old);
-	  old = tmp;
+	case Trend::incremental:
+	  {
+	    double tmp = num;
+	    num -= old[i];
+	    old[i] = tmp;
+	  }
+	  break;
+
+	case Trend::differential:
+	  old[i] += num;
+	  num = old[i];
+	  break;
+
+	default:;
 	}
-	break;
 
-      case Trend::differential:
-	old += num;
-	num = old;
-	break;
-
-      default:;
+	// append the value
+	graphs[i].rrData->push_back(num);
       }
 
-      // append the value
-      rrData->push_back(num);
-
+      // notify
       pthread_mutex_lock(&mutex);
       if(!damaged)
       {
@@ -393,6 +436,7 @@ producer(void* prg)
       pthread_mutex_unlock(&mutex);
     }
 
+  end:
     // close the stream and terminate the loop for regular files
     fclose(in);
     if(S_ISREG(stBuf.st_mode) || S_ISBLK(stBuf.st_mode))
@@ -400,6 +444,7 @@ producer(void* prg)
   }
 
   // should never get so far
+  delete []old;
   cerr << reinterpret_cast<char*>(prg) << ": producer thread exiting\n";
   return NULL;
 }
@@ -644,31 +689,31 @@ drawCircle(const int x, const int y)
 
 // get count/drawing position based on current settings
 size_t
-getCount(const Value* value)
+getCount(const Graph& g, const Value* v)
 {
-  return rrPos - (rrEnd - value);
+  return g.rrPos - (g.rrEnd - v);
 }
 
 
 size_t
-getPosition(size_t pos, const Value* value)
+getPosition(const Graph& g, size_t pos, const Value* v)
 {
-  return ((scroll? pos: getCount(value)) % divisions);
+  return ((scroll? pos: getCount(g, v)) % divisions);
 }
 
 
 size_t
-drawLine()
+drawLine(const Graph& g, double alphaMul)
 {
-  const Value* it = rrBuf;
+  const Value* it = g.rrBuf;
   const Value* nit = it + 1;
   const size_t mark(history + offset - divisions - 1);
   bool st = false;
   size_t pos;
 
-  for(size_t i = offset; it != rrEnd; ++i, ++it, ++nit)
+  for(size_t i = offset; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && !isnan(*it) && (nit == rrEnd || !isnan(*nit)))
+    if(!st && !isnan(*it) && (nit == g.rrEnd || !isnan(*nit)))
     {
       st = true;
       glBegin(GL_LINE_STRIP);
@@ -679,8 +724,8 @@ drawLine()
 	(i > mark? 1.: .5):
 	(static_cast<float>(i - offset) / history));
 
-    glColor4f(lineCol[0], lineCol[1], lineCol[2], alpha);
-    pos = getPosition(i, it);
+    glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], alpha * alphaMul);
+    pos = getPosition(g, i, it);
 
     if(st)
     {
@@ -713,7 +758,7 @@ drawLine()
       glEnd();
     }
 
-    if(st && (nit == rrEnd || isnan(*nit)))
+    if(st && (nit == g.rrEnd || isnan(*nit)))
     {
       glEnd();
       st = false;
@@ -725,20 +770,20 @@ drawLine()
 
 
 void
-drawFillZero()
+drawFillZero(const Graph& g)
 {
   const size_t m = std::min(history, divisions + 1);
   const size_t mark(history + offset - m);
-  const Value* it = rrEnd - m;
+  const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
   double last;
   size_t pos;
 
-  glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
-  for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
+  glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
+  for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && !isnan(*it) && (nit == rrEnd || !isnan(*nit)))
+    if(!st && !isnan(*it) && (nit == g.rrEnd || !isnan(*nit)))
     {
       last = *it;
       st = true;
@@ -747,7 +792,7 @@ drawFillZero()
 
     if(st)
     {
-      pos = getPosition(i, it);
+      pos = getPosition(g, i, it);
 
       if(last < 0 != *it < 0)
       {
@@ -775,7 +820,7 @@ drawFillZero()
 	glVertex2d(0, 0);
       }
 
-      if(nit == rrEnd || isnan(*nit))
+      if(nit == g.rrEnd || isnan(*nit))
       {
 	glEnd();
 	st = false;
@@ -786,25 +831,25 @@ drawFillZero()
 
 
 void
-drawFillDelta()
+drawFillDelta(const Graph& g)
 {
   const size_t m = std::min(history - divisions, divisions + 1);
   const size_t mark(history + offset - m);
-  const Value* it = rrEnd - m;
+  const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
   double l1;
   double l2;
   size_t pos;
 
-  glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillTrendAlpha);
+  glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
   glBegin(GL_QUAD_STRIP);
-  for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
+  for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
   {
     double v1 = *it;
     double v2 = *(it - divisions);
 
-    if(!st && (!isnan(v1) && (nit == rrEnd || !isnan(*nit)))
+    if(!st && (!isnan(v1) && (nit == g.rrEnd || !isnan(*nit)))
 	&& (!isnan(v2) && !isnan(*(nit - divisions))))
     {
       l1 = v1;
@@ -815,7 +860,7 @@ drawFillDelta()
 
     if(st)
     {
-      pos = getPosition(i, it);
+      pos = getPosition(g, i, it);
 
       if(v1 < v2 != l1 < l2)
       {
@@ -846,7 +891,7 @@ drawFillDelta()
       l1 = v1;
       l2 = v2;
 
-      if(nit == rrEnd || isnan(*nit) || isnan(*(nit - divisions)))
+      if(nit == g.rrEnd || isnan(*nit) || isnan(*(nit - divisions)))
       {
 	glEnd();
 	st = false;
@@ -857,27 +902,27 @@ drawFillDelta()
 
 
 void
-drawFill()
+drawFill(const Graph& g)
 {
-  if(!dimmed || history < divisions + 2) drawFillZero();
-  else drawFillDelta();
+  if(!dimmed || history < divisions + 2) drawFillZero(g);
+  else drawFillDelta(g);
 }
 
 
 void
-drawFillUndef()
+drawFillUndef(const Graph& g)
 {
   const size_t m = std::min(history, divisions + 1);
   const size_t mark(history + offset - m);
-  const Value* it = rrEnd - m;
+  const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
   size_t pos;
 
-  glColor4f(lineCol[0], lineCol[1], lineCol[2], Trend::fillUndefAlpha);
-  for(size_t i = mark; it != rrEnd; ++i, ++it, ++nit)
+  glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillUndefAlpha);
+  for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && ((nit == rrEnd && isnan(*it)) || isnan(*nit)))
+    if(!st && ((nit == g.rrEnd && isnan(*it)) || isnan(*nit)))
     {
       st = true;
       glBegin(GL_QUAD_STRIP);
@@ -885,7 +930,7 @@ drawFillUndef()
 
     if(st)
     {
-      pos = getPosition(i, it);
+      pos = getPosition(g, i, it);
 
       if(pos)
       {
@@ -902,7 +947,7 @@ drawFillUndef()
 	glVertex2d(0, hiLimit);
       }
 
-      if(nit == rrEnd || (!isnan(*it) && !isnan(*nit)))
+      if(nit == g.rrEnd || (!isnan(*it) && !isnan(*nit)))
       {
 	glEnd();
 	st = false;
@@ -921,8 +966,8 @@ drawDistrib()
     distribData.resize(height);
 
   // calculate distribution
-  const Value* it = rrBuf;
-  const Value* end = rrEnd - 1;
+  const Value* it = graph->rrBuf;
+  const Value* end = graph->rrEnd - 1;
 
   distribData.assign(distribData.size(), 0.);
   double max = 0;
@@ -1011,14 +1056,14 @@ drawTIntr()
 
   // starting position
   size_t i = trX;
-  const Value* it = rrBuf + (trX - (scroll?
-	  offset: getCount(rrBuf)) % divisions);
-  if(it < rrBuf)
+  const Value* it = graph->rrBuf + (trX - (scroll?
+	  offset: getCount(*graph, graph->rrBuf)) % divisions);
+  if(it < graph->rrBuf)
     it += divisions;
   if(intrFg)
-    it += ((rrEnd - it) / divisions) * divisions;
+    it += ((graph->rrEnd - it) / divisions) * divisions;
 
-  const Value* end = rrEnd - 1;
+  const Value* end = graph->rrEnd - 1;
   for(; it < end; i += divisions, it += divisions)
   {
     // fetch the next value
@@ -1031,13 +1076,13 @@ drawTIntr()
     if(mul < 0.5)
     {
       buf.near = *it;
-      buf.pos = getPosition(i, it);
+      buf.pos = getPosition(*graph, i, it);
       far = *nit;
     }
     else
     {
       buf.near = *nit;
-      buf.pos = getPosition(i + 1, nit);
+      buf.pos = getPosition(*graph, i + 1, nit);
       far = *it;
     }
 
@@ -1129,8 +1174,8 @@ drawDIntr()
 void
 drawValues()
 {
-  const Value& last = rrBuf[history - 1];
-  char buf[Trend::maxNumLen];
+  const Value& last = graph->rrBuf[history - 1];
+  char buf[256];
   glColor3fv(textCol);
 
   sprintf(buf, "%g", loLimit);
@@ -1139,8 +1184,83 @@ drawValues()
   sprintf(buf, "%g", hiLimit);
   drawOSString(width, height, buf);
 
-  sprintf(buf, "%g", last);
+  if(!graphs.size() || legend) sprintf(buf, "%g", last);
+  else sprintf(buf, "%s: %g", graph->label.c_str(), last);
   drawLEString(buf);
+}
+
+
+void
+drawLegend()
+{
+  using Trend::fontHeight;
+  using Trend::fontWidth;
+  using Trend::strSpc;
+
+  // calculate dynamic widths
+  vector<string> lines;
+  char buf[256];
+
+  if(values)
+  {
+    for(size_t i = 0; i != graphs.size(); ++i)
+    {
+      sprintf(buf, ": %g", graphs[i].rrBuf[history - 1]);
+      string str(buf);
+      lines.push_back(str);
+      if(str.size() > maxValue)
+	maxValue = str.size();
+    }
+  }
+
+  // positioning
+  size_t maxLen = maxLabel + (values? 1 + maxValue: 1);
+  int boxWidth = fontWidth * 2;
+  int boxX1 = width - boxWidth;
+  int textX1 = boxX1 - maxLen * fontWidth;
+  int textX2 = textX1 + maxLabel * fontWidth;
+  int y = height - fontHeight * 2 - strSpc;
+  int legendX1 = textX1 - strSpc;
+  int legendY1 = y - graphs.size() * fontHeight - strSpc;
+  int legendY2 = y + strSpc;
+
+  glColor4f(0., 0., 0., Trend::fillTextAlpha);
+  glBegin(GL_QUADS);
+  glVertex2i(width, legendY1);
+  glVertex2i(legendX1, legendY1);
+  glVertex2i(legendX1, legendY2);
+  glVertex2i(width, legendY2);
+  glEnd();
+
+  for(size_t i = 0; i != graphs.size(); ++i, y -= fontHeight)
+  {
+    const Graph& g(graphs[i]);
+
+    glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2],
+	(&g == graph? 1.: Trend::fillTrendAlpha));
+    glBegin(GL_QUADS);
+    glVertex2i(width, y - fontHeight);
+    glVertex2i(boxX1, y - fontHeight);
+    glVertex2i(boxX1, y);
+    glVertex2i(width, y);
+    glEnd();
+
+    if(&g == graph)
+    {
+      glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
+      glBegin(GL_QUADS);
+      glVertex2i(boxX1, y - fontHeight);
+      glVertex2i(textX1, y - fontHeight);
+      glVertex2i(textX1, y);
+      glVertex2i(boxX1, y);
+      glEnd();
+    }
+
+    glColor3f(textCol[0], textCol[1], textCol[2]);
+    drawString(textX1 + (maxLabel - graphs[i].label.size()) * fontWidth,
+	y - fontHeight + strSpc, graphs[i].label);
+    if(values) drawString(textX2, y - fontHeight + strSpc, lines[i]);
+  }
 }
 
 
@@ -1201,6 +1321,7 @@ drawMessages()
   time_t maxTime = time(NULL) - Trend::persist;
   while(messages.size() && messages.front().first <= maxTime)
     messages.pop_front();
+  if(!messages.size()) return;
 
   // draw background
   using Trend::fontHeight;
@@ -1246,11 +1367,20 @@ display()
   glLoadIdentity();
   gluOrtho2D(zero, divisions, loLimit, hiLimit);
 
-  // background grid
+  // background grid and main data
   if(grid) drawGrid();
-  if(filled) drawFill();
-  if(showUndef) drawFillUndef();
-  size_t pos = drawLine();
+  if(filled) drawFill(*graph);
+  if(showUndef) drawFillUndef(*graph);
+
+  // graphs
+  if(view != Trend::v_hide)
+  {
+    double alphaMul = (view == Trend::v_dim? Trend::drawOthersAlpha: 1.);
+    for(vector<Graph>::iterator gi = graphs.begin(); gi != graphs.end(); ++gi)
+      if(&*gi != graph)
+	drawLine(*gi, alphaMul);
+  }
+  size_t pos = drawLine(*graph, 1.);
 
   // other data
   if(distrib) drawDistrib();
@@ -1264,6 +1394,7 @@ display()
 
   // video stuff
   if(values) drawValues();
+  if(legend) drawLegend();
   if(latency) drawLatency();
   if(intr && distrib && intrX < 0)
     drawDIntr();
@@ -1280,33 +1411,26 @@ display()
 
 
 void
-rrShift(double v)
-{
-  for(Value* it = rrBuf; it != rrEnd; ++it)
-    *it -= v;
-}
-
-
-void
 setLimits()
 {
-  const Value* it = rrBuf;
-
-  double lo(*it);
+  double lo(*graph->rrBuf);
   double hi;
 
-  for(; it != rrEnd; ++it)
+  for(vector<Graph>::iterator gi = graphs.begin(); gi != graphs.end(); ++gi)
   {
-    if(!isnan(*it))
+    for(const Value* it = gi->rrBuf; it != gi->rrEnd; ++it)
     {
-      if(isnan(lo))
-	hi = lo = *it;
-      else
+      if(!isnan(*it))
       {
-	if(*it > hi)
-	  hi = *it;
-	if(*it < lo)
-	  lo = *it;
+	if(isnan(lo))
+	  hi = lo = *it;
+	else
+	{
+	  if(*it > hi)
+	    hi = *it;
+	  if(*it < lo)
+	    lo = *it;
+	}
       }
     }
   }
@@ -1336,11 +1460,13 @@ check()
   if(recalc)
   {
     atVLat.start();
-    rrPos = rrData->copy(rrBuf);
 
-    // shift values if requested
-    if(zero)
-      rrShift(zero);
+    // update buffers
+    for(vector<Graph>::iterator gi = graphs.begin(); gi != graphs.end(); ++gi)
+    {
+      gi->rrPos = gi->rrData->copy(gi->rrBuf);
+      if(gi->zero) rrShift(*gi, gi->zero);
+    }
 
     // recalculate limits seldom
     if(autoLimit)
@@ -1528,10 +1654,10 @@ void
 getZero(const string& str)
 {
   double nZero = strtod(str.c_str(), NULL);
-  if(nZero != zero)
+  if(nZero != graph->zero)
   {
-    rrShift(nZero - zero);
-    zero = nZero;
+    rrShift(*graph, nZero - graph->zero);
+    graph->zero = nZero;
     if(autoLimit)
       setLimits();
   }
@@ -1554,6 +1680,39 @@ getPollRate(const string& str)
 
 
 void
+changeGraph()
+{
+  if(++graph == &*graphs.end())
+    graph = &graphs[0];
+  if(!legend && !values)
+    pushMessage(string("current graph: ") + graph->label);
+}
+
+
+void
+toggleView()
+{
+  switch(view)
+  {
+  case Trend::v_normal:
+    view = Trend::v_dim;
+    pushMessage("view mode: dim others");
+    break;
+
+  case Trend::v_dim:
+    view = Trend::v_hide;
+    pushMessage("view mode: hide others");
+    break;
+
+  case Trend::v_hide:
+    view = Trend::v_normal;
+    pushMessage("view mode: normal");
+    break;
+  }
+}
+
+
+void
 dispKeyboard(const unsigned char key, const int x, const int y)
 {
   switch(key)
@@ -1563,8 +1722,16 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     break;
 
   // redraw alteration
+  case Trend::changeKey:
+    changeGraph();
+    break;
+
   case Trend::dimmedKey:
     toggleStatus("dimmed", dimmed);
+    break;
+
+  case Trend::viewModeKey:
+    toggleView();
     break;
 
   case Trend::distribKey:
@@ -1607,6 +1774,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
 
   case Trend::showUndefKey:
     toggleStatus("show undefined", showUndef);
+    break;
+
+  case Trend::legendKey:
+    toggleStatus("legend", legend);
     break;
 
   case Trend::gridKey:
@@ -1699,20 +1870,24 @@ parseHistSpec(size_t& hist, size_t& div, const char* spec)
 }
 
 
-bool
+size_t
 parseInput(Trend::input_t& input, const char* arg)
 {
-  switch(arg[0])
+  char* end;
+  size_t n = strtoul(arg, &end, 10);
+  if(end == arg) n = 1;
+
+  switch(*end)
   {
   case 'a': input = Trend::absolute; break;
   case 'i': input = Trend::incremental; break;
   case 'd': input = Trend::differential; break;
 
   default:
-    return true;
+    return 0;
   };
 
-  return false;
+  return n;
 }
 
 
@@ -1736,6 +1911,26 @@ parseFormat(Trend::format_t& format, const char* arg)
 }
 
 
+bool
+parseNums(vector<double>& nums, char* arg)
+{
+  char* p;
+  while(p = strsep(&arg, ","))
+    nums.push_back(strtod(p, NULL));
+  return false;
+}
+
+
+bool
+parseStrings(vector<string>& strings, char* arg)
+{
+  char* p;
+  while(p = strsep(&arg, ","))
+    strings.push_back(p);
+  return false;
+}
+
+
 // Initialize globals through command line
 int
 parseOptions(int argc, char* const argv[])
@@ -1744,7 +1939,6 @@ parseOptions(int argc, char* const argv[])
   memcpy(backCol, Trend::backCol, sizeof(backCol));
   memcpy(textCol, Trend::textCol, sizeof(textCol));
   memcpy(gridCol, Trend::gridCol, sizeof(gridCol));
-  memcpy(lineCol, Trend::lineCol, sizeof(lineCol));
   memcpy(markCol, Trend::markCol, sizeof(markCol));
   memcpy(intrCol, Trend::intrCol, sizeof(intrCol));
   memcpy(editCol, Trend::editCol, sizeof(editCol));
@@ -1752,7 +1946,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:irz:f:c:p:u:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:L:irz:f:c:p:u:")) != -1)
     switch(arg)
     {
     case 'd':
@@ -1800,7 +1994,7 @@ parseOptions(int argc, char* const argv[])
       break;
 
     case 'z':
-      zero = strtod(optarg, NULL);
+      parseNums(zeros, optarg);
       break;
 
     case 't':
@@ -1820,7 +2014,7 @@ parseOptions(int argc, char* const argv[])
       break;
 
     case 'I':
-      parseColor(lineCol, optarg);
+      parseStrings(lineCol, optarg);
       break;
 
     case 'M':
@@ -1835,8 +2029,13 @@ parseOptions(int argc, char* const argv[])
       parseColor(editCol, optarg);
       break;
 
+    case 'L':
+      parseStrings(labels, optarg);
+      break;
+
     case 'c':
-      if(parseInput(input, optarg))
+      graphs.resize(parseInput(input, optarg));
+      if(!graphs.size())
       {
 	cerr << argv[0] << ": bad input mode\n";
 	return -1;
@@ -1918,6 +2117,7 @@ parseOptions(int argc, char* const argv[])
     return -1;
   }
   offset = divisions - (history % divisions) + 1;
+  legend = labels.size();
 
   // optional y limits
   if(argc == 4 || argc == 5)
@@ -1953,6 +2153,42 @@ editMode(bool edit)
 }
 
 
+void
+initGraphs()
+{
+  char buf[Trend::maxNumLen];
+  const size_t maxLineCol = (sizeof(Trend::lineCol) / sizeof(*Trend::lineCol));
+
+  for(vector<Graph>::iterator gi = graphs.begin(); gi != graphs.end(); ++gi)
+  {
+    gi->rrData = new rr<Value>(history);
+    gi->rrBuf = new Value[history];
+    gi->rrEnd = gi->rrBuf + history;
+    gi->rrPos = 0;
+    rrFill(*gi, NAN);
+
+    size_t n = gi - graphs.begin();
+    gi->zero = (zeros.size() > n? zeros[n]: 0.);
+
+    if(labels.size() > n)
+      gi->label = labels[n];
+    else
+    {
+      sprintf(buf, "%lu", n + 1);
+      gi->label = buf;
+    }
+
+    if(gi->label.size() > maxLabel)
+      maxLabel = gi->label.size();
+
+    if(lineCol.size() > n && lineCol[n].size())
+      parseColor(gi->lineCol, lineCol[n].c_str());
+    else
+      memcpy(gi->lineCol, Trend::lineCol[n % maxLineCol], sizeof(GLfloat[3]));
+  }
+}
+
+
 int
 main(int argc, char* argv[]) try
 {
@@ -1962,10 +2198,9 @@ main(int argc, char* argv[]) try
     return Trend::args;
 
   // initialize rr buffers
-  rrData = new rr<Value>(history);
-  rrBuf = new Value[history];
-  rrEnd = rrBuf + history;
-  fillRr(NAN);
+  if(!graphs.size()) graphs.resize(1);
+  graph = &graphs[0];
+  initGraphs();
 
   // start the producer thread
   pthread_t thrd;

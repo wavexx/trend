@@ -1,6 +1,6 @@
 /*
  * defaults: trend defaults and constants
- * Copyright(c) 2004-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2004-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -33,11 +33,15 @@ namespace Trend
   const unsigned char fillKey = 'f';
   const unsigned char showUndefKey = 'u';
   const unsigned char pollRateKey = 'p';
+  const unsigned char changeKey = '\t';
+  const unsigned char legendKey = 'n';
+  const unsigned char viewModeKey = 'N';
 
   // Some types
   typedef double Value;
   enum input_t {absolute, incremental, differential};
   enum format_t {f_ascii, f_float, f_double, f_short, f_int, f_long};
+  enum view_t {v_normal, v_dim, v_hide};
 
   // Defaults
   const input_t input = absolute;
@@ -51,20 +55,31 @@ namespace Trend
   const bool latency = false;
   const bool filled = false;
   const bool showUndef = false;
+  const view_t view = v_normal;
   const bool grid = false;
   const double gridres = 1.;
   const int mayor = 10;
   const int pollMs = 1;
 
   // Colors
-  const GLfloat backCol[3] = {0.,  0.,  0. };
-  const GLfloat textCol[3] = {1.,  1.,  1. };
-  const GLfloat gridCol[3] = {0.5, 0.,  0.5};
-  const GLfloat lineCol[3] = {1.,  1.,  1. };
-  const GLfloat markCol[3] = {0.5, 0.5, 0. };
-  const GLfloat intrCol[3] = {0.,  1.,  0. };
-  const GLfloat editCol[3] = {1.,  0.,  0. };
+  const GLfloat backCol[3] = {0.0, 0.0, 0.0};
+  const GLfloat textCol[3] = {1.0, 1.0, 1.0};
+  const GLfloat gridCol[3] = {0.5, 0.0, 0.5};
+  const GLfloat markCol[3] = {0.5, 0.5, 0.0};
+  const GLfloat intrCol[3] = {0.0, 1.0, 0.0};
+  const GLfloat editCol[3] = {1.0, 0.0, 0.0};
 
+  const GLfloat lineCol[][3] =
+  {
+    {1.0, 1.0, 1.0},
+    {0.0, 1.0, 1.0},
+    {0.3, 0.0, 1.0},
+    {1.0, 0.0, 0.7},
+    {1.0, 0.4, 0.0},
+    {1.0, 0.8, 0.0}
+  };
+
+  const GLfloat drawOthersAlpha = 0.3;
   const GLfloat fillTrendAlpha = 0.25;
   const GLfloat fillUndefAlpha = 0.125;
   const GLfloat fillTextAlpha = 0.9;
