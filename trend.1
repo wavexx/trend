@@ -2,7 +2,7 @@
 .\" Copyright(c) 2006-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
 .\" Distributed under GNU LGPL WITHOUT ANY WARRANTY.
 .\"
-.Dd October 27, 2007
+.Dd November 2, 2007
 .Dt TREND 1
 .\"
 .\"
@@ -17,7 +17,7 @@
 .Op Fl display
 .Op Fl geometry
 .Op Fl iconic
-.Ar fifo
+.Aq Ar fifo | -
 .Aq Ar hist-spec | hist-sz x-sz
 .Op Ar low high
 .\"
@@ -48,18 +48,13 @@ can be changed directly during execution.
 .Sh INPUT
 .\"
 .Ss FIFO
-To display real-time data you should use a FIFO. A named FIFO can be created
-using the
+To display real-time data you should use a FIFO. Both standard input and named
+pipes can be used. Standard input (used for simple pipelining purposes) can be
+opened by using
+.Ar -
+instead of a named file. A named FIFO can be created using the
 .Xr mkfifo 1
-command. You should then redirect your program's output to that file. FIFOs are
-automatically re-opened upon EOF.
-.Pp
-Both
-.Pa /dev/stdin
-and
-.Pa /dev/fd/0
-(where available) can be used as valid FIFOs for pipelining purposes without
-the need of extra filesystem objects. See the
+command. FIFOs are automatically re-opened upon EOF. See the
 .Sx EXAMPLES
 section.
 .Pp
@@ -195,7 +190,7 @@ visible grid
 .It Fl G Ar grid-spec
 specify grid resolution
 .It Fl z Ar zero[,zero...]
-specify y zero
+specify y zero/s
 .It Fl h
 help and version info
 .It Fl t Ar str
@@ -322,6 +317,8 @@ toggle grid
 change grid-spec interactively
 .It Ic z
 change zero interactively
+.It Ic Z
+set limits by center and amplitude
 .It Ic p
 change polling rate interactively
 .It Ic u
@@ -429,14 +426,16 @@ update. Scheduler latencies apply.
 .Sh EXAMPLES
 Running
 .Nm
-without a FIFO:
+with a named FIFO:
 .Pp
-.Dl command | trend /dev/stdin ...
+.Dl mkfifo fifo
+.Dl command > fifo &
+.Dl trend fifo ...
 .Pp
 Display the number of current active processes over time:
 .Pp
-.Dl trend fifo 60x24 &
-.Dl (while true; do ps -A | wc -l; sleep 1; done) > fifo
+.Dl (while true; do ps -A | wc -l; sleep 1; done) | \e\\
+.Dl trend - 60x24
 .Pp
 Display two graphs:
 .Pp

@@ -47,6 +47,7 @@ using std::memcpy;
 using std::strlen;
 using std::strpbrk;
 using std::strchr;
+using std::strcmp;
 
 #include <string.h>
 #include <math.h>
@@ -378,7 +379,7 @@ producer(void* prg)
   for(;;)
   {
     // open the file and disable buffering
-    in = fopen(fileName, "r");
+    in = (*fileName? fopen(fileName, "r"): stdin);
     if(!in) break;
     setvbuf(in, NULL, _IONBF, 0);
 
@@ -2074,7 +2075,7 @@ parseOptions(int argc, char* const argv[])
 
     case 'h':
       cout << argv[0] << " usage: " <<
-	argv[0] << " [options] fifo <hist-spec|hist-sz x-sz> [-y +y]\n" <<
+	argv[0] << " [options] <fifo|-> <hist-spec|hist-sz x-sz> [-y +y]\n" <<
 	argv[0] << " version: $Revision$ $Date$\n";
       return 1;
 
@@ -2086,11 +2087,16 @@ parseOptions(int argc, char* const argv[])
   argc -= optind;
   if(argc < 2 || argc > 5)
   {
-    cerr << argv[0] << ": bad parameters\n";
+    cerr << argv[0] << ": bad number of parameters\n";
     return -1;
   }
 
+  // fifo
   fileName = argv[optind++];
+  if(!strcmp(fileName, "-"))
+    *const_cast<char*>(fileName) = 0;
+
+  // history/divisions
   if(argc == 2 || argc == 4)
   {
     if(parseHistSpec(history, divisions, argv[optind++]))
