@@ -72,7 +72,7 @@ Some simple example scripts are included within the package:
 
 ``./net <seconds> [if]``:
 
-  Show cumulative (in + out) network consumption in bytes using /proc/net/dev
+  Show network usage (in and out) in bytes using /proc/net/dev
   using Perl (the default network interface if you don't specify any is eth0).
 
 ``./tstimes``:
@@ -94,25 +94,22 @@ In the following example we will display the latest two minutes of network
 activity (with the first one being in front of the other) sampled each tenth of
 second::
 
-  mkfifo fifo
-  trend fifo 1200 600 &
-  ./net 0.1 > fifo
+  ./net 0.1 | trend -c2a -Lin,out - 1200 600
 
 To display the number of current active processes over time you can do::
 
-  (while true; do ps -A | wc -l; sleep 1; done) > fifo
+  (while true; do ps -A | wc -l; sleep 1; done) | trend - ...
 
 Bytes roughly transferred each minute on an apache server?::
 
-  trend -fd -d fifo 60x24 &
   tail -f access.log | \
     sed -une 's/.* \([0-9][0-9]*\) [0-9]*$/\1/p' | \
-    ./timeq -s 60 > fifo
+    ./timeq -s 60 | trend -fd -d - 60x24
 
 An example of using snmpdelta from the NET-SNMP utilities to monitor a remote
 IF-MIB network interface::
 
-  snmpdelta -v1 -CT -c public router ifInOctets.1 > fifo
+  snmpdelta -v1 -CT -c public router ifInOctets.1 | trend - ...
 
 A collection of contributed data-gathering scripts is kept at
 http://www.thregr.org/~wavexx/software/trend/contrib/ (if you want to make a

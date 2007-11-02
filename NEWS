@@ -1,4 +1,4 @@
-Rev #58 03/10/2006 to Rev #
+Rev #58 03/10/2006 to Rev #68 02/11/2007
 
 	* Polling rate limits can now be configured dynamically.
 	* Latency sampling now also shows maximal sync times.
@@ -6,6 +6,7 @@ Rev #58 03/10/2006 to Rev #
 	* Memory usage reduction (reduced in half).
 	* 'Z' allows to specify view limits by center and amplitude.
 	* Support for multiple graphs in a single instance.
+	* Using '-' as a file name now causes stdin to be read.
 
 
 Rev #54 28/04/2006 to Rev #58 03/10/2006

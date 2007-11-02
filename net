@@ -9,7 +9,8 @@ use Time::HiRes "usleep";
 $| = 1;
 
 # arguments
-my $old = 0;
+my $oldIn = 0;
+my $oldOut = 0;
 my $ms = ($ARGV[0]? $ARGV[0]: 0.1) * 1000000;
 my $if = ($ARGV[1]? $ARGV[1]: "eth0");
 
@@ -22,11 +23,14 @@ while()
     my ($ent, $in, $out) = /^\s*([^\s:]+):\s*(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)/;
     if($ent and $ent eq $if)
     {
-      my $cnt = $in + $out;
-      $old = $cnt if($old == 0);
-      print(($cnt - $old) . "\n");
+      $oldIn = $in if($oldIn == 0);
+      $oldOut = $out if($oldOut == 0);
+
+      print(($in - $oldIn) . " " .
+	    ($out - $oldOut) . "\n");
       
-      $old = $cnt;
+      $oldIn = $in;
+      $oldOut = $out;
       last;
     }
   }
