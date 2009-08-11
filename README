@@ -35,16 +35,15 @@ Requirements:
 Building
 ========
 
-Type "make" in the source distribution. The executable "trend" will be created.
-The Makefile is still in embryonic form, so it supports only gcc (and IRIX
-systems using pmake and MIPSPro) for now. trend should work on any POSIX/OpenGL
-capable system.
+Cd into the distribution's "src" directory and execute "make".
 
-Compiler optimisations are left to the user. Usually doing::
+Compiler optimisations are left to the user. Set your standard compiler flags
+(CPPFLAGS/CXXFLAGS/LDFLAGS) before building.
 
-  CXXFLAGS="-O2" make -e
+Copy the resulting "src/trend" executable and trend's manual "trend.1" where
+appropriate.
 
-should suffice.
+trend should work on any POSIX/OpenGL capable system.
 
 
 Usage
@@ -59,7 +58,8 @@ See the `manual page`_ for details.
 Examples
 ========
 
-Some simple example scripts are included within the package:
+Some simple example scripts are included in the package.
+Within the "examples" directory you can find:
 
 ``./mem <seconds>``:
 
@@ -94,7 +94,7 @@ In the following example we will display the latest two minutes of network
 activity (with the first one being in front of the other) sampled each tenth of
 second::
 
-  ./net 0.1 | trend -c2a -Lin,out - 1200 600
+  ./examples/net 0.1 | trend -c2a -Lin,out - 1200 600
 
 To display the number of current active processes over time you can do::
 
@@ -104,7 +104,7 @@ Bytes roughly transferred each minute on an apache server?::
 
   tail -f access.log | \
     sed -une 's/.* \([0-9][0-9]*\) [0-9]*$/\1/p' | \
-    ./timeq -s 60 | trend -fd -d - 60x24
+    ./examples/timeq -s 60 | trend -fd -d - 60x24
 
 An example of using snmpdelta from the NET-SNMP utilities to monitor a remote
 IF-MIB network interface::

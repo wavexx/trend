@@ -1,3 +1,9 @@
+trend 1.0
+
+	* Fix man page warnings.
+	* Use a traditional version numbering scheme.
+
+
 Rev #58 03/10/2006 to Rev #68 02/11/2007
 
 	* Polling rate limits can now be configured dynamically.

@@ -2,19 +2,16 @@
 # generate and tests a trend distribution
 
 # basic data
-LOG="`p4 filelog -m1 trend.cc`"
-REV="`echo $LOG | sed -ne 's/.* \.\.\. #\([0-9]*\) .*/\1/p'`"
-ISODATE="`echo $LOG | sed -ne 's/.* on \([0-9]*\)\/\([0-9]*\)\/\([0-9]*\) by .*/\3\/\2\/\1/p'`"
-DATE="`echo $LOG | sed -ne 's/.* on \([0-9]*\)\/\([0-9]*\)\/\([0-9]*\) by .*/\1\2\3/p'`"
-DIST="trend-$DATE"
-HEAD=" to Rev #$REV $ISODATE"
+REV="`git describe | sed -e s/^trend-//`"
+DIST="trend-$REV"
+HEAD="trend $REV"
 CATALOG="
-	Makefile
-	imem tstimes mem net timeq
-	trend.cc defaults.hh color.cc color.hh rr.hh timer.hh gl.hh
 	AUTHORS THANKS COPYING README TODO NEWS trend.1
+	src/Makefile src/trend.cc src/version.h src/defaults.hh
+	src/color.cc src/color.hh src/rr.hh src/timer.hh src/gl.hh
+	examples/imem examples/tstimes examples/mem
+	examples/net examples/timeq
 "
-
 
 # trap errors
 set -e
@@ -31,9 +28,14 @@ fi
 
 # creating distribution
 echo "2: creating distribution"
+(
+  cd src
+  make distclean
+  make dist
+)
 rm -rf "$DIST"
 mkdir "$DIST"
-cp -p $CATALOG "$DIST"
+tar -cf - $CATALOG | { cd "$DIST" && tar xf -; }
 { tar -cf - --owner 0 --group 0 "$DIST" || tar -cf - "$DIST"; } | \
 	gzip -9 > "$DIST.tar.gz"
 rm -rf "$DIST"
@@ -42,10 +44,11 @@ rm -rf "$DIST"
 # check
 echo "3: checking distribution"
 gzip -dc "$DIST.tar.gz" | tar xf -
-cd "$DIST"
-pmake || make
-test -x trend
-cd ..
+(
+  cd "$DIST/src"
+  pmake || make
+  test -x trend
+)
 rm -rf "$DIST"
 
 
