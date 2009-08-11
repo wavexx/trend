@@ -5,16 +5,24 @@
 set -e
 
 # basic data
-DATE="`date '+%Y%m%d'`"
-DIST="trend-$DATE"
+REV="`git describe | sed -e s/^trend-//`"
+HEAD="trend ($REV-"
+DIST="trend-$REV"
+
+# check matching version
+if [ "$1" != "-" ]
+then
+	head -1 debian/changelog | fgrep -s "$HEAD"
+	grep -q '\<TODO\>' README || true
+fi
 
 # generate the source package
-./gendist
+./gendist "$@"
 
 # working directory
 rm -fr trend_*
 tar xvzf "$DIST.tar.gz"
-mv "$DIST.tar.gz" "trend_$DATE.orig.tar.gz"
+mv "$DIST.tar.gz" "trend_$REV.orig.tar.gz"
 cp -r debian "$DIST"
 
 # build the package
@@ -27,6 +35,6 @@ cd ..
 rm -rf "$DIST"
 
 # checks
-lintian trend_$DATE-*.dsc
-lintian trend_$DATE-*_*.deb
+lintian trend_$REV-*.dsc
+lintian trend_$REV-*_*.deb
 

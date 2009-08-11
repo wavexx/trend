@@ -1,59 +1,53 @@
 #!/usr/bin/make -f
+# -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
 
-# General optimization flags
-export CXXFLAGS
 
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CXXFLAGS += -O0
-else
-	CXXFLAGS += -O3
-endif
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Nothing to configure.
+	touch configure-stamp
 
 
-# Build
 build: build-stamp
 
-build-stamp:
+build-stamp: configure-stamp  
 	dh_testdir
-	$(MAKE)
-	touch build-stamp
+
+	$(MAKE) -C src
+
+	touch $@
 
 
-# Cleanup
-clean:
+clean: 
 	dh_testdir
 	dh_testroot
-	rm -f build-stamp
-	-$(MAKE) clean
+	rm -f build-stamp configure-stamp
+
+	$(MAKE) -C src clean
+
 	dh_clean 
 
 
-# Install
 install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k 
-	dh_installdirs
-	dh_install
-	dh_installdocs
-	dh_installexamples
-#	dh_installinfo
-#	dh_installman
+	# Nothing to install.
 
+# Build architecture-independent files here.
+binary-indep: install
 
-# Build architecture-independent files
-binary-indep: build install
-
-# Build architecture-dependent files
-binary-arch: build install
+# Build architecture-dependent files here.
+binary-arch: install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs 
-	dh_link
+	dh_installdocs
+	dh_installexamples
+	dh_install
+	dh_installman
 	dh_strip
 	dh_compress
 	dh_fixperms
@@ -63,7 +57,5 @@ binary-arch: build install
 	dh_md5sums
 	dh_builddeb
 
-
-# Stubs
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure

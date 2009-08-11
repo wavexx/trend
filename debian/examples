@@ -1,5 +1,5 @@
-imem
-mem
-net
-timeq
-tstimes
+examples/imem
+examples/mem
+examples/net
+examples/timeq
+examples/tstimes

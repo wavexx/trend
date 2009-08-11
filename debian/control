@@ -1,18 +1,17 @@
 Source: trend
 Section: utils
-Priority: optional
-Maintainer: Yuri D'Elia <wavexx@yuv.info>
-Build-Depends: debhelper (>= 4.0.2), freeglut-dev, xlibmesa-gl-dev | libgl-dev, xlibmesa-glu-dev | libglu-dev
-Standards-Version: 3.6.2
+Priority: extra
+Maintainer: Yuri D'Elia <wavexx@thregr.org>
+Build-Depends: debhelper (>= 7), freeglut-dev
+Standards-Version: 3.8.2
+Homepage: http://www.thregr.org/~wavexx/software/trend/
 
 Package: trend
 Architecture: any
-Depends: ${shlibs:Depends}
-Description: a general-purpose, efficient trend graph for "live" data
- trend is a general-purpose, efficient trend graph for "live" data. Data is
- read in ASCII format from a file or continuously from a FIFO, and is played
- in real-time into a multipass trend (much like a CRT oscilloscope). trend
- can be used as a rapid analysis tool for progressive or time-based data
- series together with trivial scripting.
- .
- Homepage: http://www.yuv.info/~wavexx/hacks/trend/
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: a general-purpose, efficient trend graph
+ trend is a general-purpose, efficient trend graph for "live" data. Data
+ is read in ASCII form from a file or continuously from a FIFO and
+ displayed in real-time into a multi-pass trend (much like a CRT
+ oscilloscope). trend can be used as a rapid analysis tool for
+ progressive or time-based data series together with trivial scripting.

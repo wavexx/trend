@@ -1,6 +1,5 @@
-trend (20050723-1) unstable; urgency=low
+trend (1.0-1) unstable; urgency=low
 
-  * Initial Release.
+  * Initial release.
 
- -- Yuri D'Elia <wavexx@yuv.info>  Sun, 10 Apr 2005 19:16:44 +0200
-
+ -- Yuri D'Elia <wavexx@thregr.org>  Wed, 05 Aug 2009 19:04:25 +0200
