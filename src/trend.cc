@@ -9,6 +9,7 @@
  */
 
 // defaults
+#include "version.h"
 #include "defaults.hh"
 #include "color.hh"
 #include "timer.hh"
@@ -2076,7 +2077,7 @@ parseOptions(int argc, char* const argv[])
     case 'h':
       cout << argv[0] << " usage: " <<
 	argv[0] << " [options] <fifo|-> <hist-spec|hist-sz x-sz> [-y +y]\n" <<
-	argv[0] << " version: $Revision$ $Date$\n";
+	argv[0] << " version: " << TREND_VERSION << "\n";
       return 1;
 
     default:
