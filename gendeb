@@ -28,13 +28,11 @@ cp -r debian "$DIST"
 # build the package
 cd "$DIST"
 unset CPP CXX CPPFLAGS CXXFLAGS LDFLAGS
-dpkg-buildpackage -rfakeroot -us -uc
+dpkg-buildpackage -k153410EC
 
 # remove aux. files
 cd ..
 rm -rf "$DIST"
 
 # checks
-lintian trend_$REV-*.dsc
-lintian trend_$REV-*_*.deb
-
+lintian trend_$REV-*.changes

@@ -1,5 +1,5 @@
 trend (1.0-1) unstable; urgency=low
 
-  * Initial release.
+  * Initial release (Closes: #541106).
 
  -- Yuri D'Elia <wavexx@thregr.org>  Wed, 05 Aug 2009 19:04:25 +0200
