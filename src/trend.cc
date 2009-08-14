@@ -1,6 +1,6 @@
 /*
  * trend: display live data on a trend graph
- * Copyright(c) 2003-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -1411,28 +1411,41 @@ display()
 
 
 void
-setLimits()
+setGraphLimits(const Graph& g, double& lo, double& hi)
 {
-  double lo(*graph->rrBuf);
-  double hi;
-
-  for(vector<Graph>::iterator gi = graphs.begin(); gi != graphs.end(); ++gi)
+  for(const Value* it = g.rrBuf; it != g.rrEnd; ++it)
   {
-    for(const Value* it = gi->rrBuf; it != gi->rrEnd; ++it)
+    if(!isnan(*it))
     {
-      if(!isnan(*it))
+      if(isnan(lo))
+	hi = lo = *it;
+      else
       {
-	if(isnan(lo))
-	  hi = lo = *it;
-	else
-	{
-	  if(*it > hi)
-	    hi = *it;
-	  if(*it < lo)
-	    lo = *it;
-	}
+	if(*it > hi)
+	  hi = *it;
+	if(*it < lo)
+	  lo = *it;
       }
     }
+  }
+}
+
+
+void
+setLimits()
+{
+  double lo = *graph->rrBuf;
+  double hi = lo;
+
+  if(view == Trend::v_hide)
+  {
+    // only operate on the curren graph
+    setGraphLimits(*graph, lo, hi);
+  }
+  else
+  {
+    for(vector<Graph>::iterator it = graphs.begin(); it != graphs.end(); ++it)
+      setGraphLimits(*it, lo, hi);
   }
 
   // some vertical bounds
@@ -1469,8 +1482,7 @@ check()
     }
 
     // recalculate limits seldom
-    if(autoLimit)
-      setLimits();
+    if(autoLimit) setLimits();
 
     glutPostRedisplay();
   }
@@ -1658,8 +1670,7 @@ getZero(const string& str)
   {
     rrShift(*graph, nZero - graph->zero);
     graph->zero = nZero;
-    if(autoLimit)
-      setLimits();
+    if(autoLimit) setLimits();
   }
 }
 
@@ -1686,6 +1697,8 @@ changeGraph()
     graph = &graphs[0];
   if(!legend && !values)
     pushMessage(string("current graph: ") + graph->label);
+  if(autoLimit && view == Trend::v_hide)
+    setLimits();
 }
 
 
@@ -1701,11 +1714,13 @@ toggleView()
 
   case Trend::v_dim:
     view = Trend::v_hide;
+    if(autoLimit) setLimits();
     pushMessage("view mode: hide others");
     break;
 
   case Trend::v_hide:
     view = Trend::v_normal;
+    if(autoLimit) setLimits();
     pushMessage("view mode: normal");
     break;
   }
