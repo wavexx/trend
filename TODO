@@ -9,3 +9,5 @@ Planned features
 	* Remote control via stdin.
 
 	* Internal refactoring.
+
+	* Allow to disable escape sequences in input.

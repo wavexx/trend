@@ -1,5 +1,5 @@
 .\" trend.1: trend manual
-.\" Copyright(c) 2006-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+.\" Copyright(c) 2006-2009 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
 .\" Distributed under GNU LGPL WITHOUT ANY WARRANTY.
 .\"
 .Dd November 2, 2007
@@ -71,7 +71,7 @@ The default data format is a space/tab/newline-separated series of parseable
 ASCII numbers; eg:
 .Bd -literal -offset indent
 1 2 3 4 5.1 0642
-0x12 -12.4E5 .987
+0x12 \-12.4E5 .987
 .Ed
 .Pp
 The parser is very lenient, and will silently ignore whatever looks like
@@ -108,7 +108,7 @@ for more details on how this affects the input stream.
 Different input formats are supported, as specified by the
 .Fl f
 flag. Note however that only the ASCII parser (the default) silently ignores
-errors. NaNs and Infinity have special treatment. Internally, 
+errors. NaNs and Infinity have special treatment. Internally,
 .Nm
 always works with double precision floating points: conversion toward these is
 performed with the default FPU conversion rules. The actual underlying binary
@@ -466,5 +466,5 @@ normal.
 .Nm
 is distributed under LGPL (see COPYING)
 .Em WITHOUT ANY WARRANTY .
-Copyright(c) 2003-2007 by
+Copyright(c) 2003-2009 by
 .An "Yuri D'Elia" Aq wavexx@users.sf.net .

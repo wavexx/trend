@@ -183,20 +183,24 @@ trend-qtac:
 	Courtesy of Liam MacKenzie and qtac.edu.au
 
 
-Further customisation
-=====================
+Further customisation and development
+=====================================
 
 Almost all internal aspects and defaults of trend can be changed by modifying
 "defaults.hh" and recompiling. If you feel that a default should be changed or
 an internal constant be exposed contact me to make the change customizable
 instead.
 
+trend's GIT repository is publicly accessible at::
+
+  git://src.thregr.org/trend
+
 
 Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
+Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate. Latest trend versions can be downloaded from
 http://www.thregr.org/~wavexx/software/trend/
