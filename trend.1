@@ -13,11 +13,11 @@
 .\"
 .Sh SYNOPSIS
 .Nm
-.Op Fl dDSsvlmFgGhtAERIMNTLzfcpu
+.Op Fl dDSsvlmFgGhtAERIMNTLzfcpue
 .Op Fl display
 .Op Fl geometry
 .Op Fl iconic
-.Aq Ar fifo | -
+.Aq Ar fifo | \-
 .Aq Ar hist-spec | hist-sz x-sz
 .Op Ar low high
 .\"
@@ -51,7 +51,7 @@ can be changed directly during execution.
 To display real-time data you should use a FIFO. Both standard input and named
 pipes can be used. Standard input (used for simple pipelining purposes) can be
 opened by using
-.Ar -
+.Ar \-
 instead of a named file. A named FIFO can be created using the
 .Xr mkfifo 1
 command. FIFOs are automatically re-opened upon EOF. See the
@@ -131,9 +131,12 @@ binary long
 .\"
 .Ss SPECIAL VALUES
 ASCII and binary floating point input have special treatment for NaNs and
-Infinity (entered in any representable form). NaNs are considered as "undefined
+Infinity (entered in any representable form). Both are considered as "undefined
 values". Undefined values can be highlighted, but aren't otherwise
-rendered. Infinity is reserved for future use as an escape sequence.
+rendered. If the
+.Fl e
+flag is set, Infinity enters an escape sequence instead (See
+.Sx ESCAPE SEQUENCES )
 .\"
 .Ss MULTIPLE GRAPHS
 Multiple graphs can be displayed inside a single trend instance by specifying
@@ -160,15 +163,24 @@ examiners only work on the current graph. The current graph can be cycled
 dynamically with the
 .Ic TAB
 key and differentiated using the
-.Ic N
+.Ic K
 key, which cycles between "normal", "dim others" and "hide others" views. The
 graph key, if enabled, also highlights the current graph.
+.\"
+.Ss ESCAPE SEQUENCES
+If escape sequences are enabled (through the
+.Fl e
+flag), entering Infinity (in any representable form) will start an escape
+sequence. Currently, this feature is not yet implemented: Infinity is simply
+discarded. This is reserved for future use as a way to control the
+.Nm
+interface and parameters remotely.
 .\"
 .\"
 .Sh OPTIONS
 .\"
 .Ss FLAGS
-.Bl -tag -compact -width " -I colour[,colour...] "
+.Bl -tag -compact -width " \-I colour[,colour...] "
 .It Fl d
 "dimmed" shading mode
 .It Fl D
@@ -221,6 +233,9 @@ input format (See
 polling rate (hz)
 .It Fl u
 show undefined values
+.It Fl e
+enable escape sequences (See
+.Sx ESCAPE SEQUENCES )
 .It Fl display
 .No See Xr X 7 .
 .It Fl geometry
@@ -384,7 +399,7 @@ The examiners can be removed by clicking anywhere with the third mouse button.
 .Ss DISTRIBUTION GRAPH
 .Ic D No or Fl D
 enable a distribution graph on the left side of the window. This is especially
-useful when analysing the continuity of a function or signal. Intensity is
+useful when analyzing the continuity of a function or signal. Intensity is
 proportional to the visible maximum.
 .\"
 .Ss FILLING
@@ -434,12 +449,12 @@ with a named FIFO:
 .Pp
 Display the number of current active processes over time:
 .Pp
-.Dl (while true; do ps -A | wc -l; sleep 1; done) | \e
-.Dl trend - 60x24
+.Dl (while true; do ps \-A | wc \-l; sleep 1; done) | \e
+.Dl trend \- 60x24
 .Pp
 Display two graphs:
 .Pp
-.Dl trend -c2a -L"graph 1, graph 2" fifo ...
+.Dl trend \-c2a \-L"graph 1, graph 2" fifo ...
 .\"
 .\"
 .Sh DIAGNOSTICS

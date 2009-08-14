@@ -5,7 +5,9 @@ trend 1.1
 	  graphs are present and "hide others" is in effect.
 	* 'Legend' is now properly called 'Key'. The 'nN' key bindings were
 	  also remapped to 'kK' for consistency.
-	* DEPRECATES: 'nN' key bindings should no longer be used, use 'kK' instead.
+	* Infinity is now handled like NaNs.
+	* DEPRECATES: 'nN' key bindings are still available, but should no
+	  longer be used, use 'kK' instead.
 
 
 trend 1.0

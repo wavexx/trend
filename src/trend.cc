@@ -133,6 +133,7 @@ namespace
   volatile bool damaged = false;
   Trend::input_t input = Trend::input;
   Trend::format_t format = Trend::format;
+  bool allowEsc = false;
 
   // Main graph data
   vector<Graph> graphs;
@@ -350,6 +351,9 @@ readEsc(FILE* fd)
 bool
 readNext(FILE* fd, double& v)
 {
+  if(!allowEsc)
+    return readFNum(fd, v);
+
   while(readFNum(fd, v))
   {
     if(!isinf(v))
@@ -713,7 +717,7 @@ drawLine(const Graph& g, double alphaMul)
 
   for(size_t i = offset; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && !isnan(*it) && (nit == g.rrEnd || !isnan(*nit)))
+    if(!st && isfinite(*it) && (nit == g.rrEnd || isfinite(*nit)))
     {
       st = true;
       glBegin(GL_LINE_STRIP);
@@ -740,7 +744,7 @@ drawLine(const Graph& g, double alphaMul)
 	glVertex2d(0, *it);
       }
     }
-    else if(!isnan(*it))
+    else if(isfinite(*it))
     {
       glBegin(GL_LINES);
       if(pos)
@@ -758,7 +762,7 @@ drawLine(const Graph& g, double alphaMul)
       glEnd();
     }
 
-    if(st && (nit == g.rrEnd || isnan(*nit)))
+    if(st && (nit == g.rrEnd || !isfinite(*nit)))
     {
       glEnd();
       st = false;
@@ -777,12 +781,12 @@ drawFillZero(const Graph& g)
   const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
-  double last = NAN;
+  Value last = NAN;
 
   glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
   for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && !isnan(*it) && (nit == g.rrEnd || !isnan(*nit)))
+    if(!st && isfinite(*it) && (nit == g.rrEnd || isfinite(*nit)))
     {
       last = *it;
       st = true;
@@ -819,7 +823,7 @@ drawFillZero(const Graph& g)
 	glVertex2d(0, 0);
       }
 
-      if(nit == g.rrEnd || isnan(*nit))
+      if(nit == g.rrEnd || !isfinite(*nit))
       {
 	glEnd();
 	st = false;
@@ -837,18 +841,18 @@ drawFillDelta(const Graph& g)
   const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
-  double l1 = NAN;
-  double l2 = NAN;
+  Value l1 = NAN;
+  Value l2 = NAN;
 
   glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
   glBegin(GL_QUAD_STRIP);
   for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    double v1 = *it;
-    double v2 = *(it - divisions);
+    Value v1 = *it;
+    Value v2 = *(it - divisions);
 
-    if(!st && (!isnan(v1) && (nit == g.rrEnd || !isnan(*nit)))
-	&& (!isnan(v2) && !isnan(*(nit - divisions))))
+    if(!st && (isfinite(v1) && (nit == g.rrEnd || isfinite(*nit)))
+	&& (isfinite(v2) && isfinite(*(nit - divisions))))
     {
       l1 = v1;
       l2 = v2;
@@ -889,7 +893,7 @@ drawFillDelta(const Graph& g)
       l1 = v1;
       l2 = v2;
 
-      if(nit == g.rrEnd || isnan(*nit) || isnan(*(nit - divisions)))
+      if(nit == g.rrEnd || !isfinite(*nit) || !isfinite(*(nit - divisions)))
       {
 	glEnd();
 	st = false;
@@ -920,7 +924,7 @@ drawFillUndef(const Graph& g)
   glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillUndefAlpha);
   for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
   {
-    if(!st && ((nit == g.rrEnd && isnan(*it)) || isnan(*nit)))
+    if(!st && ((nit == g.rrEnd && !isfinite(*it)) || !isfinite(*nit)))
     {
       st = true;
       glBegin(GL_QUAD_STRIP);
@@ -945,7 +949,7 @@ drawFillUndef(const Graph& g)
 	glVertex2d(0, hiLimit);
       }
 
-      if(nit == g.rrEnd || (!isnan(*it) && !isnan(*nit)))
+      if(nit == g.rrEnd || (isfinite(*it) && isfinite(*nit)))
       {
 	glEnd();
 	st = false;
@@ -974,7 +978,7 @@ drawDistrib()
   {
     const Value* a = it;
     const Value* b = (it + 1);
-    if(isnan(*a) || isnan(*b)) continue;
+    if(!isfinite(*a) || !isfinite(*b)) continue;
 
     // projection
     double mul = (static_cast<double>(height) / (hiLimit - loLimit));
@@ -1066,7 +1070,7 @@ drawTIntr()
   {
     // fetch the next value
     const Value* nit = (it + 1);
-    if(isnan(*it) && isnan(*nit)) continue;
+    if(!isfinite(*it) && !isfinite(*nit)) continue;
 
     Intr buf;
     double far;
@@ -1084,9 +1088,9 @@ drawTIntr()
       far = *it;
     }
 
-    if(!isnan(buf.near))
+    if(isfinite(buf.near))
     {
-      buf.value = (isnan(far)? buf.near: *it + mul * (*nit - *it));
+      buf.value = (!isfinite(far)? buf.near: *it + mul * (*nit - *it));
       buf.dist = fabs(buf.value - intrY);
       intrs.push_back(buf);
     }
@@ -1409,21 +1413,16 @@ display()
 
 
 void
-setGraphLimits(const Graph& g, double& lo, double& hi)
+setGraphLimits(const Graph& g, Value& lo, Value& hi)
 {
   for(const Value* it = g.rrBuf; it != g.rrEnd; ++it)
   {
-    if(!isnan(*it))
+    if(isfinite(*it))
     {
-      if(isnan(lo))
-	hi = lo = *it;
-      else
-      {
-	if(*it > hi)
-	  hi = *it;
-	if(*it < lo)
-	  lo = *it;
-      }
+      if(!isfinite(lo) || *it < lo)
+	lo = *it;
+      if(!isfinite(hi) || *it > hi)
+	hi = *it;
     }
   }
 }
@@ -1432,8 +1431,8 @@ setGraphLimits(const Graph& g, double& lo, double& hi)
 void
 setLimits()
 {
-  double lo = *graph->rrBuf;
-  double hi = lo;
+  Value lo = *graph->rrBuf;
+  Value hi = lo;
 
   if(view == Trend::v_hide)
   {
@@ -1963,7 +1962,7 @@ parseOptions(int argc, char* const argv[])
   grSpec.x.mayor = grSpec.y.mayor = Trend::mayor;
 
   int arg;
-  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:L:irz:f:c:p:u:")) != -1)
+  while((arg = getopt(argc, argv, "dDSsvlmFgG:ht:A:E:R:I:M:N:T:L:irz:f:c:p:u:e")) != -1)
     switch(arg)
     {
     case 'd':
@@ -2000,6 +1999,10 @@ parseOptions(int argc, char* const argv[])
 
     case 'u':
       showUndef = !showUndef;
+      break;
+
+    case 'e':
+      allowEsc = !allowEsc;
       break;
 
     case 'g':

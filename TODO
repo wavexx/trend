@@ -10,4 +10,6 @@ Planned features
 
 	* Internal refactoring.
 
-	* Allow to disable escape sequences in input.
+	* Infinity support is lacking (lines, fill and integration
+	  could be correctly implemented by using signbit() instead
+	  of ignoring the value completely).
