@@ -34,8 +34,8 @@ namespace Trend
   const unsigned char showUndefKey = 'u';
   const unsigned char pollRateKey = 'p';
   const unsigned char changeKey = '\t';
-  const unsigned char legendKey = 'n';
-  const unsigned char viewModeKey = 'N';
+  const unsigned char graphKeyKey = 'k';
+  const unsigned char viewModeKey = 'K';
 
   // Some types
   typedef double Value;

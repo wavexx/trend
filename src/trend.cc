@@ -176,8 +176,8 @@ namespace
   deque<pair<time_t, string> > messages;
   int pollMs = Trend::pollMs;
 
-  // Legend
-  bool legend;
+  // Key
+  bool graphKey;
   size_t maxLabel = 0;
   size_t maxValue = 0;
 
@@ -1184,14 +1184,14 @@ drawValues()
   sprintf(buf, "%g", hiLimit);
   drawOSString(width, height, buf);
 
-  if(!graphs.size() || legend) sprintf(buf, "%g", last);
+  if(!graphs.size() || graphKey) sprintf(buf, "%g", last);
   else sprintf(buf, "%s: %g", graph->label.c_str(), last);
   drawLEString(buf);
 }
 
 
 void
-drawLegend()
+drawGraphKey()
 {
   using Trend::fontHeight;
   using Trend::fontWidth;
@@ -1220,16 +1220,16 @@ drawLegend()
   int textX1 = boxX1 - maxLen * fontWidth;
   int textX2 = textX1 + maxLabel * fontWidth;
   int y = height - fontHeight * 2 - strSpc;
-  int legendX1 = textX1 - strSpc;
-  int legendY1 = y - graphs.size() * fontHeight - strSpc;
-  int legendY2 = y + strSpc;
+  int graphKeyX1 = textX1 - strSpc;
+  int graphKeyY1 = y - graphs.size() * fontHeight - strSpc;
+  int graphKeyY2 = y + strSpc;
 
   glColor4f(0., 0., 0., Trend::fillTextAlpha);
   glBegin(GL_QUADS);
-  glVertex2i(width, legendY1);
-  glVertex2i(legendX1, legendY1);
-  glVertex2i(legendX1, legendY2);
-  glVertex2i(width, legendY2);
+  glVertex2i(width, graphKeyY1);
+  glVertex2i(graphKeyX1, graphKeyY1);
+  glVertex2i(graphKeyX1, graphKeyY2);
+  glVertex2i(width, graphKeyY2);
   glEnd();
 
   for(size_t i = 0; i != graphs.size(); ++i, y -= fontHeight)
@@ -1394,7 +1394,7 @@ display()
 
   // video stuff
   if(values) drawValues();
-  if(legend) drawLegend();
+  if(graphKey) drawGraphKey();
   if(latency) drawLatency();
   if(intr && distrib && intrX < 0)
     drawDIntr();
@@ -1695,7 +1695,7 @@ changeGraph()
 {
   if(++graph == &*graphs.end())
     graph = &graphs[0];
-  if(!legend && !values)
+  if(!graphKey && !values)
     pushMessage(string("current graph: ") + graph->label);
   if(autoLimit && view == Trend::v_hide)
     setLimits();
@@ -1746,6 +1746,8 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     break;
 
   case Trend::viewModeKey:
+  case 'N':
+    // TODO: 'N' is deprecated
     toggleView();
     break;
 
@@ -1791,8 +1793,10 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     toggleStatus("show undefined", showUndef);
     break;
 
-  case Trend::legendKey:
-    toggleStatus("legend", legend);
+  case Trend::graphKeyKey:
+  case 'n':
+    // TODO: 'n' is deprecated
+    toggleStatus("graph key", graphKey);
     break;
 
   case Trend::gridKey:
@@ -2137,7 +2141,7 @@ parseOptions(int argc, char* const argv[])
     return -1;
   }
   offset = divisions - (history % divisions) + 1;
-  legend = labels.size();
+  graphKey = labels.size();
 
   // optional y limits
   if(argc == 4 || argc == 5)

@@ -2,6 +2,9 @@ trend 1.1
 
 	* Auto-scaling now considers only the current graph when multiple
 	  graphs are present and "hide others" is in effect.
+	* 'Legend' is now properly called 'Key'. The 'nN' key bindings were
+	  also remapped to 'kK' for consistency.
+	* DEPRECATES: 'nN' key bindings should no longer be used, use 'kK' instead.
 
 
 trend 1.0
