@@ -709,7 +709,7 @@ drawLine(const Graph& g, double alphaMul)
   const Value* nit = it + 1;
   const size_t mark(history + offset - divisions - 1);
   bool st = false;
-  size_t pos;
+  size_t pos = 0;
 
   for(size_t i = offset; it != g.rrEnd; ++i, ++it, ++nit)
   {
@@ -777,8 +777,7 @@ drawFillZero(const Graph& g)
   const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
-  double last;
-  size_t pos;
+  double last = NAN;
 
   glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
   for(size_t i = mark; it != g.rrEnd; ++i, ++it, ++nit)
@@ -792,7 +791,7 @@ drawFillZero(const Graph& g)
 
     if(st)
     {
-      pos = getPosition(g, i, it);
+      size_t pos = getPosition(g, i, it);
 
       if((last < 0) != (*it < 0))
       {
@@ -838,9 +837,8 @@ drawFillDelta(const Graph& g)
   const Value* it = g.rrEnd - m;
   const Value* nit = it + 1;
   bool st = false;
-  double l1;
-  double l2;
-  size_t pos;
+  double l1 = NAN;
+  double l2 = NAN;
 
   glColor4f(g.lineCol[0], g.lineCol[1], g.lineCol[2], Trend::fillTrendAlpha);
   glBegin(GL_QUAD_STRIP);
@@ -860,7 +858,7 @@ drawFillDelta(const Graph& g)
 
     if(st)
     {
-      pos = getPosition(g, i, it);
+      size_t pos = getPosition(g, i, it);
 
       if((v1 < v2) != (l1 < l2))
       {
