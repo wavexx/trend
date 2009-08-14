@@ -323,19 +323,17 @@ readNum(FILE* fd, double& v)
 bool
 readFNum(FILE* fd, double& v)
 {
-  bool st;
-
   switch(format)
   {
-  case Trend::f_ascii: st = readANum(fd, v); break;
-  case Trend::f_float: st = readNum<float>(fd, v); break;
-  case Trend::f_double: st = readNum<double>(fd, v); break;
-  case Trend::f_short: st = readNum<short>(fd, v); break;
-  case Trend::f_int: st = readNum<int>(fd, v); break;
-  case Trend::f_long: st = readNum<long>(fd, v); break;
+  case Trend::f_ascii: return readANum(fd, v);
+  case Trend::f_float: return readNum<float>(fd, v);
+  case Trend::f_double: return readNum<double>(fd, v);
+  case Trend::f_short: return readNum<short>(fd, v);
+  case Trend::f_int: return readNum<int>(fd, v);
+  case Trend::f_long: return readNum<long>(fd, v);
   }
 
-  return st;
+  return false;
 }
 
 
@@ -796,7 +794,7 @@ drawFillZero(const Graph& g)
     {
       pos = getPosition(g, i, it);
 
-      if(last < 0 != *it < 0)
+      if((last < 0) != (*it < 0))
       {
 	// extra truncation needed
 	double zt = (pos? pos: divisions) - *it / (*it - last);
@@ -864,7 +862,7 @@ drawFillDelta(const Graph& g)
     {
       pos = getPosition(g, i, it);
 
-      if(v1 < v2 != l1 < l2)
+      if((v1 < v2) != (l1 < l2))
       {
 	// extra truncation needed
 	double r = (l1 - l2) / (l1 - v1 - l2 + v2);
@@ -1917,7 +1915,7 @@ bool
 parseNums(vector<double>& nums, char* arg)
 {
   char* p;
-  while(p = strsep(&arg, ","))
+  while((p = strsep(&arg, ",")))
     nums.push_back(strtod(p, NULL));
   return false;
 }
@@ -1927,7 +1925,7 @@ bool
 parseStrings(vector<string>& strings, char* arg)
 {
   char* p;
-  while(p = strsep(&arg, ","))
+  while((p = strsep(&arg, ",")))
     strings.push_back(p);
   return false;
 }
