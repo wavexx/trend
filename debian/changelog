@@ -1,3 +1,10 @@
+trend (1.1-2) unstable; urgency=low
+
+  * Bump Standars-Version to 3.8.3 (no changes needed).
+  * Fix versioned dependency on debhelper.
+
+ -- Yuri D'Elia <wavexx@thregr.org>  Mon, 17 Aug 2009 11:28:04 +0200
+
 trend (1.1-1) unstable; urgency=low
 
   * Initial release (Closes: #541106).

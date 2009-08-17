@@ -1,8 +1,11 @@
 #!/bin/sh
 # generate and tests a trend distribution
 
+# trap errors
+set -e
+
 # basic data
-REV="`git describe | sed -e s/^trend-//`"
+REV="`git describe $1 | sed -e s/^trend-//`"
 DIST="trend-$REV"
 HEAD="trend $REV"
 CATALOG="
@@ -13,18 +16,10 @@ CATALOG="
 	examples/net examples/timeq
 "
 
-# trap errors
-set -e
-
-
 # check ancillary files
 echo "1: checking files"
-if [ "$1" != "-" ]
-then
-	head -1 NEWS | fgrep -s "$HEAD"
-	grep -q '\<TODO\>' README || true
-fi
-
+head -1 NEWS | fgrep -s "$HEAD"
+grep -q '\<TODO\>' README || true
 
 # creating distribution
 echo "2: creating distribution"

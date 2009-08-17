@@ -2,8 +2,8 @@ Source: trend
 Section: utils
 Priority: extra
 Maintainer: Yuri D'Elia <wavexx@thregr.org>
-Build-Depends: debhelper (>= 7), freeglut-dev
-Standards-Version: 3.8.2
+Build-Depends: debhelper (>= 7.0.50~), freeglut-dev
+Standards-Version: 3.8.3
 Homepage: http://www.thregr.org/~wavexx/software/trend/
 Vcs-Git: git://src.thregr.org/trend
 
