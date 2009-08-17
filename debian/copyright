@@ -9,7 +9,7 @@ Upstream Author:
 
 Copyright:
 
-    Copyright(c) 2003-2007 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
+    Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
 
 License:
 
@@ -34,5 +34,5 @@ The Debian packaging is:
 
     Copyright (C) 2009 Yuri D'Elia <wavexx@thregr.org>
 
-and is licensed under the GPL version 3, 
-see `/usr/share/common-licenses/GPL-3'.
+and is licensed under the GNU Lesser General Public License,
+see `/usr/share/common-licenses/LGPL-2'.

@@ -1,61 +1,26 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+# Configuration flags
+CXXFLAGS += -Wall -g
+
+ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
+	CXXFLAGS += -O0
+else
+	CXXFLAGS += -O3
+endif
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	MAKEFLAGS += -j$(NUMJOBS)
+endif
 
 
+# Rules
+%:
+	dh -Dsrc $@
 
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	# Nothing to configure.
-	touch configure-stamp
+override_dh_auto_clean:
+	$(MAKE) -Csrc clean
 
-
-build: build-stamp
-
-build-stamp: configure-stamp  
-	dh_testdir
-
-	$(MAKE) -C src
-
-	touch $@
-
-
-clean: 
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp configure-stamp
-
-	$(MAKE) -C src clean
-
-	dh_clean 
-
-
-install: build
-	# Nothing to install.
-
-# Build architecture-independent files here.
-binary-indep: install
-
-# Build architecture-dependent files here.
-binary-arch: install
-	dh_testdir
-	dh_testroot
-	dh_installchangelogs 
-	dh_installdocs
-	dh_installexamples
-	dh_install
-	dh_installman
-	dh_strip
-	dh_compress
-	dh_fixperms
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+override_dh_installchangelogs:
+	dh_installchangelogs NEWS

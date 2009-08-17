@@ -5,6 +5,7 @@ Maintainer: Yuri D'Elia <wavexx@thregr.org>
 Build-Depends: debhelper (>= 7), freeglut-dev
 Standards-Version: 3.8.2
 Homepage: http://www.thregr.org/~wavexx/software/trend/
+Vcs-Git: git://src.thregr.org/trend
 
 Package: trend
 Architecture: any

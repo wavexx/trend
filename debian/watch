@@ -1,2 +1,3 @@
 version=3
-http://www.thregr.org/~wavexx/software/trend/releases/trend-(.*)\.tar\.gz
+opts=uversionmangle=s/^(\d{8})$/0.$1/ \
+  http://www.thregr.org/~wavexx/software/trend/releases/trend-(.*)\.tar\.gz
