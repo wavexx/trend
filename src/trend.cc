@@ -1143,7 +1143,7 @@ drawTIntr()
   for(vector<Intr>::const_iterator it = intrs.begin();
       it != intrs.end(); ++i, ++it)
   {
-    sprintf(buf, "%lu: %g", i, it->value);
+    sprintf(buf, "%lu: %g", static_cast<unsigned long>(i), it->value);
     drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
   }
 
@@ -2199,7 +2199,7 @@ initGraphs()
       gi->label = labels[n];
     else
     {
-      sprintf(buf, "%lu", n + 1);
+      sprintf(buf, "%lu", static_cast<unsigned long>(n + 1));
       gi->label = buf;
     }
 
