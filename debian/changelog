@@ -2,8 +2,10 @@ trend (1.1-2) unstable; urgency=low
 
   * Bump Standars-Version to 3.8.3 (no changes needed).
   * Fix versioned dependency on debhelper.
+  * Fix debian/copyright consistency.
+  * Fix build dependencies on freeglut3-dev.
 
- -- Yuri D'Elia <wavexx@thregr.org>  Mon, 17 Aug 2009 11:28:04 +0200
+ -- Yuri D'Elia <wavexx@thregr.org>  Tue, 01 Sep 2009 14:17:10 +0200
 
 trend (1.1-1) unstable; urgency=low
 
