@@ -23,8 +23,8 @@ cp -r debian "$DIST"
 
 # build the package
 cd "$DIST"
-unset CPP CXX CPPFLAGS CXXFLAGS LDFLAGS
-dpkg-buildpackage -k153410EC
+unset CPP CC CXX CPPFLAGS CFLAGS CXXFLAGS FFLAGS LDFLAGS
+dpkg-buildpackage -sa -k153410EC
 
 # remove aux. files
 cd ..
