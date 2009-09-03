@@ -1,3 +1,10 @@
+trend (1.1-3) unstable; urgency=low
+
+  * Remove build dependencies on dead virtual package freeglut-dev entirely
+    (fixes FTBS for old freeglut3 packages).
+
+ -- Yuri D'Elia <wavexx@thregr.org>  Thu, 03 Sep 2009 15:06:32 +0200
+
 trend (1.1-2) unstable; urgency=low
 
   * Bump Standars-Version to 3.8.3 (no changes needed).
