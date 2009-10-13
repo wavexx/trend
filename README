@@ -135,8 +135,13 @@ General/support mailing list
 ============================
 
 If you feel to discuss improvements and suggestions, and/or test beta releases
-before announcement you can subscribe to <trend-users@thregr.org> by sending an
-email to <minimalist@thregr.org> with a subject of "subscribe trend-users".
+before announcement you can subscribe to `trend-users` by either sending an
+empty email to <trend-users+subscribe@thregr.org>, using GMane_ (group
+"gmane.comp.graphics.trend.general") or by contacting the author at
+<wavexx@users.sf.net>. The archives are accessible via web through
+http://news.gmane.org/gmane.comp.graphics.trend.general or via news directly.
+
+.. _GMane: http://www.gname.org/
 
 
 Troubleshooting
