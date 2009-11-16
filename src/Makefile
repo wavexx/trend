@@ -4,23 +4,27 @@
 
 #if $(CXX) == "CC"
 # pmake (assume Mipspro)
+TREND_CXXFLAGS :=
 TREND_CPPFLAGS := -I/usr/freeware/include -I/usr/local/include
 TREND_LDFLAGS := -FE:template_in_elf_section -quiet_prelink
 TREND_LDADD := -lpthread -L/usr/freeware/lib32 -L/usr/local/lib32 -lm -lglut -lGL -lGLU -lX11 -lXmu
 #else
 ifeq ($(shell uname), Darwin)
 # OS X (_nice_ framework system, I admit)
+TREND_CXXFLAGS := -pthread
 TREND_CPPFLAGS :=
 TREND_LDFLAGS :=
 TREND_LDADD := -framework GLUT -framework OpenGL
 else
 # classic posix
+TREND_CXXFLAGS := -pthread
 TREND_CPPFLAGS := -MD
 TREND_LDFLAGS :=
 TREND_LDADD := -lglut -lGL -lGLU
 endif
 #endif
 
+CXXFLAGS += $(TREND_CXXFLAGS)
 CPPFLAGS += $(TREND_CPPFLAGS)
 LDFLAGS += $(TREND_LDFLAGS)
 LDADD += $(TREND_LDADD)

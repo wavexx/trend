@@ -1,5 +1,11 @@
-trend 1.1
----------
+trend 1.2 17/11/2009
+--------------------
+
+	* Fix linking error with "binutils-gold"
+
+
+trend 1.1 14/08/2009
+--------------------
 
 	* Auto-scaling now considers only the current graph when multiple
 	  graphs are present and "hide others" is in effect.
@@ -10,8 +16,8 @@ trend 1.1
 	  longer be used, use 'kK' instead.
 
 
-trend 1.0
----------
+trend 1.0 11/08/2009
+--------------------
 
 	* Fix man page warnings.
 	* Use a traditional version numbering scheme.
