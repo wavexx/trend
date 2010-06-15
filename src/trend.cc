@@ -8,6 +8,9 @@
  * Headers
  */
 
+// force C99 macros in libstdc++ (for compatibility with other standards)
+#define _GLIBCXX_USE_C99_FP_MACROS_DYNAMIC 1
+
 // defaults
 #include "version.h"
 #include "defaults.hh"
