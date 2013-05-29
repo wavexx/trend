@@ -1139,14 +1139,14 @@ drawTIntr()
   char buf[256];
   int curY = height;
 
-  sprintf(buf, "nearest: %g, mean: %g", intrs[0].near, mean);
+  snprintf(buf, sizeof(buf), "nearest: %g, mean: %g", intrs[0].near, mean);
   drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
 
   i = 1;
   for(vector<Intr>::const_iterator it = intrs.begin();
       it != intrs.end(); ++i, ++it)
   {
-    sprintf(buf, "%lu: %g", static_cast<unsigned long>(i), it->value);
+    snprintf(buf, sizeof(buf), "%lu: %g", static_cast<unsigned long>(i), it->value);
     drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
   }
 
@@ -1171,7 +1171,7 @@ drawDIntr()
   glEnd();
 
   char buf[256];
-  sprintf(buf, "%g: %g", intrY, (y != nY? NAN: distribData[nY]));
+  snprintf(buf, sizeof(buf), "%g: %g", intrY, (y != nY? NAN: distribData[nY]));
   drawString(Trend::strSpc, height - Trend::strSpc - Trend::fontHeight, buf);
 }
 
@@ -1183,14 +1183,14 @@ drawValues()
   char buf[256];
   glColor3fv(textCol);
 
-  sprintf(buf, "%g", loLimit);
+  snprintf(buf, sizeof(buf), "%g", loLimit);
   drawOSString(width, 0, buf);
 
-  sprintf(buf, "%g", hiLimit);
+  snprintf(buf, sizeof(buf), "%g", hiLimit);
   drawOSString(width, height, buf);
 
-  if(!graphs.size() || graphKey) sprintf(buf, "%g", last);
-  else sprintf(buf, "%s: %g", graph->label.c_str(), last);
+  if(!graphs.size() || graphKey) snprintf(buf, sizeof(buf), "%g", last);
+  else snprintf(buf, sizeof(buf), "%s: %g", graph->label.c_str(), last);
   drawLEString(buf);
 }
 
@@ -1210,7 +1210,7 @@ drawGraphKey()
   {
     for(size_t i = 0; i != graphs.size(); ++i)
     {
-      sprintf(buf, ": %g", graphs[i].rrBuf[history - 1]);
+      snprintf(buf, sizeof(buf), ": %g", graphs[i].rrBuf[history - 1]);
       string str(buf);
       lines.push_back(str);
       if(str.size() > maxValue)
@@ -1272,10 +1272,10 @@ drawGraphKey()
 void
 drawLatency()
 {
-  char buf[Trend::maxNumLen];
+  char buf[256];
   glColor3fv(textCol);
 
-  sprintf(buf, "lat: %g/%g", vLat, bLat);
+  snprintf(buf, sizeof(buf), "lat: %g/%g", vLat, bLat);
   drawLEString(buf);
 }
 
@@ -2202,7 +2202,7 @@ initGraphs()
       gi->label = labels[n];
     else
     {
-      sprintf(buf, "%lu", static_cast<unsigned long>(n + 1));
+      snprintf(buf, sizeof(buf), "%lu", static_cast<unsigned long>(n + 1));
       gi->label = buf;
     }
 
