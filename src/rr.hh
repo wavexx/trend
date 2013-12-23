@@ -1,6 +1,6 @@
 /*
  * rr: thread-safe round robin container
- * Copyright(c) 2004-2007 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2004-2007 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 

@@ -138,7 +138,7 @@ If you feel to discuss improvements and suggestions, and/or test beta releases
 before announcement you can subscribe to `trend-users` by either sending an
 empty email to <trend-users+subscribe@thregr.org>, using GMane_ (group
 "gmane.comp.graphics.trend.general") or by contacting the author at
-<wavexx@users.sf.net>. The archives are accessible via web through
+<wavexx@thregr.org>. The archives are accessible via web through
 http://news.gmane.org/gmane.comp.graphics.trend.general or via news directly.
 
 .. _GMane: http://www.gname.org/
@@ -205,7 +205,7 @@ Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>.
+Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@thregr.org>.
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate. Latest trend versions can be downloaded from
 http://www.thregr.org/~wavexx/software/trend/

@@ -1,6 +1,6 @@
 /*
  * color: color parsing/lookup functions
- * Copyright(c) 2004-2005 by wave++ "Yuri D'Elia" <wavexx@users.sf.net>
+ * Copyright(c) 2004-2005 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
