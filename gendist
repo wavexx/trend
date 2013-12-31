@@ -9,17 +9,22 @@ REV="`git describe $1 | sed -e s/^trend-//`"
 DIST="trend-$REV"
 HEAD="trend $REV"
 CATALOG="
-	AUTHORS THANKS COPYING README TODO NEWS trend.1
-	src/Makefile src/trend.cc src/version.h src/defaults.hh
-	src/color.cc src/color.hh src/rr.hh src/timer.hh src/gl.hh
-	examples/imem examples/tstimes examples/mem
-	examples/net examples/timeq
+	AUTHORS THANKS.rst COPYING README.rst TODO.rst NEWS.rst trend.1
+	src/Makefile src/trend.cc src/version.h src/defaults.hh src/color.cc
+	src/color.hh src/rr.hh src/timer.hh src/gl.hh examples/imem
+	examples/tstimes examples/mem examples/net examples/timeq
 "
 
 # check ancillary files
 echo "1: checking files"
-head -1 NEWS | fgrep -s "$HEAD"
-grep -q '\<TODO\>' README || true
+head -1 NEWS.rst | fgrep -s "$HEAD"
+grep -q '\<TODO\>' README.rst || true
+
+for file in $CATALOG
+do
+  test -f $file
+done
+
 
 # creating distribution
 echo "2: creating distribution"

@@ -1,22 +1,18 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
 
-# Configuration flags
-CXXFLAGS += -Wall -g
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
 
-ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
-	CXXFLAGS += -O0
-else
-	CXXFLAGS += -O3
-endif
-
+# Hardening
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all
 
 # Rules
 %:
-	dh -Dsrc $@
+	dh $@ -Dsrc --parallel
 
 override_dh_auto_clean:
 	$(MAKE) -Csrc clean
 
 override_dh_installchangelogs:
-	dh_installchangelogs NEWS
+	dh_installchangelogs NEWS.rst

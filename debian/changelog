@@ -1,3 +1,12 @@
+trend (1.2-2) unstable; urgency=low
+
+  * Refresh packaging:
+    - Use debhelper 9
+    - Enable all hardening flags
+    - Standards 3.9.5 (updated copyright file)
+
+ -- Yuri D'Elia <wavexx@thregr.org>  Sat, 01 Feb 2014 14:18:08 +0100
+
 trend (1.2-1) unstable; urgency=low
 
   * New upstream version fixes linking with "gold" (Closes: #556503).
