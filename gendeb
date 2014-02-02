@@ -31,4 +31,4 @@ cd ..
 rm -rf "$DIST"
 
 # checks
-lintian --show-overrides -E --pedantic trend_$REV-*.changes
+lintian --show-overrides -IE --pedantic trend_$REV-*.changes
