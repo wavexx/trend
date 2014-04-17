@@ -141,7 +141,7 @@ empty email to <trend-users+subscribe@thregr.org>, using GMane_ (group
 <wavexx@thregr.org>. The archives are accessible via web through
 http://news.gmane.org/gmane.comp.graphics.trend.general or via news directly.
 
-.. _GMane: http://www.gname.org/
+.. _GMane: http://www.gmane.org/
 
 
 Troubleshooting
