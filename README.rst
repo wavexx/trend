@@ -163,8 +163,9 @@ http://www.thregr.org/~wavexx/software/trend/ were generated:
 
 trend-and-ion:
 
-	Several instances of trend running under the ION window manager:
-	http://freshmeat.net/projects/ion/ Data source: /proc/ and mrtg-utils.
+	Several instances of trend running under the `ION
+	<http://tuomov.iki.fi/software/>`_ window manager. Data source: /proc/
+	and mrtg-utils.
 
 trend-distrib:
 
@@ -199,6 +200,8 @@ instead.
 trend's GIT repository is publicly accessible at::
 
   git://src.thregr.org/trend
+
+or through `GitHub <https://github.com/wavexx/trend>`_.
 
 
 Authors and Copyright
