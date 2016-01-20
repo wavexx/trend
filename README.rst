@@ -199,7 +199,7 @@ Authors and Copyright
 =====================
 
 trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@thregr.org>.
+Copyright(c) 2003-2016 by wave++ "Yuri D'Elia" <wavexx@thregr.org>.
 Suggestions/comments are welcome. A new version of trend is coming out shortly,
 so don't hesitate. Latest trend versions can be downloaded from
 http://www.thregr.org/~wavexx/software/trend/

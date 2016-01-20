@@ -1,3 +1,10 @@
+trend 1.3 20/01/2016
+--------------------
+
+* Fixed build failure with GCC >= 6.
+* Fixed spelling errors in the manpage.
+
+
 trend 1.2 17/11/2009
 --------------------
 

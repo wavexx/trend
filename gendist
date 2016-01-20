@@ -9,10 +9,10 @@ REV="`git describe $1 | sed -e s/^trend-//`"
 DIST="trend-$REV"
 HEAD="trend $REV"
 CATALOG="
-	AUTHORS THANKS.rst COPYING README.rst TODO.rst NEWS.rst trend.1
+	AUTHORS.rst THANKS.rst COPYING.txt README.rst TODO.rst NEWS.rst
 	src/Makefile src/trend.cc src/version.h src/defaults.hh src/color.cc
 	src/color.hh src/rr.hh src/timer.hh src/gl.hh examples/imem
-	examples/tstimes examples/mem examples/net examples/timeq
+	examples/tstimes examples/mem examples/net examples/timeq trend.1
 "
 
 # check ancillary files
