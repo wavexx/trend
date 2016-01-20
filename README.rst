@@ -46,17 +46,8 @@ appropriate.
 trend should work on any POSIX/OpenGL capable system.
 
 
-Usage
-=====
-
-Trend now comes with exhaustive online documentation.
-See the `manual page`_ for details.
-
-.. _manual page: trend.1.html
-
-
-Examples
-========
+Usage examples
+==============
 
 Some simple example scripts are included in the package.
 Within the "examples" directory you can find:
@@ -201,7 +192,7 @@ trend's GIT repository is publicly accessible at::
 
   git://src.thregr.org/trend
 
-or through `GitHub <https://github.com/wavexx/trend>`_.
+or at https://github.com/wavexx/trend
 
 
 Authors and Copyright
