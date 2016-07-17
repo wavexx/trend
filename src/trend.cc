@@ -1,6 +1,6 @@
 /*
  * trend: display live data on a trend graph
- * Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
+ * Copyright(c) 2003-2016 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
@@ -9,7 +9,7 @@
  */
 
 // force C99 macros in libstdc++ (for compatibility with other standards)
-#define _GLIBCXX_USE_C99_FP_MACROS_DYNAMIC 1
+#define _GLIBCXX_USE_C99_MATH 1
 
 // defaults
 #include "version.h"

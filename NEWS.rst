@@ -1,3 +1,9 @@
+trend 1.4 17/07/2016
+--------------------
+
+* Fixed another build failure with GCC 6.1.
+
+
 trend 1.3 20/01/2016
 --------------------
 
