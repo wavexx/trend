@@ -1,24 +1,24 @@
-trend 1.4 17/07/2016
---------------------
+trend 1.4: 2016-07-17
+---------------------
 
 * Fixed another build failure with GCC 6.1.
 
 
-trend 1.3 20/01/2016
---------------------
+trend 1.3: 2016-01-20
+---------------------
 
 * Fixed build failure with GCC >= 6.
 * Fixed spelling errors in the manpage.
 
 
-trend 1.2 17/11/2009
---------------------
+trend 1.2: 2009-11-17
+---------------------
 
 * Fix linking error with "binutils-gold"
 
 
-trend 1.1 14/08/2009
---------------------
+trend 1.1: 2009-08-14
+---------------------
 
 * Auto-scaling now considers only the current graph when multiple graphs are
   present and "hide others" is in effect.
@@ -29,15 +29,15 @@ trend 1.1 14/08/2009
   used, use 'kK' instead.
 
 
-trend 1.0 11/08/2009
---------------------
+trend 1.0: 2009-08-11
+---------------------
 
 * Fix man page warnings.
 * Use a traditional version numbering scheme.
 
 
-Rev #58 03/10/2006 to Rev #68 02/11/2007
-----------------------------------------
+Rev #68: 2007-11-02
+-------------------
 
 * Polling rate limits can now be configured dynamically.
 * Latency sampling now also shows maximal sync times.
@@ -48,8 +48,8 @@ Rev #58 03/10/2006 to Rev #68 02/11/2007
 * Using '-' as a file name now causes stdin to be read.
 
 
-Rev #54 28/04/2006 to Rev #58 03/10/2006
-----------------------------------------
+Rev #58: 2006-10-03
+-------------------
 
 * Graph filling can be enabled with 'f'.
 * 'd' now affects filling mode as well.
@@ -57,15 +57,15 @@ Rev #54 28/04/2006 to Rev #58 03/10/2006
 * Created a man page (trend.1).
 
 
-Rev #49 05/12/2005 to Rev #54 28/04/2006
-----------------------------------------
+Rev #54: 2006-04-28
+-------------------
 
 * Changing zero now aligns the graph instead of the grid.
 * Fixed hung on negative 'grid-spec'.
 
 
-Rev #44 23/07/2005 to Rev #49 05/12/2005
-----------------------------------------
+Rev #49: 2005-12-05
+-------------------
 
 * Console is no longer used for input, an embedded line editor is now used (ie
   when setting limits/grid-spec interactively, stdin will eventually be used
@@ -77,15 +77,15 @@ Rev #44 23/07/2005 to Rev #49 05/12/2005
   the selected value.
 
 
-Rev #40 15/04/2005 to Rev #44 23/07/2005
-----------------------------------------
+Rev #44: 2005-07-23
+-------------------
 
 * Solaris build fixes.
 * Ported to OS X.
 
 
-Rev #35 14/12/2004 to Rev #40 15/04/2005
-----------------------------------------
+Rev #40: 2005-04-15
+-------------------
 
 * Correctly align X grid lines in scrolling mode.
 * hist-spec now uses "x" instead of "*".
@@ -95,8 +95,8 @@ Rev #35 14/12/2004 to Rev #40 15/04/2005
   -r flags should no longer be used, use -ci -cd.
 
 
-Rev #27 02/11/2004 to Rev #35 14/12/2004
-----------------------------------------
+Rev #35: 2004-12-14
+-------------------
 
 * An "history specification" can be used on the command line as a simplified
   alternative to the hist-sz/x-div pair.
@@ -105,8 +105,8 @@ Rev #27 02/11/2004 to Rev #35 14/12/2004
 * Grid enhancements/offsetting.
 
 
-Rev #23 29/10/2004 to Rev #27 02/11/2004
-----------------------------------------
+Rev #27: 2004-11-02
+-------------------
 
 * Incorrectly initialised buffers could cause interactive indicators to
   malfunction for first values.
@@ -114,8 +114,8 @@ Rev #23 29/10/2004 to Rev #27 02/11/2004
 * 'A' re-scales the graph without activating auto-scaling.
 
 
-Rev #20 21/10/2004 to Rev #23 29/10/2004
-----------------------------------------
+Rev #23: 2004-10-29
+-------------------
 
 * Optimisations and huge internal latency reductions.
 * Fixed precision truncation in auto-scaling.
@@ -123,8 +123,8 @@ Rev #20 21/10/2004 to Rev #23 29/10/2004
 * Created a support/testing mailing list. See README for details.
 
 
-Rev #15 27/09/2004 to Rev #20 21/10/2004
-----------------------------------------
+Rev #20: 2004-10-21
+-------------------
 
 * Implemented distribution graph.
 * Fixed trend for plain files.
@@ -132,15 +132,15 @@ Rev #15 27/09/2004 to Rev #20 21/10/2004
 * Fixed precision truncation in drawing code.
 
 
-Rev #11 21/09/2004 to Rev #15 27/09/2004
-----------------------------------------
+Rev #15: 2004-09-27
+-------------------
 
 * Fixed standard X11/GLUT options (-display, -geometry, etc)
 * Implemented interactive indicators.
 
 
-Rev #4 09/09/2004 to Rev #11 21/09/2004
----------------------------------------
+Rev #11: 2004-09-21
+-------------------
 
 * Several optimisations. Code cleanup.
 * Colours are configurable.
