@@ -1,68 +1,51 @@
 ## Makefile for trend
-## Copyright(c) 2003-2009 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
-## Distributed under GNU LGPL WITHOUT ANY WARRANTY.
+# Copyright(c) 2003-2018 by wave++ (Yuri D'Elia) <wavexx@thregr.org>
 
-#if $(CXX) == "CC"
-# pmake (assume Mipspro)
-TREND_CXXFLAGS :=
-TREND_CPPFLAGS := -I/usr/freeware/include -I/usr/local/include
-TREND_LDFLAGS := -FE:template_in_elf_section -quiet_prelink
-TREND_LDADD := -lpthread -L/usr/freeware/lib32 -L/usr/local/lib32 -lm -lglut -lGL -lGLU -lX11 -lXmu
-#else
-ifeq ($(shell uname), Darwin)
-# OS X (_nice_ framework system, I admit)
-TREND_CXXFLAGS := -pthread
-TREND_CPPFLAGS :=
-TREND_LDFLAGS :=
-TREND_LDADD := -framework GLUT -framework OpenGL
-else
-# classic posix
-TREND_CXXFLAGS := -pthread
-TREND_CPPFLAGS := -MD
-TREND_LDFLAGS :=
-TREND_LDADD := -lglut -lGL -lGLU
-endif
-#endif
+# Flags
+CWARN += -Wall -Wextra -Wno-shadow -Wno-unused-parameter
+CXXFLAGS += -pthread $(CWARN)
+CPPFLAGS += -MD -D_FILE_OFFSET_BITS=64
 
-CXXFLAGS += $(TREND_CXXFLAGS)
-CPPFLAGS += $(TREND_CPPFLAGS)
-LDFLAGS += $(TREND_LDFLAGS)
-LDADD += $(TREND_LDADD)
+# Paths
+DESTDIR :=
+PREFIX := /usr/local
 
-
-# Config
-TREND_BUILT = version.h
-TREND_OBJECTS = trend.o color.o
-TARGETS = trend
+# Objects/targets
+TARGETS := trend
+trend_OBJECTS := trend.o color.o
+trend_LDADD := -lglut -lGL -lGLU
 
 
 # Rules
-.SUFFIXES: .cc .o
-.PHONY: all dist clean distclean
+.SUFFIXES:
+.SECONDEXPANSION:
+.PHONY: all clean distclean install
 
-.cc.o:
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
-
-
-# Targets
+all_OBJECTS := $(foreach T,$(TARGETS),$($(T)_OBJECTS))
+all_DEPS := $(all_OBJECTS:.o=.d)
 all: $(TARGETS)
 
-dist: $(TREND_BUILT)
+%.o: %.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
-trend: $(TREND_OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(TREND_OBJECTS) $(LDADD)
-
-# just update upon tagging
-version.h:
-	echo -n `git describe` | cencode -q 'static const' -s TREND_VERSION > $@
-
-distclean: clean
-	rm -rf $(TREND_BUILT)
+$(TARGETS): %: $$($$@_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $($@_OBJECTS) $(LDFLAGS) $($@_LDADD)
 
 clean:
-	rm -rf *.[do] core ii_files $(TARGETS)
+	rm -f $(all_OBJECTS) $(all_DEPS) $(TARGETS)
+
+install: $(TARGETS)
+	install -p -t $(DESTDIR)$(PREFIX)/bin/ $(TARGETS)
+
+
+# Built files
+trend.o: version.h
+version.h:
+	echo "static const char TREND_VERSION[]=\"`git describe`\";" > $@
+
+distclean: clean
+	rm -f version.h
 
 
 # Dependencies
-trend.o: version.h
-sinclude *.d
+sinclude $(all_DEPS)
