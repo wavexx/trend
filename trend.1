@@ -1,8 +1,8 @@
 .\" trend.1: trend manual
-.\" Copyright(c) 2006-2009 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
-.\" Distributed under GNU LGPL WITHOUT ANY WARRANTY.
+.\" Copyright(c) 2006-2018 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
+.\" Distributed under GNU LGPLv2+ WITHOUT ANY WARRANTY.
 .\"
-.Dd November 2, 2007
+.Dd February 18, 2018
 .Dt TREND 1
 .\"
 .\"
@@ -304,6 +304,9 @@ draw a mayor line every C normal grid lines
 quit/exit
 .It Ic TAB
 cycle current graph
+.It Ic space
+pause visualisation (but still continue to consume input to preserve time
+coherency)
 .It Ic a
 toggle auto-scaling
 .It Ic A
@@ -342,9 +345,8 @@ toggle display of undefined values
 toggle the graph key
 .It Ic K
 cycle view mode (normal, dim others or hide others)
-.It Ic space
-pause visualisation (but still continue to consume input to preserve time
-coherency)
+.It Ic ?
+show help
 .El
 .\"
 .Ss AUTOSCALING
@@ -479,7 +481,7 @@ normal.
 .\"
 .Sh AUTHORS
 .Nm
-is distributed under LGPL (see COPYING)
+is distributed under GNU LGPLv2+
 .Em WITHOUT ANY WARRANTY .
-Copyright(c) 2003-2009 by
+Copyright(c) 2003-2018 by
 .An "Yuri D'Elia" Aq wavexx@thregr.org .
