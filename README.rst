@@ -103,7 +103,7 @@ IF-MIB network interface::
   snmpdelta -v1 -CT -c public router ifInOctets.1 | trend - ...
 
 A collection of contributed data-gathering scripts is kept at
-http://www.thregr.org/~wavexx/software/trend/contrib/ (if you want to make a
+https://www.thregr.org/~wavexx/software/trend/contrib/ (if you want to make a
 contribution just mail me). Alternatively, many (if not all) of the contributed
 MRTG scripts are a valuable resource to system administrators in particular.
 
@@ -130,7 +130,7 @@ before announcement you can subscribe to `trend-users` by either sending an
 empty email to <trend-users+subscribe@thregr.org>, using GMane_ (group
 "gmane.comp.graphics.trend.general") or by contacting the author at
 <wavexx@thregr.org>. The archives are accessible via web through
-http://news.gmane.org/gmane.comp.graphics.trend.general or via news directly.
+https://www.mail-archive.com/trend-users@thregr.org/ or via news directly.
 
 .. _GMane: http://www.gmane.org/
 
@@ -150,7 +150,7 @@ Screen-shots
 ============
 
 Due to popular demand, here's how the screen-shots as found in
-http://www.thregr.org/~wavexx/software/trend/ were generated:
+https://www.thregr.org/~wavexx/software/trend/ were generated:
 
 trend-and-ion:
 
@@ -188,18 +188,19 @@ Almost all internal aspects and defaults of trend can be changed by modifying
 an internal constant be exposed contact me to make the change customizable
 instead.
 
-trend's GIT repository is publicly accessible at::
+trend's GIT repository is publicly accessible at:
 
-  git://src.thregr.org/trend
+  https://github.com/wavexx/trend
 
-or at https://github.com/wavexx/trend
+or at ``git://src.thregr.org/trend``
 
 
 Authors and Copyright
 =====================
 
-trend is distributed under LGPL (see COPYING) WITHOUT ANY WARRANTY.
-Copyright(c) 2003-2016 by wave++ "Yuri D'Elia" <wavexx@thregr.org>.
-Suggestions/comments are welcome. A new version of trend is coming out shortly,
-so don't hesitate. Latest trend versions can be downloaded from
-http://www.thregr.org/~wavexx/software/trend/
+"trend" can be found at https://www.thregr.org/~wavexx/software/trend/
+
+| "trend" is distributed under GNU LGPLv2+, WITHOUT ANY WARRANTY.
+| Copyright(c) 2003-2018 by wave++ "Yuri D'Elia" <wavexx@thregr.org>.
+
+Suggestions/comments are welcome.

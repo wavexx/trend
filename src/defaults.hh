@@ -1,6 +1,6 @@
 /*
  * defaults: trend defaults and constants
- * Copyright(c) 2004-2007 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
+ * Copyright(c) 2004-2018 by wave++ "Yuri D'Elia" <wavexx@thregr.org>
  * Distributed under GNU LGPL WITHOUT ANY WARRANTY.
  */
 
