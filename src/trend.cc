@@ -482,7 +482,7 @@ unproject(int xi, int yi, double& xo, double& yo)
   int xr = (distrib? xi - Trend::distribWidth: xi);
 
   xo = (static_cast<double>(divisions) * xr / width);
-  yo = hiLimit - (static_cast<double>(hiLimit - loLimit) * yi / height);
+  yo = hiLimit - ((hiLimit - loLimit) * yi / height);
 }
 
 
@@ -1147,7 +1147,7 @@ drawTIntr()
   for(vector<Intr>::const_iterator it = intrs.begin();
       it != intrs.end(); ++i, ++it)
   {
-    snprintf(buf, sizeof(buf), "%lu: %g", static_cast<unsigned long>(i), it->value);
+    snprintf(buf, sizeof(buf), "%lu: %g", i, it->value);
     drawString(strSpc, curY -= Trend::fontHeight + strSpc, buf);
   }
 
@@ -2266,7 +2266,7 @@ initGraphs()
       gi->label = labels[n];
     else
     {
-      snprintf(buf, sizeof(buf), "%lu", static_cast<unsigned long>(n + 1));
+      snprintf(buf, sizeof(buf), "%lu", (n + 1));
       gi->label = buf;
     }
 
