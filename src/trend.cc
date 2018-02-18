@@ -202,11 +202,12 @@ namespace
   double bLat = 0.;
   double vLat = 0.;
 
-  // Edit form
-  bool edit;
+  // Modes
+  mode_t mode;
   edit_callback_t editCallback;
   string editTitle;
   string editStr;
+  string messageStr;
 }
 
 
@@ -1281,14 +1282,27 @@ drawLatency()
 
 
 void
-drawEdit()
+drawFrame(const GLfloat* color, const string& str)
 {
   using Trend::fontHeight;
   using Trend::fontWidth;
 
+  // separate newlines
+  vector<string> strs;
+  size_t max = 0;
+  string::size_type itB, itE;
+  for(itB = 0, itE = str.find('\n');;
+      itB = itE + 1, itE = str.find('\n', itB))
+  {
+    strs.push_back(str.substr(itB, itE - itB));
+    max = std::max(strs.back().size(), max);
+    if(itE == string::npos) break;
+  }
+
   const int height2 = height / 2;
   const int width2 = width / 2;
-  const int blockH = fontHeight * 2;
+  const int blockB = (fontHeight * strs.size()) / 2;
+  const int blockH = blockB + fontHeight + fontHeight / 2;
   const int blockS = fontHeight / 2;
 
   glBegin(GL_QUADS);
@@ -1301,7 +1315,7 @@ drawEdit()
   glVertex2d(0, height2 - blockH);
 
   // borders
-  glColor3fv(editCol);
+  glColor3fv(color);
   glVertex2d(0, height2 + blockH + blockS);
   glVertex2d(width, height2 + blockH + blockS);
   glVertex2d(width, height2 + blockH);
@@ -1313,9 +1327,24 @@ drawEdit()
 
   glEnd();
 
-  // edit string
-  string buf(editTitle + ": " + editStr);
-  drawString(width2 - fontWidth * buf.size() / 2, height2 - blockS, buf);
+  // strings
+  int x = width2 - fontWidth * max / 2;
+  for(size_t i = 0; i != strs.size(); ++i)
+  {
+    if(!strs[i].size())
+      continue;
+
+    if(strs[i] != "-")
+      drawString(x, height2 + blockB - fontHeight * (i + 1), strs[i].c_str());
+    else
+    {
+      int y = height2 + blockB - fontHeight * i - fontHeight / 2;
+      glBegin(GL_LINES);
+      glVertex2i(0, y);
+      glVertex2i(width, y);
+      glEnd();
+    }
+  }
 }
 
 
@@ -1404,9 +1433,12 @@ display()
   if(intr && distrib && intrX < 0)
     drawDIntr();
 
-  // editing
-  if(edit) drawEdit();
+  // modes
   if(messages.size()) drawMessages();
+  if(mode == Trend::m_editing)
+    drawFrame(Trend::editCol, (editTitle + ": " + editStr));
+  else if(mode == Trend::m_message)
+    drawFrame(Trend::helpCol, messageStr);
 
   // flush buffers
   glutSwapBuffers();
@@ -1548,8 +1580,7 @@ toggleStatus(const string& str, bool& var)
 
 
 void
-editMode(bool mode);
-
+setMode(mode_t mode);
 
 void
 editMode(const string& str, edit_callback_t call)
@@ -1557,7 +1588,7 @@ editMode(const string& str, edit_callback_t call)
   editTitle = str;
   editStr.clear();
   editCallback = call;
-  editMode(true);
+  setMode(Trend::m_editing);
 }
 
 
@@ -1579,7 +1610,7 @@ editKeyboard(const unsigned char key, const int, const int)
   case 13:
   case 27:
     if(key == 27 || !editStr.size() || !editCall())
-      editMode(false);
+      setMode(Trend::m_normal);
     break;
 
   case 8:
@@ -1594,6 +1625,25 @@ editKeyboard(const unsigned char key, const int, const int)
 	static_cast<size_t>(Trend::maxNumLen))
       return;
     editStr += key;
+  }
+
+  glutPostRedisplay();
+}
+
+
+void
+messageKeyboard(const unsigned char key, const int, const int)
+{
+  switch(key)
+  {
+  case 13:
+  case 32:
+  case Trend::quitKey:
+    setMode(Trend::m_normal);
+    break;
+
+  default:
+    return;
   }
 
   glutPostRedisplay();
@@ -1823,8 +1873,14 @@ dispKeyboard(const unsigned char key, const int x, const int y)
     editMode("poll rate", getPollRate);
     break;
 
+  case Trend::helpKey:
+    messageStr = string("trend ") + TREND_VERSION + " - " + Trend::helpStr;
+    setMode(Trend::m_message);
+    break;
+
   case Trend::pauseKey:
     toggleStatus("paused", paused);
+    return;
 
   default:
     return;
@@ -2162,22 +2218,30 @@ parseOptions(int argc, char* const argv[])
 
 
 void
-editMode(bool edit)
+setMode(mode_t mode)
 {
-  if(edit)
+  ::mode = mode;
+
+  switch(mode)
   {
+  case Trend::m_editing:
     glutKeyboardFunc(editKeyboard);
     glutMouseFunc(NULL);
     glutMotionFunc(NULL);
-  }
-  else
-  {
+    break;
+
+  case Trend::m_message:
+    glutKeyboardFunc(messageKeyboard);
+    glutMouseFunc(NULL);
+    glutMotionFunc(NULL);
+    break;
+
+  default:
     glutKeyboardFunc(dispKeyboard);
     glutMouseFunc(dispMouse);
     glutMotionFunc(dispMotion);
+    break;
   }
-
-  ::edit = edit;
 }
 
 
@@ -2240,7 +2304,7 @@ main(int argc, char* argv[]) try
   glutCreateWindow(title? title: argv[0]);
   glutReshapeFunc(reshape);
   glutDisplayFunc(display);
-  editMode(false);
+  setMode(Trend::m_normal);
 
   // first redraw
   atVLat.start();

@@ -1,3 +1,9 @@
+trend 1.5: 2018-??-??
+---------------------
+
+* Interactive help is shown when '?' is pressed.
+
+
 trend 1.4: 2016-07-17
 ---------------------
 

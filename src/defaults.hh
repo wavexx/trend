@@ -36,12 +36,14 @@ namespace Trend
   const unsigned char changeKey = '\t';
   const unsigned char graphKeyKey = 'k';
   const unsigned char viewModeKey = 'K';
+  const unsigned char helpKey = '?';
 
   // Some types
   typedef double Value;
   enum input_t {absolute, incremental, differential};
   enum format_t {f_ascii, f_float, f_double, f_short, f_int, f_long};
   enum view_t {v_normal, v_dim, v_hide};
+  enum mode_t {m_normal, m_editing, m_message};
 
   // Defaults
   const input_t input = absolute;
@@ -68,6 +70,7 @@ namespace Trend
   const GLfloat markCol[3] = {0.5, 0.5, 0.0};
   const GLfloat intrCol[3] = {0.0, 1.0, 0.0};
   const GLfloat editCol[3] = {1.0, 0.0, 0.0};
+  const GLfloat helpCol[3] = {0.0, 1.0, 0.0};
 
   const GLfloat lineCol[][3] =
   {
@@ -101,6 +104,45 @@ namespace Trend
   const int latAvg = 5;
   const int persist = 2;
   const int maxPersist = 5;
+
+  // Help string
+  const char helpStr[] =
+  {
+   "HELP\n"
+   "\n"
+   "-\nKeys:\n"
+   "\n"
+   "  ESC: quit/exit\n"
+   "  TAB: cycle current graph\n"
+   "  SPC: pause visualisation (but still continue to consume input)\n"
+   "    a: toggle auto-scaling\n"
+   "    A: re-scale the graph without activating auto-scaling\n"
+   "    d: toggle dimmed shading mode\n"
+   "    D: toggle distribution graph\n"
+   "    S: toggle anti-aliasing\n"
+   "    s: switch scrolling mode (wrap-around or scrolling)\n"
+   "    v: toggle values\n"
+   "    l: show visual and maximal sync latency\n"
+   "    L: set limits interactively\n"
+   "    m: activate a marker on the current cursor position\n"
+   "    f: toggle filling\n"
+   "    g: toggle grid\n"
+   "    G: change grid-spec interactively\n"
+   "    z: change zero interactively\n"
+   "    Z: set limits by center and amplitude\n"
+   "    p: change polling rate interactively\n"
+   "    u: toggle display of undefined values\n"
+   "    k: toggle the graph key\n"
+   "    K: cycle view mode (normal, dim others or hide others)\n"
+   "\n"
+   "-\ngrid-spec:\n"
+   "\n"
+   "           [[A][+C]][x[B][+C]]\n"
+   "\n"
+   "           A: y grid resolution\n"
+   "           B: x grid resolution\n"
+   "           C: draw a mayor line every C normal grid lines"
+  };
 }
 
 #endif
